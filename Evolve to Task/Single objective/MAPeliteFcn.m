@@ -1,5 +1,5 @@
 
-function MAP = MAPeliteFcn(config)
+function MAP = MAPeliteFcn(config,resType)
 %% MAP-elites fcn
 % Notes:
 
@@ -14,15 +14,25 @@ if isempty(gcp)
 end
 
 %% Evolutionary parameters
+% ask user for EA parameters
+prompt = {'Population size:','Total generations:','Mutation rate:','Recombination rate:','bacth size:'};
+dlgtitle = 'Input CHARC parameters';
+dims = [1 35];
+definput = {'200','2000','0.1','0.5','10'};
+answer = inputdlg(prompt,dlgtitle,dims,definput);
+
+config.maxMajorUnits = 1;
+config.resType = resType; 
+config = selectReservoirType(config);       % get correct functions for type of reservoir
 config.numTests = 1;                        % num of runs
-config.initial_population = 200;                       % large pop better
-config.totalIter = 200;                    % num of gens
-config.mutRate = 0.1;                       % mutation rate
-config.recRate = 0.5;                       % recombination rate
+config.initial_population = str2num(answer{1});                       % large pop better
+config.totalIter = str2num(answer{2});                    % num of gens
+config.mutRate = str2num(answer{3});                       % mutation rate
+config.recRate = str2num(answer{4});                       % recombination rate
 config.evolveOutputWeights = 0;             % evolve rather than train
 
 %% MAP of elites parameters
-config.batch_size = 10;                                                     % how many offspring to create in one iteration
+config.batch_size = str2num(answer{5});                                                     % how many offspring to create in one iteration
 config.local_breeding = 1;                                                  % if interbreeding is local or global
 config.k_neighbours = 5;                                                    % select second parent from neighbouring behaviours
 config.total_MAP_size = config.maxMinorUnits*config.maxMajorUnits + 0.1*config.maxMinorUnits+1;  %size depends system used
@@ -49,6 +59,7 @@ for tests = 1:config.numTests
     
     % create first MAP of elites
     config.res_iter = 1;
+
     [config, MAP] = changeMAPresolution(config,config.database_genotype);
     
     %% first batch

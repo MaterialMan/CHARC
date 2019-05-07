@@ -10,17 +10,14 @@ clear
 % add all subfolders to the path --> make all functions in subdirectories available
 % addpath(genpath(pwd));
 
-%load('Framework_substrate_RoR_IA_run1_gens2000_1Nres_100_nSize.mat');
-%config.database_genotype = database_genotype;
-
 warning('off','all')
 rng(1,'twister');
 
 %% Setup
 % type of network to evolve
-config.resType = 'RoR_IA';                      % can use different hierarchical reservoirs. RoR_IA is default ESN.
+config.resType = 'instrRes';                      % can use different hierarchical reservoirs. RoR_IA is default ESN.
 config.maxMinorUnits = 20;                  % num of nodes in subreservoirs
-config.maxMajorUnits = 1;                   % num of subreservoirs. Default ESN should be 1.
+config.maxMajorUnits = 3;                   % num of subreservoirs. Default ESN should be 1.
 config = selectReservoirType(config);       % get correct functions for type of reservoir
 config.nsga2 = 0;                           % not using NSGA
 config.parallel = 1;                        % use parallel toolbox
@@ -36,8 +33,8 @@ config.evolveOutputWeights = 0;             % evolve rather than train
 
 %% Evolutionary parameters
 config.numTests = 1;                        % num of runs
-config.popSize = 200;                       % large pop better
-config.totalGens = 2000;                    % num of gens
+config.popSize = 50;                       % large pop better
+config.totalGens = 500;                    % num of gens
 config.mutRate = 0.1;                       % mutation rate
 config.deme_percent = 0.2;                  % speciation percentage
 config.deme = round(config.popSize*config.deme_percent);
@@ -47,7 +44,7 @@ config.recRate = 0.5;                       % recombination rate
 config.discrete = 0;               % binary input for discrete systems
 config.nbits = 16;                       % if using binary/discrete systems 
 config.preprocess = 1;                   % basic preprocessing, e.g. scaling and mean variance
-config.dataSet = 'poleBalance';                 % Task to evolve for
+config.dataSet = 'Laser';                 % Task to evolve for
 
 % get dataset 
 [config] = selectDataset(config);

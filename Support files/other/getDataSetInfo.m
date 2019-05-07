@@ -203,6 +203,33 @@ if strcmp(config.resType,'2dCA')
     config.rules = initRules(rules);
 end
 
+%% programmable reservoir
+
+if strcmp(config.resType,'instrRes')
+    
+    loc_str =  input('Type file location for database, or type "CHARC" or "MAPelites" to get database:\n','s');
+          
+     config.metrics = {'KR','MC'}; % metrics to use (and order of metrics)
+       
+    if strcmp(loc_str,'CHARC')
+        % Network details
+        config.voxel_size = 10;                      % when measuring quality, pick a suitable voxel size
+        
+        config.get_prediction_data = 0;                %gather task performances
+        config.taskList = {'NARMA10','NARMA30','Laser','NonChanEqRodan'}; % tasks to assess
+        config.database_genotype = runCHARCfcn(config,'RoR_IA');
+    elseif strcmp(loc_str,'MAPelites')
+        
+            config.database_genotype = [];
+            config.database_genotype = MAPeliteFcn(config,'RoR_IA');
+            config = convertMAPtoDatabase(config);
+        else
+            
+        load(loc_str);
+        config.database_genotype = database_genotype;
+    end
+end
+
 %% delay-line reservoirs
 % if strcmp(config.resType,'DL')
 %     config.DLtype = 'mackey_glass2';%'ELM';%'virtualNodes';
