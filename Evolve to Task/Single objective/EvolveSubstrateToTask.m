@@ -10,8 +10,10 @@ clear
 % add all subfolders to the path --> make all functions in subdirectories available
 % addpath(genpath(pwd));
 
-%load('Framework_substrate_RoR_IA_run1_gens2000_1Nres_100_nSize.mat');
-%config.database_genotype = database_genotype;
+%start paralllel pool if empty
+if isempty(gcp)
+    parpool; % create parallel pool
+end
 
 warning('off','all')
 rng(1,'twister');
@@ -19,7 +21,7 @@ rng(1,'twister');
 %% Setup
 % type of network to evolve
 config.resType = 'RoR_IA';                      % can use different hierarchical reservoirs. RoR_IA is default ESN.
-config.maxMinorUnits = 20;                  % num of nodes in subreservoirs
+config.maxMinorUnits = 200;                  % num of nodes in subreservoirs
 config.maxMajorUnits = 1;                   % num of subreservoirs. Default ESN should be 1.
 config = selectReservoirType(config);       % get correct functions for type of reservoir
 config.nsga2 = 0;                           % not using NSGA
@@ -35,9 +37,9 @@ config.evolvedOutputStates = 0;             % sub-sample the states to produce o
 config.evolveOutputWeights = 0;             % evolve rather than train
 
 %% Evolutionary parameters
-config.numTests = 1;                        % num of runs
+config.numTests = 5;                        % num of runs
 config.popSize = 200;                       % large pop better
-config.totalGens = 2000;                    % num of gens
+config.totalGens = 1800;                    % num of gens
 config.mutRate = 0.1;                       % mutation rate
 config.deme_percent = 0.2;                  % speciation percentage
 config.deme = round(config.popSize*config.deme_percent);
@@ -47,7 +49,7 @@ config.recRate = 0.5;                       % recombination rate
 config.discrete = 0;               % binary input for discrete systems
 config.nbits = 16;                       % if using binary/discrete systems 
 config.preprocess = 1;                   % basic preprocessing, e.g. scaling and mean variance
-config.dataSet = 'poleBalance';                 % Task to evolve for
+config.dataSet = 'NARMA10';                 % Task to evolve for
 
 % get dataset 
 [config] = selectDataset(config);
@@ -81,10 +83,11 @@ for test = 1:config.numTests
     
     %Assess population
     if config.parallel % use parallel toolbox - faster
+        ppm = ParforProgMon('Initial population: ', config.popSize);
         parfor popEval = 1:config.popSize
             warning('off','all')
             genotype(popEval) = config.testFcn(genotype(popEval),config);
-            fprintf('\n i = %d, error = %.4f\n',popEval,genotype(popEval).valError);
+            ppm.increment();
         end
     else
         for popEval = 1:config.popSize
