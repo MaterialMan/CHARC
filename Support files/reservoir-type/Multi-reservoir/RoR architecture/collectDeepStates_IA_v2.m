@@ -1,4 +1,4 @@
-function[statesExt] = collectDeepStates_IA(genotype,inputSequence,config)
+function[statesExt] = collectDeepStates_IA_v2(genotype,inputSequence,config)
 
 %% Collect states for plain ESN
 for i= 1:genotype.nInternalUnits
@@ -11,18 +11,15 @@ if iscell(genotype.reservoirActivationFunction)
     A    = cell(1, genotype.esnMinor(i).nInternalUnits);
     A(:) = {'tanh'};
     B    = cell(1, genotype.esnMinor(i).nInternalUnits);
-    B(:) = {'linearNode'};
-    
+    B(:) = {'linearNode'};   
 end
 
 %equation: x(n) = f(Win*u(n) + S)
-%for i= 1:genotype.nInternalUnits
-%temp_states = [];
 for n = 2:size(inputSequence,1)
     
     for i= 1:genotype.nInternalUnits
         for k= 1:genotype.nInternalUnits
-            x{i}(n,:) = x{i}(n,:) + (genotype.connectWeights{i,k}*states{k}(n-1,:)')';
+            x{i}(n,:) = x{i}(n,:) + ((genotype.connectWeights{i,k}*genotype.interResScaling{i,k})*states{k}(n-1,:)')';
         end
         
         if iscell(genotype.reservoirActivationFunction)
@@ -64,6 +61,5 @@ end
 if config.AddInputStates == 1
     statesExt = [statesExt inputSequence];
 end
-
 
 statesExt = statesExt(config.nForgetPoints+1:end,:); % remove washout
