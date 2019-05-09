@@ -54,7 +54,7 @@ for i = 1:config.popSize
     
     else
         % number of instructions to cycle through
-        genotype(i).numInstr = randi([1 10]);
+        genotype(i).numInstr = 1;%randi([1 10]);
         genotype(i).instrSeq = randi([1 length(config.database_genotype)],genotype(i).numInstr,1); %1000 is arbitary number, it can be different
     end
     

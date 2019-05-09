@@ -9,15 +9,19 @@ clear
 
 % add all subfolders to the path --> make all functions in subdirectories available
 % addpath(genpath(pwd));
+%start paralllel pool if empty
+if isempty(gcp)
+    parpool; % create parallel pool
+end
 
 warning('off','all')
 rng(1,'twister');
 
 %% Setup
 % type of network to evolve
-config.resType = 'instrRes';                      % can use different hierarchical reservoirs. RoR_IA is default ESN.
-config.maxMinorUnits = 20;                  % num of nodes in subreservoirs
-config.maxMajorUnits = 3;                   % num of subreservoirs. Default ESN should be 1.
+config.resType = 'RoR_IA';                      % can use different hierarchical reservoirs. RoR_IA is default ESN.
+config.maxMinorUnits = 25;                  % num of nodes in subreservoirs
+config.maxMajorUnits = 2;                   % num of subreservoirs. Default ESN should be 1.
 config = selectReservoirType(config);       % get correct functions for type of reservoir
 config.nsga2 = 0;                           % not using NSGA
 config.parallel = 1;                        % use parallel toolbox
@@ -32,9 +36,9 @@ config.evolvedOutputStates = 0;             % sub-sample the states to produce o
 config.evolveOutputWeights = 0;             % evolve rather than train
 
 %% Evolutionary parameters
-config.numTests = 1;                        % num of runs
-config.popSize = 50;                       % large pop better
-config.totalGens = 500;                    % num of gens
+config.numTests = 10;                        % num of runs
+config.popSize = 200;                       % large pop better
+config.totalGens = 1000;                    % num of gens
 config.mutRate = 0.1;                       % mutation rate
 config.deme_percent = 0.2;                  % speciation percentage
 config.deme = round(config.popSize*config.deme_percent);
@@ -44,7 +48,7 @@ config.recRate = 0.5;                       % recombination rate
 config.discrete = 0;               % binary input for discrete systems
 config.nbits = 16;                       % if using binary/discrete systems 
 config.preprocess = 1;                   % basic preprocessing, e.g. scaling and mean variance
-config.dataSet = 'Laser';                 % Task to evolve for
+config.dataSet = 'NARMA10';                 % Task to evolve for
 
 % get dataset 
 [config] = selectDataset(config);
@@ -58,7 +62,7 @@ config.startTime = datestr(now, 'HH:MM:SS');
 figure1 =figure;
 config.saveGen = 1000;                      % save at gen = saveGen
 config.multiOffspring = 0;                  % multiple tournament selection and offspring in one cycle
-config.numSyncOffspring = config.deme;      % length of cycle/synchronisation step
+config.numSyncOffspring = 4;      % length of cycle/synchronisation step
 config.metrics = {'KR','GR','MC'};          % metrics to use
 config.record_metrics = 0;                  % save metrics
 
@@ -78,10 +82,11 @@ for test = 1:config.numTests
     
     %Assess population
     if config.parallel % use parallel toolbox - faster
+        ppm = ParforProgMon('Initial population: ', config.popSize);
         parfor popEval = 1:config.popSize
             warning('off','all')
             genotype(popEval) = config.testFcn(genotype(popEval),config);
-            fprintf('\n i = %d, error = %.4f\n',popEval,genotype(popEval).valError);
+            ppm.increment();
         end
     else
         for popEval = 1:config.popSize
@@ -152,7 +157,7 @@ for test = 1:config.numTests
             % print info
             if (mod(gen,config.genPrint) == 0)
                 [best(gen),best_indv(gen)] = min(storeError(test,gen,:));
-                fprintf('Gen %d, time taken: %.4f sec(s)\n Best Error: %.4f \n',gen,toc/config.genPrint,best);
+                fprintf('Gen %d\n Best Error: %.4f \n',gen,best);
                 tic;
                 
                 if strcmp(config.resType,'Graph')

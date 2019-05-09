@@ -10,18 +10,18 @@ end
 % compute pipleine instruction set or time-varying
 if genotype.multiResInstru
     
-    %equation: x(n) = f(Win*u(n) + S)
-    for i= 1:genotype.nInternalUnits % this counter cycles through heirarchical reservoirs, is one when using single reservoir  
+    for n = 2:length(inputSequence(:,1))
         
-        current_res = config.database_genotype(genotype.instrSeq(i));
-        
-        for n = 2:length(inputSequence(:,1))
-                  
+        %equation: x(n) = f(Win*u(n) + S)
+        for i= 1:genotype.nInternalUnits % this counter cycles through heirarchical reservoirs, is one when using single reservoir
+            
+            current_res = config.database_genotype(genotype.instrSeq(i));            
+            
             % pipeline
             if i == 1
-                states{i}(n,:) = feval(current_res.reservoirActivationFunction,((current_res.esnMinor.inputWeights*current_res.esnMinor(i).inputScaling)*([current_res.esnMinor(i).inputShift inputSequence(n,:)])')+ current_res.connectWeights{1,1}*states{i}(n-1,:)'); 
+                states{i}(n,:) = feval(current_res.reservoirActivationFunction,((current_res.esnMinor.inputWeights*current_res.esnMinor(i).inputScaling)*([current_res.esnMinor(i).inputShift inputSequence(n,:)])')+ current_res.connectWeights{1,1}*states{i}(n-1,:)');
             else
-                states{i}(n,:) = feval(current_res.reservoirActivationFunction,((genotype.res(i).inputWeights*current_res.esnMinor(1).inputScaling)*([inputSequence(n,:) states{i-1}(n,:)])')+ current_res.connectWeights{1,1}*states{i}(n-1,:)'); 
+                states{i}(n,:) = feval(current_res.reservoirActivationFunction,((genotype.res(i).inputWeights*current_res.esnMinor(1).inputScaling)*([inputSequence(n,:) states{i-1}(n,:)])')+ current_res.connectWeights{1,1}*states{i}(n-1,:)');
             end
             
         end

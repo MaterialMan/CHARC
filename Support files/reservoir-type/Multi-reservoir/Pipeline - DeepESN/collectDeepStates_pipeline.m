@@ -5,13 +5,13 @@ function [statesExt] = collectDeepStates_pipeline(genotype,inputSequence,config)
         states{i} = zeros(size(inputSequence,1),genotype.esnMinor(i).nInternalUnits);
     end
     
-    %equation: x(n) = f(Win*u(n) + S)
-    for i= 1:genotype.nInternalUnits
-        for n = 2:length(inputSequence(:,1))          
+    %equation: x(n) = f(Win*u(n) + S)    
+    for n = 2:length(inputSequence(:,1))
+        for i= 1:genotype.nInternalUnits
             if i == 1
                 states{i}(n,:) = feval(genotype.reservoirActivationFunction,((genotype.esnMinor(i).inputWeights*genotype.esnMinor(i).inputScaling)*([genotype.esnMinor(i).inputShift inputSequence(n,:)])')+ genotype.connectWeights{i,i}*states{i}(n-1,:)'); %n-1
             else
-                 states{i}(n,:) = feval(genotype.reservoirActivationFunction,((genotype.esnMinor(i).inputWeights*genotype.esnMinor(i).inputScaling)*([genotype.esnMinor(i).inputShift states{i-1}(n,:)])')+ genotype.connectWeights{i,i}*states{i}(n-1,:)'); %n-1
+                states{i}(n,:) = feval(genotype.reservoirActivationFunction,((genotype.esnMinor(i).inputWeights*genotype.esnMinor(i).inputScaling)*([genotype.esnMinor(i).inputShift states{i-1}(n,:)])')+ genotype.connectWeights{i,i}*states{i}(n-1,:)'); %n-1
             end
         end
         
@@ -30,6 +30,9 @@ function [statesExt] = collectDeepStates_pipeline(genotype,inputSequence,config)
     statesExt = ones(size(states{1},1),1)*genotype.inputShift;
     for i= 1:genotype.nInternalUnits
         statesExt = [statesExt states{i}];
+%           subplot(1,2,i)
+%     plot(states{i})
+%     drawnow
     end
     
     if config.AddInputStates == 1

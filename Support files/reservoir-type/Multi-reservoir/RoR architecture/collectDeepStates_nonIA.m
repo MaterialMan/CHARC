@@ -6,10 +6,9 @@ function[statesExt] = collectDeepStates_nonIA(genotype,inputSequence,config)
         x{i} = zeros(size(inputSequence,1),genotype.esnMinor(i).nInternalUnits);
     end
     
-    %equation: x(n) = f(Win*u(n) + S)
-    for i= 1:genotype.nInternalUnits
-        temp_states = [];
-        for n = 2:length(inputSequence(:,1))
+    %equation: x(n) = f(Win*u(n) + S)  
+    for n = 2:length(inputSequence(:,1))
+        for i= 1:genotype.nInternalUnits
             for k= 1:genotype.nInternalUnits
                 x{i}(n,:) = x{i}(n,:) + (genotype.connectWeights{i,k}*states{k}(n-1,:)')';
             end
@@ -20,7 +19,7 @@ function[statesExt] = collectDeepStates_nonIA(genotype,inputSequence,config)
                 if i == 1
                     states{i}(n,:) = feval(genotype.reservoirActivationFunction,((genotype.esnMinor(i).inputWeights*genotype.esnMinor(i).inputScaling)*([genotype.esnMinor(i).inputShift inputSequence(n,:)])')+x{i}(n,:)'); %n-1
                 else
-                     states{i}(n,:) = feval(genotype.reservoirActivationFunction,x{i}(n,:)'); %n-1
+                    states{i}(n,:) = feval(genotype.reservoirActivationFunction,x{i}(n,:)'); %n-1
                 end
             end
         end
