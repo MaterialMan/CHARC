@@ -1,5 +1,18 @@
 function [states,node]= assessRBNreservoir(genotype,inputSequence,config)   
 
+%if single input entry, add previous state  -- not integrated
+% if size(inputSequence,1) == 1
+%     inputSequence = [zeros(size(inputSequence)); inputSequence];
+% end
+% 
+% % add last state
+% if size(inputSequence,1) == 2
+%     states = genotype.last_state;
+% else
+%     states = zeros(size(inputSequence,1),genotype.nTotalUnits);
+% end
+
+%% RBN
 node = genotype.node;                       % nodes in RBN
 fHandle = genotype.RBNtype;                 % update routine
 datalength = size(inputSequence,1);         % data length
@@ -22,7 +35,5 @@ else
 end
 
 if config.AddInputStates
-    states = [ones(size(inputSequence(config.nForgetPoints+1:end,1))) inputSequence(config.nForgetPoints+1:end,:) states];
-else
-    %states = [ones(size(inputSequence(config.nForgetPoints+1:end,1))) states];
+    states = [inputSequence(config.nForgetPoints+1:end,:) states];
 end

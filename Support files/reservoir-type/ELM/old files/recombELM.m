@@ -16,7 +16,7 @@ for i = 1:winner.nInternalUnits
     % bias
     W= winner.esnMinor(i).bias(:);
     L = loser.esnMinor(i).bias(:);
-    pos = randi([1 length(L)],round(config.recRate*length(L)),1);
+    pos = randi([1 length(L)],ceil(config.recRate*length(L)),1);
     L(pos) = W(pos);
     loser.esnMinor(i).bias = reshape(L,size(loser.esnMinor(i).bias));
         
@@ -24,10 +24,21 @@ for i = 1:winner.nInternalUnits
     [temp_esnMinor, loser] = reorderELMminor(loser.esnMinor, loser); 
     loser.esnMinor = temp_esnMinor;
     
+    
+    %mutate scales and hyperparameters   
+    if config.multiActiv
+        W= winner.reservoirActivationFunction;
+        L = loser.reservoirActivationFunction;
+        pos = randi([1 length(L)],ceil(config.recRate*length(L)),1);
+        L(pos) = W(pos);
+        loser.reservoirActivationFunction = L;
+    end
+  
+    
     if config.evolveOutputWeights
         W= winner.outputWeights(:);
         L = loser.outputWeights(:);
-        pos = randi([1 length(L)],round(config.recRate*length(L)),1);
+        pos = randi([1 length(L)],ceil(config.recRate*length(L)),1);
         L(pos) = W(pos);
         loser.outputWeights = reshape(L,size(loser.outputWeights));
     end

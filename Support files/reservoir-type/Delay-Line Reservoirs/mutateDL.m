@@ -2,7 +2,7 @@ function genotype = mutateDL(genotype,config)
 
 % mutate Mask
 M = genotype.M(:);
-pos =  randi([1 length(M)],round(config.mutRate*length(M)),1);
+pos =  randi([1 length(M)],ceil(config.mutRate*length(M)),1);
 M(pos) = 2*(round(rand(length(pos),1))*0.1)-0.1; %mutate between -0.1 and 0.1    %(2*rand(length(pos),1)-1)*0.1;%
 genotype.M = reshape(M,size(genotype.M));
 
@@ -42,7 +42,7 @@ end
 % mutate output weights
 if config.evolveOutputWeights
     outputWeights = genotype.outputWeights(:);
-    pos =  randi([1 length(outputWeights)],round(config.mutRate*length(outputWeights)),1);
+    pos =  randi([1 length(outputWeights)],ceil(config.mutRate*length(outputWeights)),1);
     outputWeights(pos) = 2*rand(length(pos),1)-1;
     genotype.outputWeights = reshape(outputWeights,size(genotype.outputWeights));
 end

@@ -1,13 +1,9 @@
-function states = getLeakStates(states,genotype,config)
+function states = getLeakStates(states,individual,input_sequence,config)
 
-leakStates = zeros(size(states));
-
-for n = 2:size(states,1)
-    leakStates(n,:) = (1-genotype.leakRate)*leakStates(n-1,:)+ genotype.leakRate*states(n,:);
-end
-
-states = leakStates;
-
-if config.discrete
-    states = round((1+sign(states))/2);
+for i= 1:config.num_reservoirs
+    leak_states = zeros(size(states{i}));
+    for n = 2:size(input_sequence,1)
+        leak_states(n,:) = (1-individual.leak_rate(i))*leak_states(n-1,:)+ individual.leak_rate(i)*states{i}(n,:);
+    end
+    states{i} = leak_states;
 end

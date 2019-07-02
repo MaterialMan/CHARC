@@ -1,10 +1,21 @@
-function states = collectDLStates(genotype,inputSequence,config)
+function [states,genotype]= collectDLStates(genotype,inputSequence,config)
 
+%if single input entry, add previous state
+if size(inputSequence,1) == 1
+    inputSequence = [zeros(size(inputSequence)); inputSequence];
+end
+
+% add last state
+if size(inputSequence,1) == 2
+    genotype.x0 = genotype.last_state;
+else
+    states = zeros(size(inputSequence,1),genotype.nInternalUnits);
+end
 
 % shift input range to be positive - scale between 0 and 1
 inputSequence = rescale(inputSequence);
 
-states = zeros(size(inputSequence,1),genotype.nInternalUnits);
+%states = zeros(size(inputSequence,1),genotype.nInternalUnits);
 
 % time multiplex input and mask
 J =[]; I = [];

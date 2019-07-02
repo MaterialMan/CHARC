@@ -1,65 +1,47 @@
-function [genotype,testStates,testSequence] = testReservoir(genotype,config)
+function [individual,test_states,test_sequence] = testReservoir(individual,config)
 
-statesExt = config.assessFcn(genotype,config.trainInputSequence,config);
-statesExtval = config.assessFcn(genotype,config.valInputSequence,config);
+train_states = config.assessFcn(individual,config.train_input_sequence,config);
+val_states = config.assessFcn(individual,config.val_input_sequence,config);
 
-if config.evolveOutputWeights %if W_out are evolved instead of trained
-    outputSequence = statesExt*genotype.outputWeights;
-    outputValSequence = statesExtval*genotype.outputWeights;
-    genotype.trainError = calculateError(outputSequence,config.trainOutputSequence,config);
-    genotype.valError = calculateError(outputValSequence,config.valOutputSequence,config);
+%if W_out are evolved instead of trained
+if config.evolve_output_weights
+    output_train_sequence = train_states*individual.output_weights;
+    output_val_sequence = val_states*individual.output_weights;
+    individual.train_error = calculateError(output_train_sequence,config.train_output_sequence,config);
+    individual.val_error = calculateError(output_val_sequence,config.val_output_sequence,config);
 else
     
     % Find best reg parameter
-    regTrainError = [];
-    regValError =[];regWeights=[];
-    regParam = [10e-1 10e-3 10e-5 10e-7 10e-9];
+    reg_train_error = [];
+    reg_val_error =[];reg_weights=[];
+    reg_param = [10e-1 10e-3 10e-5 10e-7 10e-9];
     
-    for i = 1:length(regParam)
+    for i = 1:length(reg_param)
         %Train: tanspose is inversed compared to equation
-        outputWeights = config.trainOutputSequence(config.nForgetPoints+1:end,:)'*statesExt*inv(statesExt'*statesExt + regParam(i)*eye(size(statesExt'*statesExt)));
+        output_weights = config.train_output_sequence(config.wash_out+1:end,:)'*train_states*inv(train_states'*train_states + reg_param(i)*eye(size(train_states'*train_states)));
         
         % Calculate trained output Y
-        outputSequence = statesExt*outputWeights';
-        regTrainError(i,:)  = calculateError(outputSequence,config.trainOutputSequence,config);
+        output_train_sequence = train_states*output_weights';
+        reg_train_error(i,:)  = calculateError(output_train_sequence,config.train_output_sequence,config);
         
         % Calculate trained output Y
-        outputValSequence = statesExtval*outputWeights';
-        regValError(i,:)  = calculateError(outputValSequence,config.valOutputSequence,config);
-        regWeights(i,:,:) =outputWeights';
+        output_val_sequence = val_states*output_weights';
+        reg_val_error(i,:)  = calculateError(output_val_sequence,config.val_output_sequence,config);
+        reg_weights(i,:,:) =output_weights';
     end
     
-    [~, regIndx]= min(sum(regValError,2));
-    genotype.trainError = sum(regTrainError(regIndx,:));
-    genotype.valError = sum(regValError(regIndx,:));
-    genotype.outputWeights =reshape(regWeights(regIndx,:,:),size(regWeights,2),size(regWeights,3));
+    [~, reg_indx]= min(sum(reg_val_error,2));
+    individual.train_error = sum(reg_train_error(reg_indx,:));
+    individual.val_error = sum(reg_val_error(reg_indx,:));
+    individual.output_weights =reshape(reg_weights(reg_indx,:,:),size(reg_weights,2),size(reg_weights,3));
     
     %remove NaNs
-    genotype.outputWeights(isnan(genotype.outputWeights)) = 0;
+    individual.output_weights(isnan(individual.output_weights)) = 0;
 end
 
-% subplot(2,2,1)
-% hold off
-% plot(outputSequence,'b')
-% hold on
-% plot(config.trainOutputSequence(config.nForgetPoints+1:end,:),'r')
-% 
-% subplot(2,2,2)
-% plot(statesExt)
-% 
-% subplot(2,2,3)
-% hold off
-% plot(outputValSequence,'b')
-% hold on
-% plot(config.valOutputSequence(config.nForgetPoints+1:end,:),'r')
-% 
-% subplot(2,2,4)
-% plot(statesExtval)
-% drawnow
-
 %% Evaluate on test data
-testStates = config.assessFcn(genotype,config.testInputSequence,config);
-testSequence = testStates*genotype.outputWeights;
-genotype.testError = sum(calculateError(testSequence,config.testOutputSequence,config));
+test_states = config.assessFcn(individual,config.test_input_sequence,config);
+test_sequence = test_states*individual.output_weights;
+individual.test_error = sum(calculateError(test_sequence,config.test_output_sequence,config));
 
 end

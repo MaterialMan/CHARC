@@ -16,7 +16,7 @@ for i = 1:size(genotype.nInternalUnits,2)
     % mutate input weights
     if rand < config.mutRate
         win = genotype.esnMinor(i).inputWeights(:);
-        pos =  randi([1 length(win)],round(config.mutRate*length(win)),1);
+        pos =  randi([1 length(win)],ceil(config.mutRate*length(win)),1);
         win(pos) = 2*rand(length(pos),1)-1;
         genotype.esnMinor(i).inputWeights = reshape(win,size(genotype.esnMinor(i).inputWeights));
     end
@@ -25,7 +25,7 @@ for i = 1:size(genotype.nInternalUnits,2)
         % mutate connect weights
         if rand < config.mutRate
             w = genotype.connectWeights{i,j}(:);
-            pos =  randi([1 length(w)],round(config.mutRate*length(w)),1);
+            pos =  randi([1 length(w)],ceil(config.mutRate*length(w)),1);
             w(pos) = 2*rand(length(pos),1)-1;
             genotype.connectWeights{i,j} = reshape(w,size(genotype.connectWeights{i,j}));
         end
@@ -39,7 +39,7 @@ end
 
 if config.evolveOutputWeights
     outputWeights = genotype.outputWeights(:);
-    pos =  randi([1 length(outputWeights)],round(config.mutRate*length(outputWeights)),1);
+    pos =  randi([1 length(outputWeights)],ceil(config.mutRate*length(outputWeights)),1);
     outputWeights(pos) = 2*rand(length(pos),1)-1;
     genotype.outputWeights = reshape(outputWeights,size(genotype.outputWeights));
 end

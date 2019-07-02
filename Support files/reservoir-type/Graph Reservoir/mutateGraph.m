@@ -11,7 +11,7 @@ if config.directedGraph
     end
 else
     w = genotype.G.Edges.Weight;
-    pos =  randi([1 length(w)],round(config.mutRate*length(w)),1);
+    pos =  randi([1 length(w)],ceil(config.mutRate*length(w)),1);
     w(pos) = 2*rand(length(pos),1)-1;
     genotype.G.Edges.Weight = w;
     
@@ -25,7 +25,7 @@ end
 
 % w_in
 w_in = genotype.w_in(:);
-pos =  randi([1 length(w_in)],round(config.mutRate*length(w_in)),1);
+pos =  randi([1 length(w_in)],ceil(config.mutRate*length(w_in)),1);
 w_in(pos) = 2*rand(length(pos),1)-1;
 genotype.w_in = reshape(w_in,size(genotype.w_in));
 
@@ -55,7 +55,7 @@ end
 
 if config.evolveOutputWeights
     outputWeights = genotype.outputWeights(:);
-    pos =  randi([1 length(outputWeights)],round(config.mutRate*length(outputWeights)),1);
+    pos =  randi([1 length(outputWeights)],ceil(config.mutRate*length(outputWeights)),1);
     outputWeights(pos) = 2*rand(length(pos),1)-1;
     genotype.outputWeights = reshape(outputWeights,size(genotype.outputWeights));
 end

@@ -61,4 +61,6 @@ for i = 1:config.popSize
     
     % dummy outputweights
     genotype(i).outputWeights = zeros(genotype(i).nInternalUnits+genotype(i).nInputUnits,genotype(i).nOutputUnits);
+
+    genotype(i).last_state = zeros(1,genotype(i).nInternalUnits);
 end

@@ -66,6 +66,8 @@ for res = 1:config.popSize
         else
             genotype(res).reservoirActivationFunction = 'tanh';    
         end
+        
+        genotype(res).last_state{i} = zeros(1,genotype(res).esnMinor(i).nInternalUnits);
     end
     
     %end
@@ -87,9 +89,9 @@ for res = 1:config.popSize
 
     % add dummy outputweights
     if config.AddInputStates
-        genotype(res).outputWeights = zeros(genotype(res).nTotalUnits+genotype(res).nInputUnits+1,genotype(res).nOutputUnits);      
+        genotype(res).outputWeights = 2*rand(genotype(res).nTotalUnits+genotype(res).nInputUnits+1,genotype(res).nOutputUnits)-1;      
     else
-        genotype(res).outputWeights = zeros(genotype(res).nTotalUnits+1,genotype(res).nOutputUnits);
+        genotype(res).outputWeights = 2*rand(genotype(res).nTotalUnits+1,genotype(res).nOutputUnits)-1;
     end
     
     if config.evolvedOutputStates
@@ -100,4 +102,6 @@ for res = 1:config.popSize
     end
     
     genotype(res).metrics = [];
+    
+    
 end

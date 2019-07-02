@@ -1,5 +1,5 @@
 % Separation Metrics and Kernel Quality
-function metrics = getVirtualMetrics(genotype,config)
+function metrics = getVirtualMetrics(individual,config)
 
 scurr = rng;
 temp_seed = scurr.Seed;
@@ -9,17 +9,17 @@ for metric_item = 1:length(config.metrics)
     switch config.metrics{metric_item}
         case 'KR'
             rng(1,'twister');
-            numTimesteps = 3300;
+            num_timesteps = 3300;
             
             %Remove input sequence and reduce forget points
-            config.nForgetPoints = 100;
+            config.wash_out = 100;
             
             % Expanded version - more reliable, Norton & Ventura: "Improving liquid state machines......"
-            N = genotype.nInputUnits;
+            N = individual.n_input_units;
             
             bestDist =0;
             for i = 1:1000 %search for biggest separation
-                ui = round(20*rand(numTimesteps,N)-10)/10;
+                ui = round(20*rand(num_timesteps,N)-10)/10;
                 %dist = sum(sum(abs(ui-repmat((sum(ui,2)/N),1,N))));
                 dist = std(ui);
                 if dist > bestDist
@@ -30,10 +30,10 @@ for metric_item = 1:length(config.metrics)
             
             ui = bestUi;
             
-            inputSequence = repmat(ui(:,1),1,N);
+            input_sequence = repmat(ui(:,1),1,N);
             
             %kernel matrix - pick 'to' at halfway point
-            M = config.assessFcn(genotype,inputSequence,config);
+            M = config.assessFcn(individual,input_sequence,config);
             
             %catch errors
             M(isnan(M)) = 0;
@@ -53,22 +53,20 @@ for metric_item = 1:length(config.metrics)
                 end
             end
             kernel_rank = e_rank-1;
-            
-            %kernel_rank = kernel_rank/size(M,2);
-            
-            metrics = [metrics kernel_rank];%*100];
+               
+            metrics = [metrics kernel_rank];
             
             %% Genralization Rank
         case 'GR'
             rng(1,'twister');
             ui_1 = round(10*rand)/10;
-            ui = repmat(ui_1,1,numTimesteps)'+(1*rand(numTimesteps,1)-0.5)/10;
+            ui = repmat(ui_1,1,num_timesteps)'+(1*rand(num_timesteps,1)-0.5)/10;
             ui(1) = ui_1;
             %inputSequence = ui;
-            inputSequence =repmat(ui,1,N);
+            input_sequence =repmat(ui,1,N);
             
             %collect states
-            G = config.assessFcn(genotype,inputSequence,config);
+            G = config.assessFcn(individual,input_sequence,config);
             
             %catch errors
             G(isnan(G)) = 0;
@@ -89,24 +87,21 @@ for metric_item = 1:length(config.metrics)
                 end
             end
             gen_rank = e_rank-1;
-            
-            %gen_rank = gen_rank/size(M,2);
-            %metrics = [metrics gen_rank*100];
-            
+                       
             metrics = [metrics gen_rank];
                 
             %% LE measure
         case 'LE'
             rng(1,'twister');
-            meanLE = LEmetrics_DeepESN(genotype,config);
+            meanLE = LEmetrics_DeepESN(individual,config);
             metrics = [metrics meanLE];
             
             %% Entropy measure
         case 'Entropy'
             rng(1,'twister');
-            inputSequence = ones(1000,1);
+            input_sequence = ones(1000,1);
             
-            X = config.assessFcn(genotype,inputSequence,config);
+            X = config.assessFcn(individual,input_sequence,config);
             C = X'*X;
             
             X_eig = eig(C);
@@ -122,54 +117,54 @@ for metric_item = 1:length(config.metrics)
             
         case 'MC'
             %Remove input sequence and reduce forget points
-            config.nForgetPoints = 200;
+            config.wash_out = 200;
             
-            nInternalUnits = genotype.nTotalUnits;%sum([genotype.nInternalUnits]);
+            n_internal_units = individual.total_units;%sum([genotype.nInternalUnits]);
             
-            nOutputUnits = nInternalUnits*2;
-            nInputUnits = genotype.nInputUnits;
+            n_output_units = n_internal_units*2;
+            n_input_units = individual.n_input_units;
             
             %% Assign input data and collect target output
-            dataLength = 6000;
-            if strcmp(config.resType,'basicCA') || strcmp(config.resType,'2dCA') || strcmp(config.resType,'RBN')
-                dataSequence = round(rand(1,dataLength+1++nOutputUnits));% Deep-ESN version: 1.6*rand(1,dataLength+1++nOutputUnits)-0.8;
+            data_length = 6000;
+            if strcmp(config.res_type,'basicCA') || strcmp(config.res_type,'2dCA') || strcmp(config.res_type,'RBN')
+                data_sequence = round(rand(1,data_length+1++n_output_units));% Deep-ESN version: 1.6*rand(1,dataLength+1++nOutputUnits)-0.8;
             else
-                dataSequence = rand(1,dataLength+1++nOutputUnits);% Deep-ESN version: 1.6*rand(1,dataLength+1++nOutputUnits)-0.8;
+                data_sequence = rand(1,data_length+1+n_output_units);% Deep-ESN version: 1.6*rand(1,dataLength+1++nOutputUnits)-0.8;
             end
-            sequenceLength = 5000;
+            sequence_length = 5000;
             
-            memInputSequence = dataSequence(nOutputUnits+1:dataLength+nOutputUnits)';
+            mem_input_sequence = data_sequence(n_output_units+1:data_length+n_output_units)';
             
-            for i = 1:nOutputUnits
-                memOutputSequence(:,i) = dataSequence(nOutputUnits+1-i:dataLength+nOutputUnits-i);
+            for i = 1:n_output_units
+                mem_output_sequence(:,i) = data_sequence(n_output_units+1-i:data_length+n_output_units-i);
             end
             
-            trainInputSequence = repmat(memInputSequence(1:sequenceLength,:),1,nInputUnits);%repmat(memInputSequence(1:sequenceLength/2,:),1,maxInputs);
-            testInputSequence = repmat(memInputSequence(1+sequenceLength:end,:),1,nInputUnits);%repmat(memInputSequence,1,maxInputs);
+            train_input_sequence = repmat(mem_input_sequence(1:sequence_length,:),1,n_input_units);%repmat(memInputSequence(1:sequenceLength/2,:),1,maxInputs);
+            test_input_sequence = repmat(mem_input_sequence(1+sequence_length:end,:),1,n_input_units);%repmat(memInputSequence,1,maxInputs);
             
-            trainOutputSequence = memOutputSequence(1:sequenceLength,:);%repmat(memInputSequence,1,maxInputs);
-            testOutputSequence = memOutputSequence(1+sequenceLength:end,:);%repmat(memInputSequence,1,maxInputs);
+            train_output_sequence = mem_output_sequence(1:sequence_length,:);%repmat(memInputSequence,1,maxInputs);
+            test_Output_sequence = mem_output_sequence(1+sequence_length:end,:);%repmat(memInputSequence,1,maxInputs);
             
-            states = config.assessFcn(genotype,trainInputSequence,config);
+            states = config.assessFcn(individual,train_input_sequence,config);
             
             %train
-            outputWeights = trainOutputSequence(config.nForgetPoints+1:end,:)'*states*inv(states'*states + config.regParam*eye(size(states'*states)));
-            Yt = round(states * outputWeights');
+            output_weights = train_output_sequence(config.wash_out+1:end,:)'*states*inv(states'*states + config.reg_param*eye(size(states'*states)));
+            Yt = round(states * output_weights');
             
             %test
-            testStates =  config.assessFcn(genotype,testInputSequence,config);
+            test_states =  config.assessFcn(individual,test_input_sequence,config);
             
-            Y = round(testStates * outputWeights');
+            Y = round(test_states * output_weights');
             
             MC= 0; Cm = 0;
-            for i = 1:nOutputUnits
-                coVar = cov(testOutputSequence(config.nForgetPoints+1:end,i),Y(:,i)).^2;
+            for i = 1:n_output_units
+                coVar = cov(test_Output_sequence(config.wash_out+1:end,i),Y(:,i)).^2;
                 outVar = var(Y(:,i));
-                targVar = var(testInputSequence(config.nForgetPoints+1:end,:));
+                targVar = var(test_input_sequence(config.wash_out+1:end,:));
                 totVar = (outVar*targVar(1)');
                 C = coVar(1,2)/totVar;
                 MC = MC + C;
-                R = corrcoef(testOutputSequence(config.nForgetPoints+1:end,i),Y(:,i));
+                R = corrcoef(test_Output_sequence(config.wash_out+1:end,i),Y(:,i));
                 Cm = Cm + R(1,2).^2;
             end
             

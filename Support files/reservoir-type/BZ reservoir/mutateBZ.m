@@ -2,23 +2,23 @@ function genotype = mutateBZ(genotype,config)
 
 
 a = genotype.a(:);
-pos =  randi([1 length(a)],round(config.mutRate*length(a)),1);
+pos =  randi([1 length(a)],ceil(config.mutRate*length(a)),1);
 a(pos) = rand(length(pos),1);
 genotype.a = reshape(a,size(genotype.a));
 
 b = genotype.b(:);
-pos =  randi([1 length(b)],round(config.mutRate*length(b)),1);
+pos =  randi([1 length(b)],ceil(config.mutRate*length(b)),1);
 b(pos) = rand(length(pos),1);
 genotype.b = reshape(a,size(genotype.b));
 
 c = genotype.c(:);
-pos =  randi([1 length(c)],round(config.mutRate*length(c)),1);
+pos =  randi([1 length(c)],ceil(config.mutRate*length(c)),1);
 c(pos) = rand(length(pos),1);
 genotype.c = reshape(c,size(genotype.c));
 
 % w_in
 w_in = genotype.w_in(:);
-pos =  randi([1 length(w_in)],round(config.mutRate*length(w_in)),1);
+pos =  randi([1 length(w_in)],ceil(config.mutRate*length(w_in)),1);
 if config.restricedWeight
     w_in(pos) = datasample(0.2:0.2:1,length(pos));%2*rand(length(pos),1)-1;
 else

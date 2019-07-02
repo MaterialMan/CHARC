@@ -1,18 +1,19 @@
-function[statesExt] = collectDeepStates_IA_v2(genotype,inputSequence,config)
+function[statesExt,genotype] = collectDeepStates_IA_v2(genotype,inputSequence,config)
 
-%% Collect states for plain ESN
+%if single input entry, add previous state
+if size(inputSequence,1) == 1
+    inputSequence = [zeros(size(inputSequence)); inputSequence];
+end
+
 for i= 1:genotype.nInternalUnits
-    states{i} = zeros(size(inputSequence,1),genotype.esnMinor(i).nInternalUnits);
+    if size(inputSequence,1) == 2
+        states{i} = genotype.last_state{i};
+    else
+        states{i} = zeros(size(inputSequence,1),genotype.esnMinor(i).nInternalUnits);
+    end
     x{i} = zeros(size(inputSequence,1),genotype.esnMinor(i).nInternalUnits);
 end
 
-if iscell(genotype.reservoirActivationFunction)
-    activ = genotype.reservoirActivationFunction;
-    A    = cell(1, genotype.esnMinor(i).nInternalUnits);
-    A(:) = {'tanh'};
-    B    = cell(1, genotype.esnMinor(i).nInternalUnits);
-    B(:) = {'linearNode'};   
-end
 
 %equation: x(n) = f(Win*u(n) + S)
 for n = 2:size(inputSequence,1)
@@ -23,15 +24,9 @@ for n = 2:size(inputSequence,1)
         end
         
         if iscell(genotype.reservoirActivationFunction)
-            tempstates_tanh = feval('tanh',((genotype.esnMinor(i).inputWeights*genotype.esnMinor(i).inputScaling)*([genotype.esnMinor(i).inputShift inputSequence(n,:)])')+x{i}(n,:)');
-            tempstates_lin = feval('linearNode',((genotype.esnMinor(i).inputWeights*genotype.esnMinor(i).inputScaling)*([genotype.esnMinor(i).inputShift inputSequence(n,:)])')+x{i}(n,:)');
-            
-            index_tanh = cellfun(@strcmp, activ(i,:), A);
-            index_lin = cellfun(@strcmp, activ(i,:), B);
-            
-            states{i}(n,index_tanh) = tempstates_tanh(index_tanh);
-            states{i}(n,index_lin) = tempstates_lin(index_lin);
-            
+            for p = 1:genotype.esnMinor(i).nInternalUnits            
+                states{i}(n,p) = feval(genotype.reservoirActivationFunction{p},((genotype.esnMinor(i).inputWeights(p,:)*genotype.esnMinor(i).inputScaling)*([genotype.esnMinor(i).inputShift inputSequence(n,:)])')+ x{i}(n,p)'); 
+            end
         else
             states{i}(n,:) = feval(genotype.reservoirActivationFunction,((genotype.esnMinor(i).inputWeights*genotype.esnMinor(i).inputScaling)*([genotype.esnMinor(i).inputShift inputSequence(n,:)])')+ x{i}(n,:)'); 
         end
@@ -53,9 +48,12 @@ end
 statesExt = ones(size(states{1},1),1)*genotype.inputShift;
 for i= 1:genotype.nInternalUnits
     statesExt = [statesExt states{i}];
-%         subplot(1,2,i)
-%         plot(states{i})
-%         drawnow
+%             subplot(1,2,i)
+%             plot(states{i})
+%             drawnow
+    
+    %assign last state variable
+    genotype.last_state{i} = states{i}(end,:);
 end
 
 if config.AddInputStates == 1

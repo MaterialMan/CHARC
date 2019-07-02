@@ -6,73 +6,80 @@ temp_seed = scurr.Seed;
 
 rng(1,'twister');
 
-switch config.dataSet
+switch config.dataset
     
     %% Chaotic systems
     case 'NARMA10' %input error 4 - good task
-        errType = 'NMSE';
-        queueType = 'simple';
-        nForgetPoints =200;
-        sequenceLength = 8000;
+        err_type = 'NMSE';
+        queue_type = 'simple';
+        wash_out =200;
+        sequence_length = 8000;
         train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
-        [inputSequence,outputSequence] = generate_new_NARMA_sequence(sequenceLength,10);
-        inputSequence = 2*inputSequence-0.5;
-        outputSequence = 2*outputSequence-0.5;
+        [input_sequence,output_sequence] = generate_new_NARMA_sequence(sequence_length,10);
+        input_sequence = 2*input_sequence-0.5;
+        output_sequence = 2*output_sequence-0.5;
         %fprintf('NARMA 10 task: %s \n',datestr(now, 'HH:MM:SS'))
         
     case 'NARMA20' %input error 4 - good task
-        errType = 'NMSE';
-        queueType = 'simple';
-        nForgetPoints =200;
-        sequenceLength = 8000;
+        err_type = 'NMSE';
+        queue_type = 'simple';
+        wash_out =200;
+        sequence_length = 8000;
         train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
-        [inputSequence,outputSequence] = generate_new_NARMA_sequence(sequenceLength,20);
-        inputSequence = 2*inputSequence-0.5;
-        outputSequence = 2*outputSequence-0.5;
+        [input_sequence,output_sequence] = generate_new_NARMA_sequence(sequence_length,20);
+        input_sequence = 2*input_sequence-0.5;
+        output_sequence = 2*output_sequence-0.5;
         %fprintf('NARMA 20 task: %s \n',datestr(now, 'HH:MM:SS'))
         
     case 'NARMA30' %input error 4 - good task
-        errType = 'NMSE';
-        queueType = 'simple';
-        nForgetPoints =200;
-        sequenceLength = 8000;
+        err_type = 'NMSE';
+        queue_type = 'simple';
+        wash_out =200;
+        sequence_length = 8000;
         train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
-        [inputSequence,outputSequence] = generate_new_NARMA_sequence(sequenceLength,30);
-        inputSequence = 2*inputSequence-0.5;
-        outputSequence = 2*outputSequence-0.5;
+        [input_sequence,output_sequence] = generate_new_NARMA_sequence(sequence_length,30);
+        input_sequence = 2*input_sequence-0.5;
+        output_sequence = 2*output_sequence-0.5;
         %fprintf('NARMA 30 task: %s \n',datestr(now, 'HH:MM:SS'))
-         
+        
     case 'NARMA10_DLexample' %input error 4 - good task
-        errType = 'NRMSE';
-        queueType = 'simple';
+        err_type = 'NRMSE';
+        queue_type = 'simple';
         config.preprocess = 0;
         
-        nForgetPoints = 100;
-        sequenceLength = 2700;
-       % sequenceLength = 6000;
+        wash_out = 100;
+        sequence_length = 2700;
         train_fraction = 0.3333;    val_fraction=0.3333;    test_fraction=0.3333;
-       % train_fraction = 4000/sequenceLength;    val_fraction=1000/sequenceLength;    test_fraction=1000/sequenceLength;
-     
-        [inputSequence,outputSequence] = generate_new_NARMA_sequence(sequenceLength,10);
-      %  inputSequence = inputSequence;
-     %   outputSequence = outputSequence;
-        %fprintf('NARMA 10 task: %s \n',datestr(now, 'HH:MM:SS'))
+        
+        [input_sequence,output_sequence] = generate_new_NARMA_sequence(sequence_length,10);
+        
+    case 'NARMA10_QRC' %input error 4 - good task
+        err_type = 'NSE';
+        queue_type = 'simple';
+        config.preprocess = 0;
+        
+        wash_out = 2000;
+        sequence_length = 12000;
+        train_fraction = 0.3333;    val_fraction=0.3333;    test_fraction=0.3333;
+        
+        [input_sequence,output_sequence] = generate_new_NARMA_sequence(sequence_length,10);
+        input_sequence = (input_sequence*2)*0.2;
         
     case 'HenonMap' % input error > 1 - good task
-        queueType = 'simple';
-        errType = 'NMSE';
-        nForgetPoints =200;
-        sequenceLength= 8000;
+        queue_type = 'simple';
+        err_type = 'NMSE';
+        wash_out =200;
+        sequence_length= 8000;
         stdev = 0.05;
         train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
-        [inputSequence,outputSequence] = generateHenonMap(sequenceLength,stdev);
+        [input_sequence,output_sequence] = generateHenonMap(sequence_length,stdev);
         
         %% Time-series
     case 'IPIX_plus5' % good task
-        errType = 'IPIX';
-        queueType = 'Weighted';
-        nForgetPoints =100;
-        sequenceLength = 2000;
+        err_type = 'IPIX';
+        queue_type = 'Weighted';
+        wash_out =100;
+        sequence_length = 2000;
         train_fraction=0.4;    val_fraction=0.25;    test_fraction=0.35;   %val and test are switched later so ratios need to be swapped
         
         % IPIX radar task
@@ -80,17 +87,17 @@ switch config.dataSet
         load loIPIX.txt
         
         ahead = 5;
-        data = loIPIX(1:sequenceLength+ahead,:);
-        inputSequence = data(1:sequenceLength,:);
-        outputSequence = data(ahead+1:end,:);
+        data = loIPIX(1:sequence_length+ahead,:);
+        input_sequence = data(1:sequence_length,:);
+        output_sequence = data(ahead+1:end,:);
         
         %fprintf('Low IPIX task - 5 ahead. \n Started at %s \n',datestr(now, 'HH:MM:SS'))
         
     case 'IPIX_plus1' % good task
-        errType = 'IPIX';
-        queueType = 'Weighted';
-        nForgetPoints =100;
-        sequenceLength = 2000;
+        err_type = 'IPIX';
+        queue_type = 'Weighted';
+        wash_out =100;
+        sequence_length = 2000;
         train_fraction=0.4;    val_fraction=0.25;    test_fraction=0.35;   %val and test are switched later so ratios need to be swapped
         
         % IPIX radar task
@@ -98,52 +105,52 @@ switch config.dataSet
         load loIPIX.txt
         
         ahead = 1;
-        data = loIPIX(1:sequenceLength+ahead,:);
-        inputSequence = data(1:sequenceLength,:);
-        outputSequence = data(ahead+1:end,:);
+        data = loIPIX(1:sequence_length+ahead,:);
+        input_sequence = data(1:sequence_length,:);
+        output_sequence = data(ahead+1:end,:);
         
         %fprintf('Low IPIX task 1 ahead. \n Started at %s \n',datestr(now, 'HH:MM:SS'))
         
         
     case 'Laser' % good task
-        queueType = 'simple';
-        errType = 'NMSE';
+        queue_type = 'simple';
+        err_type = 'NMSE';
         % Sante Fe Laser generator task
-        nForgetPoints =200;
-        sequenceLength = 8000;
+        wash_out =200;
+        sequence_length = 8000;
         train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
         
         ahead = 1;
         data = laser_dataset;  %checkout the list at http://uk.mathworks.com/help/nnet/gs/neural-network-toolbox-sample-data-sets.html
-        data = cell2mat(data(:,1:sequenceLength+ahead));
-        inputSequence = data(1:end-ahead)';
-        outputSequence = data(ahead+1:end)';
+        data = cell2mat(data(:,1:sequence_length+ahead));
+        input_sequence = data(1:end-ahead)';
+        output_sequence = data(ahead+1:end)';
         
         %fprintf('Laser task TSP - 64 electrode test: %s \n',datestr(now, 'HH:MM:SS'))
         
         
     case 'Sunspot' % good task but not sure about dataset- problem with dividing set
-        queueType = 'simple';
-        errType = 'NMSE';
+        queue_type = 'simple';
+        err_type = 'NMSE';
         % Sunspot task - needs proper dataset separation
-        nForgetPoints =100;
-        sequenceLength = 3100;
-        train_fraction= 1600/sequenceLength;    val_fraction=500/sequenceLength;    test_fraction=1000/sequenceLength;
+        wash_out =100;
+        sequence_length = 3100;
+        train_fraction= 1600/sequence_length;    val_fraction=500/sequence_length;    test_fraction=1000/sequence_length;
         
         ahead = 1;
         load sunspot.txt %solar_dataset;  %checkout the list at http://uk.mathworks.com/help/nnet/gs/neural-network-toolbox-sample-data-sets.html
-        data = sunspot(1:sequenceLength+ahead,4);
-        inputSequence = data(1:end-ahead);
-        outputSequence = data(ahead+1:end);
+        data = sunspot(1:sequence_length+ahead,4);
+        input_sequence = data(1:end-ahead);
+        output_sequence = data(ahead+1:end);
         
         %fprintf('Sunspot task TSP: %s \n',datestr(now, 'HH:MM:SS'))
         
         %% Pattern Recognition - using PCA to reduce dimensions maybe very useful
         
     case 'Autoencoder'
-        errType = 'MSE';
-        queueType = 'simple';
-        nForgetPoints = 0;
+        err_type = 'MSE';
+        queue_type = 'simple';
+        wash_out = 0;
         train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
         
         t = digitTrainCellArrayData; %28 x 28 image x 5000
@@ -151,13 +158,13 @@ switch config.dataSet
             u(:,i) = t{i}(:);
         end
         
-        inputSequence= u';
-        outputSequence= u';
+        input_sequence= u';
+        output_sequence= u';
         
     case 'NIST-64' %Paper: Reservoir-based techniques for speech recognition
-        errType = 'OneVsAll_NIST';
-        queueType = 'Weighted';
-        nForgetPoints =150;
+        err_type = 'OneVsAll_NIST';
+        queue_type = 'Weighted';
+        wash_out =150;
         xvalDetails.kfold = 5;
         xvalDetails.kfoldSize = 150;
         xvalDetails.kfoldType = 'standard';
@@ -184,46 +191,46 @@ switch config.dataSet
             end
         end
         
-        inputSequence = u_list';
-        outputSequence = y_list';
+        input_sequence = u_list';
+        output_sequence = y_list';
         
         
     case 'NonChanEqRodan' % (1:in, 1:out) error 0.999 Good task, requires memory
-        errType = 'NMSE';
-        queueType = 'simple'; %input alone error = 0.091
-        nForgetPoints =200;
-        sequenceLength = 8000;
+        err_type = 'NMSE';
+        queue_type = 'simple'; %input alone error = 0.091
+        wash_out =200;
+        sequence_length = 8000;
         train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
         
-        [inputSequence, outputSequence] = NonLinear_ChanEQ_data(sequenceLength);
-        inputSequence =inputSequence';
-        outputSequence =outputSequence';
+        [input_sequence, output_sequence] = NonLinear_ChanEQ_data(sequence_length);
+        input_sequence =input_sequence';
+        output_sequence =output_sequence';
         
     case 'handDigits'
         
-        errType = 'softmax';
-        queueType = 'Weighted';
-        nForgetPoints =10;
+        err_type = 'softmax';
+        queue_type = 'Weighted';
+        wash_out =10;
         train_fraction=0.8;    val_fraction=0.1;    test_fraction=0.1;
-        datasetLength = 5000; %manually change dataset length for xval
+        dataset_length = 5000; %manually change dataset length for xval
         
         load('handDigits.mat');
-        inputSequence = X;
-        outputSequence = [];
+        input_sequence = X;
+        output_sequence = [];
         for i = 1:10
-            outputSequence(:,i) = y==i;
+            output_sequence(:,i) = y==i;
         end
         
-        target=randperm(datasetLength);
-        temp_inputSequence = inputSequence(target,:);
-        temp_outputSequence = outputSequence(target,:);
+        target=randperm(dataset_length);
+        temp_inputSequence = input_sequence(target,:);
+        temp_outputSequence = output_sequence(target,:);
         
-        inputSequence = temp_inputSequence;
-        outputSequence = temp_outputSequence;
+        input_sequence = temp_inputSequence;
+        output_sequence = temp_outputSequence;
         
     case 'JapVowels' %(12: IN, 9:OUT - binary ) - input only 83% accuracy!  Train:0.2288  Test:0.1863
-        errType = 'softmax'; %Paper: Optimization and applications of echo state networks with leaky- integrator neurons
-        queueType = 'Weighted';
+        err_type = 'softmax'; %Paper: Optimization and applications of echo state networks with leaky- integrator neurons
+        queue_type = 'Weighted';
         % Nine male speakers uttered two Japanese vowels /ae/ successively.
         % For each utterance, with the analysis parameters described below, we applied
         % 12-degree linear prediction analysis to it to obtain a discrete-time series
@@ -232,19 +239,19 @@ switch config.dataSet
         % series is of 12 features (12 coefficients).
         % The number of the time series is 640 in total. We used one set of 270 time series for
         % training and the other set of 370 time series for testing.
-        nForgetPoints =100;
+        wash_out =100;
         
-        [trainInputSequence,trainOutputSequence,testInputSequence,testOutputSequence] = readJapVowels();
-        inputSequence = [trainInputSequence; testInputSequence];
-        outputSequence = [trainOutputSequence; testOutputSequence];
-        train_fraction=size(trainInputSequence,1)/9961;    val_fraction=(size(testInputSequence,1)/9961)*0.1;    test_fraction=(size(testInputSequence,1)/9961)*0.9;
+        [train_input_sequence,trainOutputSequence,testInputSequence,test_output_sequence] = readJapVowels();
+        input_sequence = [train_input_sequence; testInputSequence];
+        output_sequence = [trainOutputSequence; test_output_sequence];
+        train_fraction=size(train_input_sequence,1)/9961;    val_fraction=(size(testInputSequence,1)/9961)*0.1;    test_fraction=(size(testInputSequence,1)/9961)*0.9;
         
-        t =  randperm(datasetLength,datasetLength);
+        t =  randperm(dataset_length,dataset_length);
         
     case 'SignalClassification'
-        errType = 'softmax';
-        queueType = 'simple';
-        nForgetPoints =100;
+        err_type = 'softmax';
+        queue_type = 'simple';
+        wash_out =100;
         train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
         
         freq = 1000;
@@ -254,23 +261,23 @@ switch config.dataSet
         step = 1/scanFreq;
         t = 0:step:1-step;
         amplitude = 1;
-        sequenceLength = 6000;
+        sequence_length = 6000;
         period = 20;
         
         % sinewave input
-        inputSequence(:,1) = amplitude*sin(2*pi*freq*t);
-        inputSequence(:,2) = amplitude*square(2*pi*freq*t);
+        input_sequence(:,1) = amplitude*sin(2*pi*freq*t);
+        input_sequence(:,2) = amplitude*square(2*pi*freq*t);
         
         cnt = 1; sinInput =[];squareInput=[];
-        for i = 0:period:sequenceLength-period
-            sinInput(cnt,i+1:i+period) = inputSequence(i+1:i+period,1);
-            squareInput(cnt,i+1:i+period) = inputSequence(i+1:i+period,2);
+        for i = 0:period:sequence_length-period
+            sinInput(cnt,i+1:i+period) = input_sequence(i+1:i+period,1);
+            squareInput(cnt,i+1:i+period) = input_sequence(i+1:i+period,2);
             cnt = cnt +1;
         end
         
-        combInput = zeros(sequenceLength,1); 
-        combOutput= ones(sequenceLength,2)*0;
-        for i = 1:sequenceLength/period
+        combInput = zeros(sequence_length,1);
+        combOutput= ones(sequence_length,2)*0;
+        for i = 1:sequence_length/period
             if round(rand)
                 combInput = combInput+sinInput(i,:)';
                 combOutput((i*period)-period+1:i*period,1) =  ones(period,1);
@@ -280,31 +287,31 @@ switch config.dataSet
             end
         end
         
-        inputSequence = combInput;
-        outputSequence = combOutput;
+        input_sequence = combInput;
+        output_sequence = combOutput;
         
     case 'Iris' %iris_dataset; (4:in, 3:out) %input alone 76% - medium task
-        errType = 'IJCNNpaper';%'IJCNNpaper';%'confusion';
-        queueType = 'Weighted';
-        nForgetPoints = 0;
-       % train_fraction=0.66666667;    val_fraction=0.333333/2;    test_fraction=0.333333/2;
-       train_fraction=0.5;    val_fraction=0.25;    test_fraction=0.25;
-        datasetLength = 150;
-       
-        t =  randperm(datasetLength,datasetLength);
+        err_type = 'IJCNNpaper';%'IJCNNpaper';%'confusion';
+        queue_type = 'Weighted';
+        wash_out = 0;
+        % train_fraction=0.66666667;    val_fraction=0.333333/2;    test_fraction=0.333333/2;
+        train_fraction=0.5;    val_fraction=0.25;    test_fraction=0.25;
+        dataset_length = 150;
         
-        [inputSequence, outputSequence] =  iris_dataset; %iris_dataset; (4:in, 3:out)
-        inputSequence = inputSequence(:,t)';
-        outputSequence = outputSequence(:,t)';
+        t =  randperm(dataset_length,dataset_length);
+        
+        [input_sequence, output_sequence] =  iris_dataset; %iris_dataset; (4:in, 3:out)
+        input_sequence = input_sequence(:,t)';
+        output_sequence = output_sequence(:,t)';
         
     case 'MSO'
-        errType = 'NRMSE';
-        queueType = 'simple'; %?
-        nForgetPoints =100;
-        sequenceLength= 2000;
+        err_type = 'NRMSE';
+        queue_type = 'simple'; %?
+        wash_out =100;
+        sequence_length= 2000;
         train_fraction=0.583333;    val_fraction=0.16667;    test_fraction=0.25;
         
-        for t = 1:sequenceLength
+        for t = 1:sequence_length
             u(1,t) = sin(0.2*t)+sin(0.311*t);
             u(2,t) = sin(0.2*t)+sin(0.311*t)+sin(0.42*t);
             u(3,t) = sin(0.2*t)+sin(0.311*t)+sin(0.42*t)+sin(0.51*t);
@@ -314,33 +321,33 @@ switch config.dataSet
         %predictor - not sure what predictor value is best
         %ahead = 10;
         %outputSequence = u(:,ahead+1:end)';
-        inputSequence = zeros(sequenceLength,size(u,1));%u(:,1:end-ahead)';
-        outputSequence = u';
+        input_sequence = zeros(sequence_length,size(u,1));%u(:,1:end-ahead)';
+        output_sequence = u';
         
     case 'secondOrderTask' %best 3.61e-3
-        queueType = 'simple';
-        errType = 'NMSE';
-
-        nForgetPoints =50;
-        sequenceLength = 700;
-        train_fraction= 300/sequenceLength;    val_fraction=100/sequenceLength;    test_fraction=300/sequenceLength;       
-        u = rand(sequenceLength,1)/2;
-        y = zeros(sequenceLength,1);
-        for i = 3:sequenceLength
+        queue_type = 'simple';
+        err_type = 'NMSE';
+        
+        wash_out =50;
+        sequence_length = 700;
+        train_fraction= 300/sequence_length;    val_fraction=100/sequence_length;    test_fraction=300/sequence_length;
+        u = rand(sequence_length,1)/2;
+        y = zeros(sequence_length,1);
+        for i = 3:sequence_length
             y(i) = 0.4*y(i-1)+0.4*y(i-1)*y(i-2)+0.6*(u(i).^2) + 0.1;
         end
-        inputSequence = u;
-        outputSequence = y;
+        input_sequence = u;
+        output_sequence = y;
         
     case 'MNIST'
-        errType = 'softmax';
-        queueType = 'simple';
-        nForgetPoints = 0;
+        err_type = 'softmax';
+        queue_type = 'simple';
+        wash_out = 0;
         train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
         preprocess = 0;
         
         [xTrainImages,tTrain] = digitTrainCellArrayData; %28 x 28 image x 5000
-
+        
         for i=1:length(xTrainImages)
             u(:,i) = xTrainImages{i}(:);
         end
@@ -349,26 +356,44 @@ switch config.dataSet
         temp_inputSequence = u(:,target);
         temp_outputSequence = tTrain(:,target);
         
-        inputSequence = temp_inputSequence';
-        outputSequence = temp_outputSequence';
+        input_sequence = temp_inputSequence';
+        output_sequence = temp_outputSequence';
         
         
     case 'poleBalance'
-        errType = 'empty';
-        queueType = 'empty';
+        err_type = 'empty';
+        queue_type = 'empty';
         train_fraction=0.1;    val_fraction=0.1;    test_fraction=0.1;
-        nForgetPoints = 0;
-        inputSequence= zeros(100,4);
-        outputSequence= zeros(100,1);
+        wash_out = 1;
+        input_sequence= zeros(100,6);
+        output_sequence= zeros(100,1);
         
+        
+    case 'robot'
+        err_type = 'empty';
+        queue_type = 'empty';
+        train_fraction=0.1;    val_fraction=0.1;    test_fraction=0.1;
+        wash_out = 1;
+        config.num_sensors = 8;
+        input_sequence= zeros(100,config.num_sensors+1);
+        output_sequence= zeros(100,4);
+        
+    case 'CPPN'
+        err_type = 'empty';
+        queue_type = 'empty';
+        train_fraction=0.1;    val_fraction=0.1;    test_fraction=0.1;
+        wash_out = 1;
+        input_sequence= zeros(100,config.CPPN_inputs);
+        output_sequence= zeros(100,config.CPPN_outputs);
+               
     case 'BinaryNbitAdder'
         
-        errType = 'hamming';
-        queueType = 'simple';
+        err_type = 'hamming';
+        queue_type = 'simple';
         type = 'nbit_adder';
         bit = 3;
         datalength = 5000;
-        nForgetPoints = 25;
+        wash_out = 25;
         train_fraction=0.5;    val_fraction=0.25;    test_fraction=0.25;
         config.preprocess =0;
         
@@ -398,33 +423,33 @@ switch config.dataSet
             ex = 1;
             while(ex)
                 pos = randi([min(bin) max(bin)]);
-                if ~isempty(bin_in{pos})  
+                if ~isempty(bin_in{pos})
                     ex = 0;
                 end
             end
             pos2 = randi([1 length(bin_in{pos})]);
-            inputSequence(i,:) = bin_in{pos}(pos2,:);
-            outputSequence(i,:) = bin_out{pos}(pos2,:);
+            input_sequence(i,:) = bin_in{pos}(pos2,:);
+            output_sequence(i,:) = bin_out{pos}(pos2,:);
         end
         
-        in  = [bi2de(inputSequence(:,1:bit)) bi2de(inputSequence(:,bit+1:end))];
-        out = bi2de(outputSequence);
+        in  = [bi2de(input_sequence(:,1:bit)) bi2de(input_sequence(:,bit+1:end))];
+        out = bi2de(output_sequence);
         hist(out)
         %hist(in(:,2))
         %hist(in(:,1))
         
-        case 'ImageGaussian' % Gaussian noise task
-        errType = 'softmax';
-        queueType = 'simple';
+    case 'ImageGaussian' % Gaussian noise task
+        err_type = 'softmax';
+        queue_type = 'simple';
         
-        nForgetPoints = 0;
+        wash_out = 0;
         train_fraction=0.5;    val_fraction=0.25;    test_fraction=0.25;
         config.preprocess = 0;
         
         startscript;
         
         imagesCombined = horzcat(imagesOriginal,imagesGaussian);
- 
+        
         inputs =[];trainingTarget=[];
         for i=1:length(imagesCombined)
             %inputs = imagesCombined{i}];
@@ -449,47 +474,48 @@ switch config.dataSet
             temp_outputSequence = [temp_outputSequence; trainingTarget{target(i)}];
         end
         
-        inputSequence = temp_inputSequence;
-        outputSequence = temp_outputSequence;
+        input_sequence = temp_inputSequence;
+        output_sequence = temp_outputSequence;
 end
 
 %% preprocessing
 if config.preprocess
-    for i = 1:size(inputSequence,2)    
-        inputSequence(inputSequence(:,i) ~= 0,i) = (inputSequence(inputSequence(:,i) ~= 0,i)-mean(inputSequence(:,i)))/(max(inputSequence(:,i))-min(inputSequence(:,i)));
+    for i = 1:size(input_sequence,2)
+        input_sequence(input_sequence(:,i) ~= 0,i) = (input_sequence(input_sequence(:,i) ~= 0,i)-mean(input_sequence(:,i)))/(max(input_sequence(:,i))-min(input_sequence(:,i)));
     end
     
-    for i = 1:size(outputSequence,2)    
-        outputSequence(outputSequence(:,i) ~= 0,i) = (outputSequence(outputSequence(:,i) ~= 0,i)-mean(outputSequence(:,i)))/(max(outputSequence(:,i))-min(outputSequence(:,i)));
+    for i = 1:size(output_sequence,2)
+        output_sequence(output_sequence(:,i) ~= 0,i) = (output_sequence(output_sequence(:,i) ~= 0,i)-mean(output_sequence(:,i)))/(max(output_sequence(:,i))-min(output_sequence(:,i)));
     end
 end
 
 if config.discrete %choose n-bit word length if needed by adding s,w,f to func() parameters
-   
+    
     if config.parallel
         config.poolobj = gcp;
         addAttachedFiles(config.poolobj,{'bin2num.m'})
     end
     
-    [inputSequence, config.q] = double2binaryInputVector(inputSequence,config.nbits);
-    [outputSequence, config.q] = double2binaryInputVector(outputSequence,config.nbits);
+    [input_sequence, config.q] = double2binaryInputVector(input_sequence,config.nbits);
+    [output_sequence, config.q] = double2binaryInputVector(output_sequence,config.nbits);
 end
 
-[trainInputSequence,valInputSequence,testInputSequence] = ...
-    split_train_test3way(inputSequence,train_fraction,val_fraction,test_fraction);
-[trainOutputSequence,valOutputSequence,testOutputSequence] = ...
-    split_train_test3way(outputSequence,train_fraction,val_fraction,test_fraction);
+[train_input_sequence,val_input_sequence,test_input_sequence] = ...
+    split_train_test3way(input_sequence,train_fraction,val_fraction,test_fraction);
+
+[train_output_sequence,val_output_sequence,test_output_sequence] = ...
+    split_train_test3way(output_sequence,train_fraction,val_fraction,test_fraction);
 
 % Go back to old seed
 rng(temp_seed,'twister');
 
 % squash into structure
-config.trainInputSequence = trainInputSequence;
-config.trainOutputSequence = trainOutputSequence;
-config.valInputSequence = valInputSequence;
-config.valOutputSequence = valOutputSequence;
-config.testInputSequence = testInputSequence;
-config.testOutputSequence = testOutputSequence;
-config.nForgetPoints = nForgetPoints;
-config.errType = errType;
-config.queueType = queueType;
+config.train_input_sequence = train_input_sequence;
+config.train_output_sequence = train_output_sequence;
+config.val_input_sequence = val_input_sequence;
+config.val_output_sequence = val_output_sequence;
+config.test_input_sequence = test_input_sequence;
+config.test_output_sequence = test_output_sequence;
+config.wash_out = wash_out;
+config.err_type = err_type;
+config.queue_type = queue_type;
