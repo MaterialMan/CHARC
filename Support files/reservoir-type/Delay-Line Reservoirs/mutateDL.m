@@ -1,62 +1,61 @@
-function genotype = mutateDL(genotype,config)
+function offspring = mutateDL(offspring,config)
 
-% mutate Mask
-M = genotype.M(:);
-pos =  randi([1 length(M)],ceil(config.mutRate*length(M)),1);
-M(pos) = 2*(round(rand(length(pos),1))*0.1)-0.1; %mutate between -0.1 and 0.1    %(2*rand(length(pos),1)-1)*0.1;%
-genotype.M = reshape(M,size(genotype.M));
+% params - input scaling and leak rate
+input_scaling = offspring.input_scaling(:);
+pos =  randi([1 length(input_scaling)],rand < 0.25,1);
+input_scaling(pos) = 2*rand(length(pos),1)-1;
+offspring.input_scaling = reshape(input_scaling,size(offspring.input_scaling));
 
-% global paramters
-% if rand < config.mutRate
-%     genotype.Wscaling = 2*rand;
-% end
-% if rand < config.mutRate
-%     genotype.inputScaling = rand;
-% end
+leak_rate = offspring.leak_rate(:);
+pos =  randi([1 length(leak_rate)],rand < 0.25,1);
+leak_rate(pos) = rand(length(pos),1);
+offspring.input_scaling = reshape(leak_rate,size(offspring.leak_rate));
 
-if rand < config.mutRate
-    genotype.inputShift = 2*rand-1;
-end
-if rand < config.mutRate
-    genotype.leakRate = rand;
-end
+% DL  parameters
+eta  = offspring.eta(:);
+pos =  randi([1 length(eta)],rand < 0.25,1);
+eta(pos) = rand(length(pos),1);
+offspring.eta  = reshape(eta,size(offspring.eta));
 
-% reservoir parameters
-% if rand < config.mutRate
-%     genotype.tau = 600;%round(round(((genotype.nInternalUnits*2)-genotype.nInternalUnits*genotype.time_step)*rand+(genotype.nInternalUnits*genotype.time_step))/10)*10;%min([genotype.nInternalUnits*2 round(rand*10)*100]);%round(genotype.theta*genotype.nInternalUnits);  % lenght of delay line
-%     genotype.theta = genotype.tau/genotype.nInternalUnits; % distance between virtual nodes
-% end
+gamma  = offspring.gamma(:);
+pos =  randi([1 length(gamma)],rand < 0.25,1);
+gamma(pos) = rand(length(pos),1);
+offspring.gamma  = reshape(gamma,size(offspring.gamma));
 
-if rand < config.mutRate
-    genotype.eta = rand;
-end
+p  = offspring.p(:);
+pos =  randi([1 length(p)],rand < 0.25,1);
+p(pos) = max([1 round(20*rand(length(pos),1))]);
+offspring.p  = reshape(p,size(offspring.p));
 
-if rand < config.mutRate
-    genotype.gamma = rand;
-end
-
-if rand < config.mutRate
-    genotype.p = max([1 round(20*rand)]);
+% cycle through all sub-reservoirs
+for i = 1:config.num_reservoirs
+    
+    % input weights
+    input_weights = offspring.input_weights{i};
+    pos =  randi([1 length(input_weights)],ceil(config.mut_rate*length(input_weights)),1);
+    for n = 1:length(pos)
+        if rand < 0.5 % 50% chance to zero weight
+            input_weights(pos(n)) = 0;
+        else
+            input_weights(pos(n)) = 2*rand-1;
+        end
+    end
+    offspring.input_weights{i} = reshape(input_weights,size(offspring.input_weights{i}));    
 end
 
 % mutate output weights
-if config.evolveOutputWeights
-    outputWeights = genotype.outputWeights(:);
-    pos =  randi([1 length(outputWeights)],ceil(config.mutRate*length(outputWeights)),1);
-    outputWeights(pos) = 2*rand(length(pos),1)-1;
-    genotype.outputWeights = reshape(outputWeights,size(genotype.outputWeights));
-end
-
-% mutate states to use
-if config.evolvedOutputStates
-    % state_loc
-    for i = 1:length(genotype.state_loc)
-        if rand < config.mutRate
-            genotype.state_loc(i) = round(rand);
+if config.evolve_output_weights
+    output_weights = offspring.output_weights(:);
+    pos =  randi([1 length(output_weights)],ceil(config.mut_rate*length(output_weights)),1);
+    for n = 1:length(pos)
+        if rand > 0.75 % 75% chance to zero weight
+            output_weights(pos(n)) = 0;
+        else
+            output_weights(pos(n)) = 2*rand-1;
         end
-    end  
-    % update percent
-    genotype.state_perc = sum(genotype.state_loc)/genotype.nTotalUnits;
+    end
+    offspring.output_weights = reshape(output_weights,size(offspring.output_weights));
 end
 
-end
+
+

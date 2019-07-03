@@ -28,7 +28,7 @@ config = selectReservoirType(config);       % collect function pointers for the 
 
 %% Evolutionary parameters
 config.num_tests = 1;                        % num of tests/runs
-config.pop_size = 50;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
+config.pop_size = 10;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
 config.total_gens = 1500;                    % number of generations to evolve 
 config.mut_rate = 0.1;                       % mutation rate
 config.deme_percent = 0.2;                   % speciation percentage; determines interbreeding distance on a ring.
@@ -49,7 +49,7 @@ config.dataset = 'NARMA10_DLexample';          % Task to evolve for
 [config,figure3,figure4] = getDataSetInfo(config);
 
 %% general params
-config.gen_print = 50;                       % after 'gen_print' generations print task performance and show any plots
+config.gen_print = 10;                       % after 'gen_print' generations print task performance and show any plots
 config.start_time = datestr(now, 'HH:MM:SS');
 figure1 =figure;
 figure2 = figure;
