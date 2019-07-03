@@ -151,6 +151,7 @@ for tests = 1:config.num_tests
         % mutate offspring/loser
         population(loser) = config.mutFcn(population(loser),config);
         
+        
         %% Evaluate and update fitness of offspring/loser       
         population(loser).behaviours = getVirtualMetrics(population(loser),config);
            

@@ -1,7 +1,7 @@
 %% Evolve substrate for a specific task
-% This script can be used to evolve any reservoir directly to a task. It
-% uses the steady-state Microbial Genetic Algorithm to evolve the best
-% solution.
+% This script can be used to evolve any reservoir directly to a task
+% defined in selectDataset(). The script uses the steady-state Microbial
+% Genetic Algorithm to evolve the best solution.
 
 % Author: M. Dale
 % Date: 03/07/19
@@ -28,7 +28,7 @@ config = selectReservoirType(config);       % collect function pointers for the 
 
 %% Evolutionary parameters
 config.num_tests = 1;                        % num of tests/runs
-config.pop_size = 100;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
+config.pop_size = 50;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
 config.total_gens = 500;                    % number of generations to evolve 
 config.mut_rate = 0.1;                       % mutation rate
 config.deme_percent = 0.2;                   % speciation percentage; determines interbreeding distance on a ring.
@@ -38,9 +38,8 @@ config.rec_rate = 0.5;                       % recombination rate
 %% Task parameters
 config.discrete = 0;               % select '1' for binary input for discrete systems
 config.nbits = 16;                 % only applied if config.discrete = 1; if wanting to convert data for binary/discrete systems
-config.preprocess = 0;             % basic preprocessing, e.g. scaling and mean variance
-config.dataset = 'NARMA10';          % Task to evolve for
-
+config.preprocess = 1;             % basic preprocessing, e.g. scaling and mean variance
+config.dataset = 'NARMA10';        % Task to evolve for
 
 % get dataset information
 [config] = selectDataset(config);
@@ -50,11 +49,11 @@ config.dataset = 'NARMA10';          % Task to evolve for
 [config,figure3,figure4] = getDataSetInfo(config);
 
 %% general params
-config.gen_print = 10;                       % after 'gen_print' generations print task performance and show any plots
+config.gen_print = 25;                       % after 'gen_print' generations print task performance and show any plots
 config.start_time = datestr(now, 'HH:MM:SS');
 figure1 =figure;
 figure2 = figure;
-config.save_gen = 25;                       % save data at generation = save_gen
+config.save_gen = 100;                       % save data at generation = save_gen
 
 % Only necessary if wanting to parallelise the microGA algorithm
 config.multi_offspring = 0;                 % multiple tournament selection and offspring in one cycle
@@ -226,5 +225,6 @@ switch(config.res_type)
             'population','store_error','config','-v7.3');
 end
 end
+
 
 

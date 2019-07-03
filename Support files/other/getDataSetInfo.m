@@ -167,9 +167,8 @@ switch(config.res_type)
         config.rules = initRules(rules);
         
     case 'DL'
-        %     config.DLtype = 'mackey_glass2';%'ELM';%'virtualNodes';
-        %     %config.tau = 100;
         config.preprocess = 0;
+        
     otherwise
         
 end
