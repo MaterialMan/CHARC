@@ -41,6 +41,7 @@ config.nbits = 16;                 % only applied if config.discrete = 1; if wan
 config.preprocess = 0;             % basic preprocessing, e.g. scaling and mean variance
 config.dataset = 'NARMA10';          % Task to evolve for
 
+
 % get dataset information
 [config] = selectDataset(config);
 
