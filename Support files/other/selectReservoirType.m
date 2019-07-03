@@ -15,29 +15,14 @@ switch(config.res_type)
         config.assessFcn = @collectRoRStates;
         config.mutFcn = @mutateRoR;
         config.recFcn = @recombRoR;
-        config.hierarchy = 1;
-           
-    case 'RoR_IA_v2'
-        config.createFcn = @createRoR_v2;
-        config.assessFcn = @collectDeepStates_IA_v2;
-        config.mutFcn = @mutateRoR_v2;
-        config.recFcn = @recombRoR_v2;
-        config.hierarchy = 1;
-        
-    case 'RoR_IA_delay' % not working yet
-        config.createFcn = @createDelayRoR;
-        config.assessFcn = @collectDeepDelayStates_IA;
-        config.mutFcn = @mutateRoRdelay;
-        config.recFcn = @recombRoR;
-        config.hierarchy = 1;
+        config.hierarchy = 1;                
         
     case 'Pipeline'
         config.createFcn = @createPipeline;
         config.assessFcn = @collectPipelineStates;
         config.mutFcn = @mutateRoR;
         config.recFcn = @recombRoR;
-        config.hierarchy = 1;
-        
+        config.hierarchy = 1;       
          
     case 'Ensemble'
         config.createFcn = @createEnsemble;
