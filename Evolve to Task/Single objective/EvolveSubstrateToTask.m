@@ -5,7 +5,7 @@
 
 % Author: M. Dale
 % Date: 08/11/18
-clearvars -except config total_score recomb_list mut_list mut_j rec_i
+clear%vars -except config total_score recomb_list mut_list mut_j rec_i
 close all
 
 % add all subfolders to the path --> make all functions in subdirectories available
@@ -14,7 +14,7 @@ close all
 rng(1,'twister');
 
 %% Setup
-config.parallel = 1;                        % use parallel toolbox
+config.parallel = 0;                        % use parallel toolbox
 
 %start paralllel pool if empty
 if isempty(gcp) && config.parallel
@@ -22,18 +22,18 @@ if isempty(gcp) && config.parallel
 end
 
 % type of network to evolve
-config.res_type = 'RoR';                   % can use different hierarchical reservoirs. RoR_IA is default ESN.
-config.num_nodes = 50;                   % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
+config.res_type = 'Graph';                   % can use different hierarchical reservoirs. RoR_IA is default ESN.
+config.num_nodes = {3,3,3};                   % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
 config = selectReservoirType(config);       % get correct functions for type of reservoir
 
 %% Evolutionary parameters
-config.num_tests = 3;                        % num of runs
-config.pop_size = 100;                       % large pop better
+config.num_tests = 1;                        % num of runs
+config.pop_size = 10;                       % large pop better
 config.total_gens = 500;                    % num of gens
-%config.mut_rate = 0.2;                       % mutation rate
+config.mut_rate = 0.1;                       % mutation rate
 config.deme_percent = 0.2;                  % speciation percentage
 config.deme = round(config.pop_size*config.deme_percent);
-%config.rec_rate = 0.5;                       % recombination rate
+config.rec_rate = 0.5;                       % recombination rate
 
 %% Task parameters
 config.discrete = 0;               % binary input for discrete systems
@@ -48,7 +48,7 @@ config.dataset = 'NARMA10';                 % Task to evolve for
 [config,figure3,figure4] = getDataSetInfo(config);
 
 %% general params
-config.gen_print = 1000;                       % after 'gen_print' generations display archive and database
+config.gen_print = 25;                       % after 'gen_print' generations display archive and database
 config.start_time = datestr(now, 'HH:MM:SS');
 figure1 =figure;
 figure2 = figure;

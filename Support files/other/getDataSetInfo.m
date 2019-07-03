@@ -35,21 +35,18 @@ switch(config.res_type)
         config.BZ_figure2 = figure;
         
     case 'Graph'
-        config.graph_type= 'Lattice';            % Define substrate
+        config.graph_type= 'fullLattice';            % Define substrate
         % Examples: 'Hypercube','Cube'
         % 'Torus','L-shape','Bucky','Barbell','Ring'
         % 'basicLattice','partialLattice','fullLattice','basicCube','partialCube','fullCube',ensembleLattice,ensembleCube,ensembleShape
         
         % node details and connectivity
-        config.plot_states = 0;                  % plot states in real-time.
         config.nearest_neighbour = 0;           % choose radius of nearest neighbour, or set to 0 for direct neighbour.
-        config.directed_graph = 0;               % directed graph (i.e. weight for all directions).
+%        config.directed_graph = 0;               % directed graph (i.e. weight for all directions).
         config.self_loop = 1;                   % give node a loop to self.
-        config.input_eval = 0;                   % add input directly to node, otherwise node takes inputs value.
         config = getShape(config);              % call function to make graph.
-        config.global_params = 1;                % add global scaling parameters and leakrate
         figure3= figure;
-               
+        
     case 'DNA'
         config.tau = 20;                         % settling time
         config.step_size = 1;                   % step size for ODE solver

@@ -9,37 +9,42 @@ colorbar
 ylabel('Generations')
 xlabel('Individual')
 
+if iscell(config.G)
+    G = config.G{1};
+else
+    G = config.G;
+end
+graph_indx = logical(full(adjacency(G)));
+individual(best_indv).W{1,1}(~graph_indx) = 0;
+individual(loser).W{1,1}(~graph_indx) = 0;
+%create graphs to plot
+best_G = digraph(individual(best_indv).W{1,1});
+loser_G = digraph(individual(loser).W{1,1});
 
 subplot(2,2,3)
 if config.plot_3d
-    p = plot(individual(best_indv).G,'NodeLabel',{},'Layout','force3');
+    p = plot(best_G,'NodeLabel',{},'Layout','force3');
 else
-    p = plot(individual(best_indv).G,'NodeLabel',{},'Layout','force');
+    p = plot(best_G,'NodeLabel',{},'Layout','force');
 end
 p.NodeColor = 'black';
 p.MarkerSize = 1;
-if ~config.directed_graph
-    p.EdgeCData = individual(best_indv).G.Edges.Weight;
-end
-highlight(p,logical(individual(best_indv).input_loc),'NodeColor','g','MarkerSize',3)
+p.EdgeCData = best_G.Edges.Weight;
 colormap(bluewhitered)
 xlabel('Best weights')
 
 subplot(2,2,4)
-if config.plot3d
-    p = plot(individual(loser).G,'NodeLabel',{},'Layout','force3');
+if config.plot_3d
+    p = plot(loser_G,'NodeLabel',{},'Layout','force3');
 else
-    p = plot(individual(loser).G,'NodeLabel',{},'Layout','force');
+    p = plot(loser_G,'NodeLabel',{},'Layout','force');
 end
-if ~config.directedGraph
-    p.EdgeCData = individual(loser).G.Edges.Weight;
-end
+p.EdgeCData = loser_G.Edges.Weight;
 p.NodeColor = 'black';
 p.MarkerSize = 1;
-highlight(p,logical(individual(loser).input_loc),'NodeColor','g','MarkerSize',3)
 colormap(bluewhitered)
 xlabel('Loser weights')
 
-pause(0.01)
+%pause(0.01)
 drawnow
 end

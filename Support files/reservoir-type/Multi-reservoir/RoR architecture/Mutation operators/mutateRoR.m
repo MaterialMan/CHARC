@@ -23,9 +23,9 @@ for i = 1:config.num_reservoirs
     pos =  randi([1 length(input_weights)],ceil(config.mut_rate*length(input_weights)),1);
     for n = 1:length(pos)
         if rand < 0.5 % 50% chance to zero weight
-            input_weights(pos(i)) = 0;
+            input_weights(pos(n)) = 0;
         else
-            input_weights(pos(i)) = 2*rand-1;
+            input_weights(pos(n)) = 2*rand-1;
         end
     end
     offspring.input_weights{i} = reshape(input_weights,size(offspring.input_weights{i}));
@@ -43,9 +43,9 @@ for i = 1:config.num_reservoirs
         pos =  randi([1 length(W)],ceil(config.mut_rate*length(W)),1);
         for n = 1:length(pos)
             if rand < 0.5 % 50% chance to zero weight
-                W(pos(i)) = 0;
+                W(pos(n)) = 0;
             else
-                W(pos(i)) = rand-0.5;
+                W(pos(n)) = rand-0.5;
             end   
         end
         offspring.W{i,j} = reshape(W,size(offspring.W{i,j}));
@@ -58,9 +58,9 @@ if config.evolve_output_weights
     pos =  randi([1 length(output_weights)],ceil(config.mut_rate*length(output_weights)),1);
      for n = 1:length(pos)
         if rand > 0.75 % 75% chance to zero weight
-            output_weights(pos(i)) = 0;
+            output_weights(pos(n)) = 0;
         else
-            output_weights(pos(i)) = 2*rand-1;
+            output_weights(pos(n)) = 2*rand-1;
         end
     end
     offspring.output_weights = reshape(output_weights,size(offspring.output_weights));

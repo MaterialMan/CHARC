@@ -49,9 +49,9 @@ switch(config.res_type)
     case 'Graph'
         config.createFcn = @createGraphReservoir;
         config.assessFcn = @assessGraphReservoir;
-        config.mutFcn = @mutateGraph;
-        config.recFcn = @recombGraph;
-         config.hierarchy = 0;
+        config.mutFcn = @mutateRoR;
+        config.recFcn = @recombRoR;
+         config.hierarchy = 1;
          
     case 'BZ'
         config.createFcn = @createBZReservoir;
