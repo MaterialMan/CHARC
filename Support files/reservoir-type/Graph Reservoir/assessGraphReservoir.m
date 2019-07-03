@@ -1,78 +1,65 @@
-function states = assessGraphReservoir(genotype,inputSequence,config)
+function [final_states,individual] = assessGraphReservoir(individual,input_sequence,config)
 
-if config.globalParams
-    x1 = (genotype.w_in*genotype.inputScaling.*genotype.input_loc*inputSequence')';
-    x = x1;
-    
-    if config.inputEval
-        for t= 2:size(inputSequence,1)
-            x(t,:) = feval(config.actvFunc,genotype.w_in*genotype.inputScaling*inputSequence(t,:) + (genotype.w*genotype.Wscaling*x(t-1,:)'));
-        end
+%if single input entry, add previous state
+if size(input_sequence,1) == 1
+    input_sequence = [zeros(size(input_sequence)); input_sequence];
+end
+
+for i= 1:config.num_reservoirs
+    if size(input_sequence,1) == 2
+        states{i} = individual.last_state{i};
     else
-        for t= 2:size(inputSequence,1)
-            x(t,:) = feval(config.actvFunc,(genotype.w*genotype.Wscaling*x(t-1,:)').*~genotype.input_loc);
-            x(t,:) = x(t,:) + x1(t,:);
-        end
+        states{i} = zeros(size(input_sequence,1),individual.nodes(i));
     end
+    x{i} = zeros(size(input_sequence,1),individual.nodes(i));
+end
+
+%% collect states
+for n = 2:size(input_sequence,1)
     
-    if config.leakOn
-        for i= 1:genotype.nTotalUnits
-            leakStates = zeros(size(x));
-            for n = 2:size(inputSequence,1)
-                leakStates(n,:) = (1-genotype.leakRate)*leakStates(n-1,:)+ genotype.leakRate*x(n,:);
+    for i= 1:config.num_reservoirs
+        for k= 1:config.num_reservoirs
+            if i ==k % remove excess weights added through mutation
+                % find indices for graph weights
+                graph_indx = logical(full(adjacency(individual.G{i})));
+                % assign weights
+                individual.W{i,k}(~graph_indx) = 0;
             end
-            x = leakStates;
+            x{i}(n,:) = x{i}(n,:) + ((individual.W{i,k}*individual.W_scaling(i,k))*states{k}(n-1,:)')';
         end
-    end
-
-    if config.AddInputStates
-        states = [ones(size(inputSequence(config.nForgetPoints+1:end,:))) inputSequence(config.nForgetPoints+1:end,:) x(config.nForgetPoints+1:end,:)];
-    else
-        %states = [ones(size(inputSequence(config.nForgetPoints+1:end,:))) x(config.nForgetPoints+1:end,:)];
-        states =  x(config.nForgetPoints+1:end,:);
-    end
-    
-else % no global params
-    x1 = (genotype.w_in.*genotype.input_loc*inputSequence')';
-    x = x1;
-    
-    if config.inputEval
-        for t= 2:size(inputSequence,1)
-            x(t,:) = feval(config.actvFunc,genotype.w_in*inputSequence(t,:) + (genotype.w*x(t-1,:)'));
-        end
-    else
-        for t= 2:size(inputSequence,1)
-            x(t,:) = feval(config.actvFunc,(genotype.w*x(t-1,:)').*~genotype.input_loc);
-            x(t,:) = x(t,:) + x1(t,:);
-        end
-    end
-    
-    if config.AddInputStates
-        states = [ones(size(inputSequence(config.nForgetPoints+1:end,:),1)) inputSequence(config.nForgetPoints+1:end,:) x(config.nForgetPoints+1:end,:)];
-    else
-        states = [ones(size(inputSequence(config.nForgetPoints+1:end,:),1)) x(config.nForgetPoints+1:end,:)];
-    end
-    
-end
-
-if config.plotStates
-    for i = 1:size(states)
-        subplot(2,1,1)
-        if i > 25
-            plot(states(i-25:i,:))
-            xticks(1:2:25)
-            xticklabels(i-25:2:i)
+        
+        if iscell(individual.activ_Fcn)
+            for p = 1:individual.nodes(i)            
+                states{i}(n,p) = feval(individual.activ_Fcn{p},((individual.input_weights{i}(p,:)*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,p)'); 
+            end
         else
-            plot(states(1:i,:))
+            states{i}(n,:) = feval(individual.activ_Fcn,((individual.input_weights{i}*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,:)'); 
         end
-        subplot(2,1,2)
-        p = plot(genotype.G,'NodeLabel',{});
-        p.NodeCData = states(i,:);
-        p.EdgeCData = genotype.G.Edges.Weight;
-        colormap(bluewhitered)
-        drawnow
-        pause(0.01)
     end
 end
 
+% for t= 2:size(inputSequence,1)
+%     x(t,:) = feval(config.actvFunc,genotype.w_in*genotype.inputScaling*inputSequence(t,:)' + (genotype.w*genotype.Wscaling*x(t-1,:)'));
+% end
+
+% get leak states
+if config.leak_on
+    states = getLeakStates(states,individual,input_sequence,config);
 end
+
+% concat all states for output weights
+final_states = [];
+for i= 1:config.num_reservoirs
+    final_states = [final_states states{i}];
+    
+    %assign last state variable
+    individual.last_state{i} = states{i}(end,:);
+end
+
+% concat input states
+if config.add_input_states == 1
+    final_states = [final_states input_sequence];
+end
+
+final_states = final_states(config.wash_out+1:end,:); % remove washout    
+  

@@ -1,92 +1,109 @@
-function genotype = createELM(config)
-
+function population = createELM(config)
 
 %% Reservoir Parameters
-for res = 1:config.popSize
-    % Assign neuron/model type (options: 'plain' and 'leaky', so far... 'feedback', 'multinetwork', 'LeakyBias')
-    genotype(res).trainError = 1;
-    genotype(res).valError = 1;
-    genotype(res).testError = 1;
+for pop_indx = 1:config.pop_size
     
-    genotype(res).inputShift = 1;
-
+    % add performance records
+    population(pop_indx).train_error = 1;
+    population(pop_indx).val_error = 1;
+    population(pop_indx).test_error = 1;
     
+    % add single bias node
+    population(pop_indx).bias_node = 1;
     
-    if config.startFull
-        config.minMajorUnits = config.maxMajorUnits; %maxMinorUnits = 100;
-        config.minMinorUnits = config.maxMinorUnits;
+    % assign input/output count
+    if isempty(config.train_input_sequence)
+        population(pop_indx).n_input_units = 1;
+        population(pop_indx).n_output_units = 1;
     else
-        config.minMajorUnits = 1;
-        config.minMinorUnits = 2;
+        population(pop_indx).n_input_units = size(config.train_input_sequence,2);
+        population(pop_indx).n_output_units = size(config.train_output_sequence,2);
     end
     
-    % how many subreservoirs
-    genotype(res).nInternalUnits = randi([config.minMajorUnits config.maxMajorUnits]);
     
-    if isempty(config.trainInputSequence) 
-        genotype(res).nInputUnits = 1;
-        genotype(res).nOutputUnits = 1;
-    else
-        genotype(res).nInputUnits = size(config.trainInputSequence,2);
-        genotype(res).nOutputUnits = size(config.trainOutputSequence,2);
-    end
-    
-    % rand number of inner ESN's
-    for i = 1: genotype(res).nInternalUnits
+ % rand number of inner ESN's
+    for i = 1:config.num_reservoirs
         
         %define num of units
-        genotype(res).esnMinor(i).nInternalUnits = randi([config.minMinorUnits config.maxMinorUnits]);
-        % bias
-        genotype(res).esnMinor(i).bias = 2*rand(genotype(res).esnMinor(i).nInternalUnits,1)-1; %adds bias/value shift to input signal
-        % Scaling
-        genotype(res).esnMinor(i).spectralRadius = 2*rand; %alters network dynamics
-        genotype(res).esnMinor(i).inputScaling = 2*rand-1; %increases nonlinearity
-    
-        %assign different activations, if necessary
-        if config.multiActiv 
-            activPositions = randi(length(config.ActivList),1,genotype(res).esnMinor(i).nInternalUnits);
-            for act = 1:length(activPositions)
-                genotype(res).reservoirActivationFunction{i,act} = config.ActivList{activPositions(act)};
+        if iscell(config.num_nodes)
+            population(pop_indx).nodes(i) = config.num_nodes{i};
+        else
+            population(pop_indx).nodes(i) = config.num_nodes;
+        end
+        
+        % Scaling and leak rate
+        population(pop_indx).input_scaling(i) = 2*rand-1; %increases nonlinearity
+        population(pop_indx).leak_rate(i) = rand;
+        
+        %inputweights
+        if i == 1
+            if config.sparse_input_weights
+                input_weights = sprand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1, 0.1);
+                input_weights(input_weights ~= 0) = ...
+                    input_weights(input_weights ~= 0)  - 0.5;
+            else
+                input_weights = 2*rand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1);
             end
         else
-            genotype(res).reservoirActivationFunction = config.activeFcn;   
+            input_weights = sprand(population(pop_indx).nodes(i),  population(pop_indx).nodes(i-1)+1, 0.1);
+            input_weights(input_weights ~= 0) = ...
+                input_weights(input_weights ~= 0)  - 0.5;
         end
+        
+        population(pop_indx).input_weights{i} = input_weights;
+        
+        
+        %assign different activations, if necessary
+        if config.multi_activ
+            activ_positions = randi(length(config.activ_list),1,population(pop_indx).nodes(i));
+            for act = 1:length(activ_positions)
+                population(pop_indx).activ_Fcn{i,act} = config.activ_list{activ_positions(act)};
+            end
+        else
+            population(pop_indx).activ_Fcn = 'tanh';
+        end
+        
+        population(pop_indx).last_state{i} = zeros(1,population(pop_indx).nodes(i));
     end
     
-
-    genotype(res).nTotalUnits = 0;
-    
-    %% connectivity to other reservoirs
-    for i= 1:genotype(res).nInternalUnits
-        for j= 1:genotype(res).nInternalUnits
-            
-            genotype(res).esnMinor(i).connRatio = rand;
+    %track total nodes in use
+    population(pop_indx).total_units = 0;
+        
+    %% weights and connectivity of all reservoirs
+    for i= 1:config.num_reservoirs
+        
+        for j= 1:config.num_reservoirs
             
             if i==j
-                if i ==1
-                    if config.gaussWeights
-                        genotype(res).connectWeights{i,j} = randn(genotype(res).nInputUnits ,genotype(res).esnMinor(i).nInternalUnits);
-                    else
-                        genotype(res).connectWeights{i,j} = rand(genotype(res).nInputUnits ,genotype(res).esnMinor(i).nInternalUnits);
-                    end
+                population(pop_indx).connectivity(i,j) =  10/population(pop_indx).nodes(i);%max([10/population(indx).nodes(i) rand]);
+                
+                if i > 1
+                    internal_weights = sprand(population(pop_indx).nodes(i), population(pop_indx).nodes(i-1)+1, population(pop_indx).connectivity(i,j));
                 else
-                    if config.gaussWeights
-                        genotype(res).connectWeights{i,j} = randn(genotype(res).esnMinor(i-1).nInternalUnits ,genotype(res).esnMinor(i).nInternalUnits);
-                    else
-                        genotype(res).connectWeights{i,j} = sprand(genotype(res).esnMinor(i-1).nInternalUnits ,genotype(res).esnMinor(i).nInternalUnits,genotype(res).esnMinor(i).connRatio);
-                    end
+                    internal_weights = sprand(population(pop_indx).nodes(i), population(pop_indx).nodes(i)+1, population(pop_indx).connectivity(i,j));
                 end
+                
+                internal_weights(internal_weights ~= 0) = ...
+                    internal_weights(internal_weights ~= 0)  - 0.5;
+                
+                % assign scaling for inner weights
+                population(pop_indx).W_scaling(i,j) = rand;
+                population(pop_indx).W{i,j} = internal_weights;
             else
-                genotype(res).connectWeights{i,j} = 0;
+                population(pop_indx).W{i,j} = 0;
             end
+            
         end
-            genotype(res).nTotalUnits = genotype(res).nTotalUnits + genotype(res).esnMinor(i).nInternalUnits; 
+        population(pop_indx).total_units = population(pop_indx).total_units + population(pop_indx).nodes(i);
     end
     
-
-    if config.AddInputStates
-        genotype(res).outputWeights = zeros(genotype(res).nTotalUnits+genotype(res).nInputUnits+1,genotype(res).nOutputUnits);      
+    
+    % add rand output weights
+    if config.add_input_states
+        population(pop_indx).output_weights = 2*rand(population(pop_indx).total_units + population(pop_indx).n_input_units, population(pop_indx).n_output_units)-1;
     else
-        genotype(res).outputWeights = zeros(genotype(res).nTotalUnits+1,genotype(res).nOutputUnits);
+        population(pop_indx).output_weights = 2*rand(population(pop_indx).total_units, population(pop_indx).n_output_units)-1;
     end
+    
+    population(pop_indx).behaviours = [];
 end

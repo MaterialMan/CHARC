@@ -1,52 +1,52 @@
-function l = recombDL(w,l,config)
+function loser = recombDL(winner,loser,config)
 
-% recombine Mask
-Winner= w.M(:);
-Loser = l.M(:);
-pos = randi([1 length(Loser)],round(config.recRate*length(Loser)),1);
-Loser(pos) = Winner(pos);
-l.M = reshape(Loser,size(l.M));
+% params - input_scaling, leak_rate,
+W= winner.input_scaling(:);
+L = loser.input_scaling(:);
+pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+L(pos) = W(pos);
+loser.input_scaling = reshape(L,size(loser.input_scaling));
 
-% global parameters
-temp_winner = [w.inputShift w.leakRate];
-temp_loser = [l.inputShift l.leakRate];
-pos = randi([1 length(temp_loser)],round(config.recRate*length(temp_loser)),1);
-temp_loser(pos) = temp_winner(pos);
+W= winner.leak_rate(:);
+L = loser.leak_rate(:);
+pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+L(pos) = W(pos);
+loser.leak_rate = reshape(L,size(loser.leak_rate));
 
-%l.Wscaling = temp_loser(1);                          
-%l.inputScaling = temp_loser(1);                    
-l.inputShift = temp_loser(1);                             
-l.leakRate = temp_loser(2);
-
-% reservoir parameters
-temp_winner = [w.tau w.eta w.gamma w.p];
-temp_loser = [l.tau l.eta l.gamma l.p];
-pos = randi([1 length(temp_loser)],round(config.recRate*length(temp_loser)),1);
-temp_loser(pos) = temp_winner(pos);
-
-l.tau = temp_loser(1);
-l.theta = l.tau/l.nInternalUnits;
-l.eta = temp_loser(2);                    
-l.gamma = temp_loser(3);                             
-l.p = temp_loser(4);
-
-
-if config.evolveOutputWeights
-    Winner= w.outputWeights(:);
-    Loser = l.outputWeights(:);
-    pos = randi([1 length(Loser)],round(config.recRate*length(Loser)),1);
-    Loser(pos) = Winner(pos);
-    l.outputWeights = reshape(Loser,size(l.outputWeights));
+% cycle through sub-reservoirs
+for i = 1:config.num_reservoirs
+    
+    % input weights
+    W= winner.input_weights{i}(:);
+    L = loser.input_weights{i}(:);
+    pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+    L(pos) = W(pos);
+    loser.input_weights{i} = reshape(L,size(loser.input_weights{i}));
+    
+    % reservoir parameters
+    temp_winner = [winner.eta(i) winner.gamma(i) winner.p(i)];
+    temp_loser = [loser.eta(i) loser.gamma(i) loser.p(i)];
+    pos = randi([1 length(temp_loser)],ceil(config.rec_rate*length(temp_loser)),1);
+    temp_loser(pos) = temp_winner(pos);
+    
+    loser.eta(i) = temp_loser(1);
+    loser.gamma(i) = temp_loser(2);
+    loser.p(i) = temp_loser(3);
+       
 end
 
-if config.evolvedOutputStates
-    Winner= w.state_loc(:);
-    Loser = l.state_loc(:);
-    pos = randi([1 length(Loser)],round(config.recRate*length(Loser)),1);
-    Loser(pos) = Winner(pos);
-    l.state_loc = reshape(Loser,size(l.state_loc));
-    % update percent
-    l.state_perc = sum(l.state_loc)/l.nTotalUnits;
+% for output weights
+if config.evolve_output_weights
+    W= winner.output_weights(:);
+    L = loser.output_weights(:);
+    pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+    L(pos) = W(pos);
+    loser.output_weights = reshape(L,size(loser.output_weights));
 end
 
-end
+
+
+
+
+
+

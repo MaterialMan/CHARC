@@ -1,77 +1,104 @@
-function genotype = createGraphReservoir(config)
+function population = createGraphReservoir(config)
 
-genotype = [];
-for i = 1:config.popSize
+%% Reservoir Parameters
+for pop_indx = 1:config.pop_size
     
-    genotype(i).trainError = 1;
-    genotype(i).valError = 1;
-    genotype(i).testError = 1;
+    % add performance records
+    population(pop_indx).train_error = 1;
+    population(pop_indx).val_error = 1;
+    population(pop_indx).test_error = 1;
     
-    genotype(i).inputShift = 1;
+    % add single bias node
+    population(pop_indx).bias_node = 1;
     
-    if isempty(config.trainInputSequence)
-        genotype(i).nInputUnits = 1;
-        genotype(i).nOutputUnits = 1;
-        config.task_num_inputs = 1;
-        config.task_num_outputs = 1;
+    % assign input/output count
+    if isempty(config.train_input_sequence)
+        population(pop_indx).n_input_units = 1;
+        population(pop_indx).n_output_units = 1;
     else
-        genotype(i).nInputUnits = size(config.trainInputSequence,2);
-        genotype(i).nOutputUnits = size(config.trainOutputSequence,2);
-        config.task_num_inputs = size(config.trainInputSequence,2);
-        config.task_num_outputs =size(config.trainOutputSequence,2);
+        population(pop_indx).n_input_units = size(config.train_input_sequence,2);
+        population(pop_indx).n_output_units = size(config.train_output_sequence,2);
     end
-    genotype(i).nTotalUnits = config.N;
     
-    genotype(i).w = zeros(config.N); %needs to be sparse
-    if config.directedGraph
-        genotype(i).G = config.G;
-        for j= 1:config.N
-            if config.nearest_neighbour > 0
-                Ne = nearest(G,j,config.nearest_neighbour);
-            else
-                Ne = neighbors(config.G,j);
-            end
-            genotype(i).w(Ne,j) = 2*rand(length(Ne),1)-1;
-            genotype(i).w(j,Ne) = 2*rand(1,length(Ne))-1;
-        end
-    else
-        genotype(i).G = config.G;
-        genotype(i).G.Edges.Weight = 2*rand(size(genotype(i).G.Edges,1),1)-1;
+    % iterate through subreservoirs
+    for i = 1:config.num_reservoirs
         
-        A = table2array(genotype(i).G.Edges);
-        for j = 1:size(genotype(i).G.Edges,1)
-            genotype(i).w(A(j,1),A(j,2)) = A(j,3);
+        %define num of units
+        if iscell(config.num_nodes)
+            population(pop_indx).nodes(i) = config.num_nodes{i};
+        else
+            population(pop_indx).nodes(i) = config.num_nodes;
         end
+        
+        % Scaling and leak rate
+        population(pop_indx).input_scaling(i) = 2*rand-1; %increases nonlinearity
+        population(pop_indx).leak_rate(i) = rand;
+        
+        %inputweights
+        if config.sparse_input_weights
+            input_weights = sprand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1, 0.1);
+            input_weights(input_weights ~= 0) = ...
+                2*input_weights(input_weights ~= 0)  - 1;
+            population(pop_indx).input_weights{i} = input_weights;
+        else
+            population(pop_indx).input_weights{i} = 2*rand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1)-1;
+        end
+        
+        
+        %assign different activations, if necessary
+        if config.multi_activ
+            activ_positions = randi(length(config.activ_list),1,population(pop_indx).nodes(i));
+            for act = 1:length(activ_positions)
+                population(pop_indx).activ_Fcn{i,act} = config.activ_list{activ_positions(act)};
+            end
+        else
+            population(pop_indx).activ_Fcn = 'tanh';
+        end
+        
+        population(pop_indx).last_state{i} = zeros(1,population(pop_indx).nodes(i));
     end
-    genotype(i).w = sparse(genotype(i).w);
     
-    %inputweights
-    if config.sparseInputWeights
-        inputWeights = sprand(config.N,config.task_num_inputs, 0.1); %1/genotype.esnMinor(res,i).nInternalUnits
-        inputWeights(inputWeights ~= 0) = ...
-                2*inputWeights(inputWeights ~= 0)  - 1;
-        genotype(i).w_in = inputWeights;
+    %track total nodes in use
+    population(pop_indx).total_units = 0;
+    
+    
+    %% weights and connectivity of all reservoirs
+    for i= 1:config.num_reservoirs
+        
+        population(pop_indx).G{i} = config.G{i};
+        
+        for j= 1:config.num_reservoirs
+            
+            if i == j
+                internal_weights = zeros(size(population(pop_indx).G{i}.Nodes,1));
+                % find indices for graph weights
+                graph_indx = logical(full(adjacency(population(pop_indx).G{i})));
+                % assign weights
+                internal_weights(graph_indx) = rand(1,length(nonzeros(graph_indx)))-0.5;
+                
+            else
+                population(pop_indx).connectivity(i,j) =  10/population(pop_indx).nodes(i);
+                
+                internal_weights = sprand(population(pop_indx).nodes(i), population(pop_indx).nodes(j), population(pop_indx).connectivity(i,j));
+                internal_weights(internal_weights ~= 0) = ...
+                    internal_weights(internal_weights ~= 0)  - 0.5;
+                
+            end
+            % assign scaling for inner weights
+            population(pop_indx).W_scaling(i,j) = rand;
+            population(pop_indx).W{i,j} = internal_weights;
+            
+        end
+        population(pop_indx).total_units = population(pop_indx).total_units + population(pop_indx).nodes(i);
+    end
+    
+    
+    % add rand output weights
+    if config.add_input_states
+        population(pop_indx).output_weights = 2*rand(population(pop_indx).total_units + population(pop_indx).n_input_units, population(pop_indx).n_output_units)-1;
     else
-        genotype(i).w_in = 2*rand(config.N,config.task_num_inputs)-1; %1/genotype.esnMinor(res,i).nInternalUnits
+        population(pop_indx).output_weights = 2*rand(population(pop_indx).total_units, population(pop_indx).n_output_units)-1;
     end
     
-    %genotype(i).w_out = zeros(config.N,config.task_num_outputs);
-    genotype(i).input_loc = zeros(config.N,1);
-    genotype(i).input_loc(randperm(config.N,randi([1 round(config.N)]))) = 1;
-    genotype(i).totalInputs = sum(genotype(i).input_loc);
-    if config.AddInputStates
-        genotype(i).outputWeights = zeros(config.N+genotype(i).nInputUnits+1,config.task_num_outputs);
-    else
-        genotype(i).outputWeights = zeros(config.N+1,config.task_num_outputs);
-    end
-
-    %genotype(i).regParam = 10e-7;
-    
-    if config.globalParams
-        genotype(i).Wscaling = 2*rand;                          %alters network dynamics and memory, SR < 1 in almost all cases
-        genotype(i).inputScaling = 2*rand-1;                    %increases nonlinearity
-        genotype(i).inputShift = 1;                             %adds bias/value shift to input signal
-        genotype(i).leakRate = rand;
-    end
-end
+    population(pop_indx).behaviours = [];
 end

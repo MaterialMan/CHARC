@@ -2,9 +2,7 @@
 clearvars -except all_databases database_genotype config read_session switch_session
 
 % define tasks
-config.taskList = {'NARMA10','NARMA30','Laser','NonChanEqRodan'};
-
-test_error = AssessGenotypeOnAllTasks(database_genotype,config, read_session, switch_session,config.taskList);
+test_error = AssessGenotypeOnAllTasks(database_genotype,config, read_session, switch_session,config.task_list);
     
 pred_dataset.inputs = all_databases{1,10};
 pred_dataset.outputs = test_error;

@@ -1,42 +1,45 @@
-function genotype = poleBalance(genotype,config)
+function individual = poleBalance(individual,config)
 
+scurr = rng;
+temp_seed = scurr.Seed;
+rng(1,'twister');
 
 for  tests = 1:config.pole_tests
     
     %% Collect states for plain ESN
-    inputSequence = zeros(config.time_steps,4);
+    input_sequence = zeros(config.time_steps,6);
     max_x = 4.8;
     
     % switch to task
-    switch(config.simpleTask)
+    switch(config.simple_task)
         case 1 %simple version
-            x_pole = zeros(length(inputSequence(:,1))+1,1);
-            x_dot = zeros(length(inputSequence(:,1))+1,1);
-            theta = zeros(length(inputSequence(:,1))+1,1);
-            theta(1) = pi+((2*pi)/360)*rand;%pi+(2*rand-1)*(pi/5); % start in good region
-            theta_dot = zeros(length(inputSequence(:,1))+1,1);
+            x_pole = zeros(length(input_sequence(:,1))+1,1);
+            x_dot = zeros(length(input_sequence(:,1))+1,1);
+            theta = zeros(length(input_sequence(:,1))+1,1);
+            theta(1) = pi+(2*rand-1)*(pi/5); % start in good region %pi+((2*pi)/360)*rand;%
+            theta_dot = zeros(length(input_sequence(:,1))+1,1);
             LENGTH          = 0.5;         % half length of pole
             MASS_P          = 0.1;         % mass pole
             MU_P            = 0.000002;    % coeff frict, pole on cart  START: 0.000002
             
         case 2 %swinging version
-            x_pole = zeros(length(inputSequence(:,1))+1,1);
-            x_dot = zeros(length(inputSequence(:,1))+1,1);
-            theta = zeros(length(inputSequence(:,1))+1,1);
-            theta(1) = rand*2*pi;%pi*1.5 + rand*pi; % start anywhere
-            theta_dot = zeros(length(inputSequence(:,1))+1,1);
+            x_pole = zeros(length(input_sequence(:,1))+1,1);
+            x_dot = zeros(length(input_sequence(:,1))+1,1);
+            theta = zeros(length(input_sequence(:,1))+1,1);
+            theta(1) = (2*rand-1)*(pi/5);%rand*2*pi;%pi*1.5 + rand*pi; % start anywhere
+            theta_dot = zeros(length(input_sequence(:,1))+1,1);
             LENGTH          = 0.5;         % half length of pole
             MASS_P          = 0.1;         % mass pole
             MU_P            = 0.000002;    % coeff frict, pole on cart  START: 0.000002
             
             
         case 3 %double pole balancing
-            x_pole = zeros(length(inputSequence(:,1))+1,1);
-            x_dot = zeros(length(inputSequence(:,1))+1,1);
-            theta = zeros(length(inputSequence(:,1))+1,2);
-            theta(1,1) = pi+((2*pi)/360)*(2*rand-1);%pi-(2*rand-1)*(pi/5); % start in good region rand*2*pi;%
-            theta(1,2) = pi+((2*pi)/360)*(2*rand-1);%pi-(2*rand-1)*(pi/5);
-            theta_dot = zeros(length(inputSequence(:,1))+1,2);
+            x_pole = zeros(length(input_sequence(:,1))+1,1);
+            x_dot = zeros(length(input_sequence(:,1))+1,1);
+            theta = zeros(length(input_sequence(:,1))+1,2);
+            theta(1,1) = pi+(2*rand-1)*(pi/5);%pi+((2*pi)/360)*(2*rand-1);%pi-(2*rand-1)*(pi/5); % start in good region rand*2*pi;%
+            theta(1,2) = pi+(2*rand-1)*(pi/5);%pi+((2*pi)/360)*(2*rand-1);%pi-(2*rand-1)*(pi/5);
+            theta_dot = zeros(length(input_sequence(:,1))+1,2);
             LENGTH          = [1 0.1];%0.5;         % half length of pole
             %LENGTH(2)          = 0.1;%0.05;         % half length of pole
             MASS_P          = [0.1 0.01];         % mass pole
@@ -48,35 +51,64 @@ for  tests = 1:config.pole_tests
     
     GRAV            = -9.8;        % g
     MASS_C          = 1.0;         % mass cart 1kg
-    SAMPLE_INTERVAL = 0.05;        % delta t
+    SAMPLE_INTERVAL = 0.01;        % delta t (0.01 & 0.02 work well)
     MU_C            = 0.0005;      % coeff fric, cart on track  START: 0.0005
     FORCE           = 10;        % magnitude of force applied at every time step (either plus or minus)
     
     % For fitness function
     summation = 0;
     longest_balance = 0;
-    exited = 0;
+    exited = size(input_sequence,1);
     F2 = 0;
     
     %equation: x(n) = f(Win*u(n) + S)
     %each time step
-    for n = 2:size(inputSequence,1)
+    score = 0;
+    force_record = [];
+    
+    for n = 2:size(input_sequence,1)
         
         if config.velocity
-            inputSequence(n,:) = tanh([x_pole(n-1); x_dot(n-1); theta(n-1); theta_dot(n-1)]); % scale input between -1 and 1
+            if config.simple_task ~= 3
+                % limit theta to [-2*pi 2*pi] 
+                if theta(n-1,:) < 0
+                    th = -mod(abs(theta(n-1,:)),2*pi);
+                else
+                    th = mod(theta(n-1,:),2*pi);
+                end
+                
+                %inputSequence(n,:) = [x_pole(n-1); x_dot(n-1); theta(n-1,:); 0; theta_dot(n-1,:); 0]; % scale input between -1 and 1
+                input_sequence(n,:) = [x_pole(n-1); x_dot(n-1); th; 0; theta_dot(n-1,:); 0]; % scale input between -1 and 1
+            else
+                input_sequence(n,:) = [x_pole(n-1); x_dot(n-1); theta(n-1,1); theta(n-1,2); theta_dot(n-1,1); theta_dot(n-1,2)]; % scale input between -1 and 1
+            end
         else
-            inputSequence(n,:) = tanh([x_pole(n-1); 0; theta(n-1); 0]); % scale input between -1 and 1
+            if config.simpleTask ~= 3
+                input_sequence(n,:) = [x_pole(n-1); 0; theta(n-1); 0; 0; 0]; % scale input between -1 and 1
+            else
+                input_sequence(n,:) = [x_pole(n-1); 0; theta(n-1,1); theta(n-1,2); 0; 0];
+            end
         end
         
-        testStates = config.assessFcn(genotype,inputSequence(n,:),config);
+        [test_states,individual] = config.assessFcn(individual,input_sequence(n,:),config); %[testStates,genotype]
         
-        force = testStates*genotype.outputWeights;
+        force = test_states*individual.output_weights;
         
         %% STEP on system
-        f = FORCE* sign(force);
+        if mod(n,1) == 0 % output every 0.02 secs
+            if config.velocity
+                f = FORCE*sign(force);
+            else
+                f = force*100;
+            end
+        else
+            f = 0;
+        end
+        
+        force_record(n,:) = [force f];
         
         %original equations
-        switch(config.simpleTask)
+        switch(config.simple_task)
             case 1
                 th = theta(n-1);
                 th_dot = theta_dot(n-1);
@@ -119,14 +151,14 @@ for  tests = 1:config.pole_tests
         end
         
         %escape sim
-        switch(config.simpleTask)
+        switch(config.simple_task)
             case 1
                 if abs(x_pole(n)) > max_x || theta(n,1) > pi + pi/5 || theta(n,1) < pi - pi/5
                     exited =n;
                     break;
                 end
             case 2
-                if abs(x_pole(n)) > max_x
+                if abs(x_pole(n)) > max_x || sum(score) > 500
                     exited =n;
                     break;
                 end
@@ -139,6 +171,7 @@ for  tests = 1:config.pole_tests
         
         % Fitness function: Check longest balancing time within an pi/5 angle
         % deviation and within -5,+5 meters on the track
+        %        score(n) = abs(pi-theta(n));
         if theta(n) < pi + pi/5 && theta(n) > pi - pi/5
             summation = summation + 1;
             if summation > longest_balance
@@ -148,10 +181,16 @@ for  tests = 1:config.pole_tests
             summation = 0;
         end
         
-        % Plot
-        if config.runSim
-            if config.simpleTask < 3
-                figure(1)
+    end
+    
+    figHandle = figure(2);
+    %plot
+    for n = 2:5:exited
+        if config.run_sim && tests == config.pole_tests % only show last
+            if config.simple_task < 3
+
+                set(0,'currentFigure',figHandle)
+                subplot(2,2,1)
                 plot(x_pole(n),0,'k+','LineWidth',10);
                 hold on
                 plot([x_pole(n)-1 x_pole(n)+1], [0 0], 'k')
@@ -163,13 +202,31 @@ for  tests = 1:config.pole_tests
                 grid on
                 xlabel(num2str(x_pole(n)))
                 ylabel(num2str(summation))
-                
+                title(strcat('Time = ',num2str(n)))
                 
                 axis([x_pole(n)-1 x_pole(n)+1 -1 1])
-                pause(1/config.time_steps)
                 
+                % force
+                subplot(2,2,2)
+                plot(force_record(1:n,1))
+                title('Force(n)')
+                
+                %pole angle
+                subplot(2,2,3)
+                plot(theta(1:n))
+                title('pole angle (\theta)')
+                
+                % cart position
+                subplot(2,2,4)
+                plot(x_pole(1:n))
+                title('cart position')
+                
+                drawnow
+                %pause(1/config.time_steps)
             else
-                figure(1)
+               
+               set(0,'currentFigure',figHandle)
+                subplot(2,2,1)
                 plot(x_pole(n),0,'k+','LineWidth',10);
                 hold on
                 %first pole
@@ -186,30 +243,57 @@ for  tests = 1:config.pole_tests
                 ylabel(num2str(summation))
                 
                 axis([x_pole(n)-1 x_pole(n)+1 -LENGTH(1)+0.2 LENGTH(1)+0.2])
-                pause(1/config.time_steps)
+                title(strcat('Time = ',num2str(n)))
+                
+                % force
+                subplot(2,2,2)
+                plot(force_record(1:n,1))
+                title('Force(n)')
+                
+                %pole angle
+                subplot(2,2,3)
+                plot(theta(1:n,:))
+                title('pole angle (\theta)')
+                
+                % cart position
+                subplot(2,2,4)
+                plot(x_pole(1:n))
+                title('cart position')
+                
+                drawnow
+                %pause(1/config.time_steps)
                 
             end
+            
         end
     end
-    % Reward is longest balancing streak through all timesteps
+    
+    
     F1 = longest_balance/config.time_steps;
     
     % Reward F2
-    if config.simpleTask == 3
+    F2_bottom = 0;
+    if config.velocity
         if longest_balance < 100
             F2 = 0;
         else
-            F2_bottom = sum(abs(x_pole(exited-100:exited)) + abs(x_dot(exited-100:exited)) + abs(theta(exited-100:exited,1)) +abs(theta_dot(exited-100:exited,1)));
+            %F2_bottom = sum(abs(x_pole(exited-100:exited)) + abs(x_dot(exited-100:exited)) + abs(theta(exited-100:exited,1)) +abs(theta_dot(exited-100:exited,1)));
+            for p = 101:exited
+                F2_bottom = F2_bottom + abs(x_pole(p)) + abs(x_dot(p)) + abs(theta(p,1)) +abs(theta_dot(p,1));
+            end
             
             F2 = 0.75/F2_bottom;
         end
         
-        fitness(tests) = F1*0.1 +0.9*F2;
+        fitness(tests) = 1-(F1*0.1 +0.9*F2);
     else
-        fitness(tests) = F1;
+        fitness(tests) = 1-F1;
     end
 end
 
-genotype.trainError = 1-mean(fitness);
-genotype.valError = 1-mean(fitness);
-genotype.testError = 1-mean(fitness);
+individual.train_error = mean(fitness);
+individual.val_error = mean(fitness);
+individual.test_error = mean(fitness);
+
+% Go back to old seed
+rng(temp_seed,'twister');

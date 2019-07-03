@@ -1,63 +1,42 @@
 %% Types of reservoirs available
 function config = selectReservoirType(config)
 
-switch(config.resType)
+switch(config.res_type)
     
     case 'ELM'
         config.createFcn = @createELM;
-        config.assessFcn = @collectDeepStates_ELM;
-        config.mutFcn = @mutateELM;
-        config.recFcn = @recombELM;
+        config.assessFcn = @collectELMStates;
+        config.mutFcn = @mutateRoR;
+        config.recFcn = @recombRoR;
         config.hierarchy = 1;
         
     case 'RoR' 
         config.createFcn = @createRoR;
-        config.assessFcn = @collectDeepStates_nonIA;
+        config.assessFcn = @collectRoRStates;
         config.mutFcn = @mutateRoR;
         config.recFcn = @recombRoR;
-        config.hierarchy = 1;
-         
-    case 'RoR_IA'
-        config.createFcn = @createRoR;
-        config.assessFcn = @collectDeepStates_IA;
-        config.mutFcn = @mutateRoR;
-        config.recFcn = @recombRoR;
-        config.hierarchy = 1;
-        
-    case 'RoR_IA_delay' % not working yet
-        config.createFcn = @createDelayRoR;
-        config.assessFcn = @collectDeepDelayStates_IA;
-        config.mutFcn = @mutateRoRdelay;
-        config.recFcn = @recombRoR;
-        config.hierarchy = 1;
+        config.hierarchy = 1;                
         
     case 'Pipeline'
-        config.createFcn = @createDeepReservoir_pipeline;
-        config.assessFcn = @collectDeepStates_pipeline;
+        config.createFcn = @createPipeline;
+        config.assessFcn = @collectPipelineStates;
         config.mutFcn = @mutateRoR;
         config.recFcn = @recombRoR;
-         config.hierarchy = 1;
-        
-    case 'Pipeline_IA'
-        config.createFcn = @createDeepReservoir_pipeline;
-        config.assessFcn = @collectDeepStates_pipeline_IA;
-        config.mutFcn = @mutateRoR;
-        config.recFcn = @recombRoR;
-         config.hierarchy = 1;
+        config.hierarchy = 1;       
          
     case 'Ensemble'
-        config.createFcn = @createDeepReservoir_ensemble;
+        config.createFcn = @createEnsemble;
         config.assessFcn = @collectEnsembleStates;
         config.mutFcn = @mutateRoR;
         config.recFcn = @recombRoR;
-         config.hierarchy = 1;
+        config.hierarchy = 1;
          
     case 'Graph'
         config.createFcn = @createGraphReservoir;
         config.assessFcn = @assessGraphReservoir;
-        config.mutFcn = @mutateGraph;
-        config.recFcn = @recombGraph;
-         config.hierarchy = 0;
+        config.mutFcn = @mutateRoR;
+        config.recFcn = @recombRoR;
+         config.hierarchy = 1;
          
     case 'BZ'
         config.createFcn = @createBZReservoir;

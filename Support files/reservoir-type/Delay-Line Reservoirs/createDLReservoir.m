@@ -1,64 +1,78 @@
-function genotype = createDLReservoir(config)
+function population = createDLReservoir(config)
 
-genotype = [];
 
-% create and loop through the population
-for i = 1:config.popSize
+%% Reservoir Parameters
+for pop_indx = 1:config.pop_size
+
+    % add performance records
+    population(pop_indx).train_error = 1;
+    population(pop_indx).val_error = 1;
+    population(pop_indx).test_error = 1;
     
-    % assign dummy training variables
-    genotype(i).trainError = 1;
-    genotype(i).valError = 1;
-    genotype(i).testError = 1;
+    % add single bias node
+    population(pop_indx).bias_node = 1;
     
-    % define size of network
-    genotype(i).nInternalUnits = config.maxMinorUnits;
-    genotype(i).nTotalUnits = genotype(i).nInternalUnits; 
-    
-    % define number of inputs and outputs 
-    if isempty(config.trainInputSequence)
-        genotype(i).nInputUnits = 1;
-        genotype(i).nOutputUnits = 1;
+    % assign input/output count
+    if isempty(config.train_input_sequence)
+        population(pop_indx).n_input_units = 1;
+        population(pop_indx).n_output_units = 1;
     else
-        genotype(i).nInputUnits = size(config.trainInputSequence,2);
-        genotype(i).nOutputUnits = size(config.trainOutputSequence,2);
+        population(pop_indx).n_input_units = size(config.train_input_sequence,2);
+        population(pop_indx).n_output_units = size(config.train_output_sequence,2);
     end
     
-    %set inputweights
-    if config.sparseInputWeights % sparse weights
-        inputWeights = sprand(genotype(i).nInternalUnits,genotype(i).nInputUnits, 0.1); %1/genotype.esnMinor(res,i).nInternalUnits
-        inputWeights(inputWeights ~= 0) = ...
-            2*inputWeights(inputWeights ~= 0)  - 1;
-        genotype(i).M = inputWeights;
-    else % non-sparse weights
-        % the correct one reported in the literature
-        genotype(i).M = 2*(round(rand(genotype(i).nInternalUnits,genotype(i).nInputUnits))*0.1)-0.1;
+    %track total nodes in use
+    population(pop_indx).total_units = 0;
+    
+        % iterate through subreservoirs
+    for i = 1:config.num_reservoirs
         
-        % random
-        %genotype(i).M = 2*rand(genotype(i).nInternalUnits,genotype(i).nInputUnits)-1;
+        %define num of units
+        if iscell(config.num_nodes)
+            population(pop_indx).nodes(i) = config.num_nodes{i};
+        else
+            population(pop_indx).nodes(i) = config.num_nodes;
+        end
+        
+        % Scaling and leak rate
+        population(pop_indx).input_scaling(i) = 2*rand-1; %increases nonlinearity
+        population(pop_indx).leak_rate(i) = rand;
+        
+        % mackey glass parameters: eta, gamma and p must be > 0
+        population(pop_indx).eta(i) = rand;
+        population(pop_indx).gamma(i) = rand;
+        population(pop_indx).p(i) = 1;
+        population(pop_indx).x0(i) = 0.01;
+        population(pop_indx).T(i) = 1; %time-scale of node
+        population(pop_indx).time_step(i) = 0.1;
+        
+        % set reservoir specific parameters round(20*rand);
+        population(pop_indx).tau(i) = 80; % lenght of delay line
+        population(pop_indx).theta(i) = population(pop_indx).tau(i)/population(pop_indx).nodes(i); % distance between virtual nodes
+                     
+        
+       %inputweights - MASK for DL
+       if config.sparse_input_weights
+           input_weights = sprand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units, 0.1);
+           input_weights(input_weights ~= 0) = ...
+               2*input_weights(input_weights ~= 0)  - 1;
+           population(pop_indx).input_weights{i} = input_weights;
+       else           
+           population(pop_indx).input_weights{i} = (sign(rand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units)-0.5)*0.1);%(round(rand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units))*0.1);
+       end
+          
+        population(pop_indx).last_state{i} = zeros(1,population(pop_indx).nodes(i));
+    
+        population(pop_indx).total_units = population(pop_indx).total_units + population(pop_indx).nodes(i); 
     end
     
-    
-    % set global scaling parameters for weights
-    %genotype(i).Wscaling = 2*rand;                          %alters network dynamics and memory, SR < 1 in almost all cases
-    genotype(i).inputScaling = rand;                    % increases nonlinearity
-    genotype(i).inputShift = 1;                             % adds bias/value shift to input signal
-    genotype(i).leakRate = rand;
-    
-    genotype(i).reservoirActivationFunction = 'MG_dde23';%'mackey_glass3';    % func to calculate states 
-    
-    % mackey glass parameters: eta, gamma and p must be > 0
-    genotype(i).eta = rand;
-    genotype(i).gamma = rand;
-    genotype(i).p = 1;  
-    genotype(i).x0 = 0.01;
-    genotype(i).T = 1; %time-scale of node
-    genotype(i).time_step = 0.1;
-    
-     % set reservoir specific parameters round(20*rand);	
-    genotype(i).tau = 80; % lenght of delay line
-    genotype(i).theta = genotype(i).tau/genotype(i).nInternalUnits; % distance between virtual nodes
 
+    % add rand output weights
+    if config.add_input_states
+        population(pop_indx).output_weights = 2*rand(population(pop_indx).total_units + population(pop_indx).n_input_units, population(pop_indx).n_output_units)-1;      
+    else
+        population(pop_indx).output_weights = 2*rand(population(pop_indx).total_units, population(pop_indx).n_output_units)-1;
+    end
     
-    % dummy outputweights
-    genotype(i).outputWeights = zeros(genotype(i).nInternalUnits+genotype(i).nInputUnits,genotype(i).nOutputUnits);
+    population(pop_indx).behaviours = [];
 end
