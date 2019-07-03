@@ -1,9 +1,7 @@
 %% Define additional params for particular reservoirs and tasks
 % overflow for params that can be changed
 function [config,figure3,figure4] = getDataSetInfo(config)
-
-% config.nsga2 = 0;                           % use multi-objective nsga algorithm
-
+                         
 figure3= 0; figure4 = 0;
 if ~isfield(config,'nsga2')
     config.task_num_inputs = size(config.train_input_sequence,2);
@@ -171,7 +169,7 @@ switch(config.res_type)
     case 'DL'
         %     config.DLtype = 'mackey_glass2';%'ELM';%'virtualNodes';
         %     %config.tau = 100;
-        
+        config.preprocess = 0;
     otherwise
         
 end

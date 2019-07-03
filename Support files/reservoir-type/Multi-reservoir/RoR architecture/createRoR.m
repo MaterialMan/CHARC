@@ -75,7 +75,7 @@ for pop_indx = 1:config.pop_size
                 internal_weights(internal_weights ~= 0)  - 0.5;
             
             % assign scaling for inner weights 
-            population(pop_indx).W_scaling(i,j) = rand;            
+            population(pop_indx).W_scaling(i,j) = 2*rand;            
             population(pop_indx).W{i,j} = internal_weights; 
 
         end

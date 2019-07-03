@@ -1,9 +1,20 @@
 %% CHARC framework
-% Notes: Can now evolve heirarchical networks and
-% any other reservoir in the support files.
+% The CHARC framework measures the quality of a reservoir substrate using
+% the total number and diversity of behaviours realisable by different substrate configurations.
+% To search for all realisable behaviours in the substrate's abstract behaviour space, 
+% we use novelty search and the microbial GA (a steady-state genetic
+% algorithm). The search and fitness calculation is performed in this
+% behaviour space and not the configuration space.
+%
+% To start 'runCHARC.m', define the substrate-to-test ('res_type'), 
+% behaviours to be measured ('metrics') and details of the
+% genetic algorithm (population, generations etc.). After 'gen_print'
+% generations, the script will display the behaviour space and where different
+% reservoir configurations sit in this space.
 
 % Author: M. Dale
-% Date: 18/02/19
+% Date: 03/07/19
+
 clear
 close all
 % add all subfolders to the path --> make all functions in subdirectories available
@@ -13,36 +24,36 @@ close all
 rng(1,'twister');
 
 %% Setup
-config.parallel = 1;                        % use parallel toolbox
-
 %start paralllel pool if empty
-if isempty(gcp) && config.parallel
+if isempty(gcp) 
     parpool; % create parallel pool
 end
 
 % type of network to evolve
-config.res_type = 'RoR_IA';                   % can use different hierarchical reservoirs. RoR_IA is default ESN.
-config.num_nodes = 50;                   % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
-config = selectReservoirType(config);       %get correct functions for type of reservoir
+config.res_type = 'ELM';                % state type of reservoir to use. E.g. 'RoR' (Reservoir-of-reservoirs/ESNs), 'ELM' (Extreme learning machine), 'Graph' (graph network of neurons), 'DL' (delay line reservoir) etc. Check 'selectReservoirType.m' for more.
+config.num_nodes = {10,10,10};                  % num of nodes in each sub-reservoir, e.g. if config.num_nodes = {10,5,15}, there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. For one reservoir, sate as a non-cell, e.g. config.num_nodes = 25
+config = selectReservoirType(config);   % collect function pointers for the selected reservoir type 
 
 % Network details
-config.metrics = {'KR','GR','MC'};       % behaviours to use defined by given metrics (and order of metrics)
-config.voxel_size = 10;                      % when measuring quality, pick a suitable voxel size 
+config.metrics = {'KR','GR','MC'};       % behaviours that will be used; name metrics to use and order of metrics
+config.voxel_size = 10;                  % when measuring quality, this will determine the voxel size. Depends on systems being compared. Rule of thumb: around 10 is good 
 
-% dummy variables for dataset
+% dummy variables for dataset; not used but still needed for functions to
+% work
 config.train_input_sequence= [];
 config.train_output_sequence =[];
 config.dataset = 'blank';
 
-% get addition params for reservoir type
+% get any additional params stored in getDataSetInfo.m. This might include:
+% details on reservoir structure, extra task variables, etc. 
 [config,figure3,figure4] = getDataSetInfo(config);
 
 %% Evolutionary parameters
-config.num_tests = 1;                        % num of runs
-config.pop_size = 50;                       % large pop better
-config.total_gens = 1000;                    % num of gens
+config.num_tests = 1;                        % num of tests/runs
+config.pop_size = 100;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
+config.total_gens = 1000;                    % number of generations to evolve 
 config.mut_rate = 0.1;                       % mutation rate
-config.deme_percent = 0.2;                  % speciation percentage
+config.deme_percent = 0.2;                   % speciation percentage; determines interbreeding distance on a ring.
 config.deme = round(config.pop_size*config.deme_percent);
 config.rec_rate = 0.5;                       % recombination rate
 
@@ -57,19 +68,19 @@ config.start_time = datestr(now, 'HH:MM:SS');
 figure1 =figure;
 figure2 = figure;
 config.save_gen = 25;                       % save data at generation = save_gen
-config.param_indx = 1;                       % record databases; start from 1
+config.param_indx = 1;                      % index for recording database quality; start from 1
 
 % prediction parameters
-config.get_prediction_data = 0;                % gather task performances as well, if desired. Use following details if on.
+config.get_prediction_data = 0;             % collect task performances after experiment. Variables below are applied if '1'.
 config.task_list = {'NARMA10','NARMA30','Laser','NonChanEqRodan'}; % tasks to assess
-config.discrete = 0;                    % binary or continious input to system
-config.nbits = 16;                       % set bit conversion if using binary/discrete systems
-config.preprocess = 1;                   % apply basic preprocessing, e.g. scaling and mean variance
+config.discrete = 0;                        % binary or continious input to system
+config.nbits = 16;                          % set bit conversion if using binary/discrete systems
+config.preprocess = 1;                      % apply basic preprocessing, e.g. scaling and mean variance
 
-%% Run MicroGA - start tests
+%% Run experiments
 for tests = 1:config.num_tests
     
-    clearvars -except config get_prediction_data tests storeError figure1 figure2 stats_novelty_KQ stats_novelty_MC total_space_covered all_databases
+    clearvars -except config tests figure1 figure2 quality database_history pred_dataset
 
     fprintf('\n Test: %d  ',tests);
     fprintf('Processing genotype......... %s \n',datestr(now, 'HH:MM:SS'))
@@ -78,27 +89,28 @@ for tests = 1:config.num_tests
     % update random seed
     rng(tests,'twister');
     
+    % Reset database counter 
     config.param_indx=1;
     
     % create population of reservoirs
     population = config.createFcn(config);    
     
-    %% Evaluate population and assess novelty
+    % Evaluate population and assess novelty
     ppm = ParforProgMon('Initial population: ', config.pop_size);
     parfor pop_indx = 1:config.pop_size
         population(pop_indx).behaviours = getVirtualMetrics(population(pop_indx),config);
         ppm.increment();
     end
     
-    %% Create NS archive from initial population    
-    archive = reshape([population.behaviours],length(config.metrics),config.pop_size)'; % only keep archive of found behaviours
+    % establish archive from initial population    
+    archive = reshape([population.behaviours],length(config.metrics),config.pop_size)';  
     
-    % Add all search points to db
+    % add population to database
     database = population;     
     
     fprintf('Processing took: %.4f sec, Starting GA \n',toc)
     
-    % reset variables
+    % reset variables for novelty threshold
     cnt_no_change = 1;
     config.p_min = config.p_min_start;
     
@@ -107,12 +119,11 @@ for tests = 1:config.num_tests
 
         rng(gen,'twister');
               
-        % Tournment selection - pick two individuals. Second within in deme
-        % range of the first
+        % Tournment selection - pick two individuals. 
         equal = 1;
         while(equal)
             indv1 = randi([1 config.pop_size]);
-            indv2 = indv1+randi([1 config.deme]);
+            indv2 = indv1+randi([1 config.deme]); %Second within in deme range of the first
             if indv2 > config.pop_size
                 indv2 = indv2- config.pop_size;
             end
@@ -123,19 +134,19 @@ for tests = 1:config.num_tests
         
         %calculate distances in behaviour space using KNN search
         pop_behaviours = reshape([population.behaviours],length(config.metrics),config.pop_size)'; 
-        error_indv1 = findKNN([archive; pop_behaviours],pop_behaviours(indv1,:),config.k_neighbours);
-        error_indv2 = findKNN([archive; pop_behaviours],pop_behaviours(indv2,:),config.k_neighbours);
+        fit_indv1 = findKNN([archive; pop_behaviours],pop_behaviours(indv1,:),config.k_neighbours);
+        fit_indv2 = findKNN([archive; pop_behaviours],pop_behaviours(indv2,:),config.k_neighbours);
              
         % Assess fitness of both and assign winner/loser - highest score
         % wins
-        if error_indv1 > error_indv2
+        if fit_indv1 > fit_indv2
             winner=indv1; loser = indv2;
         else
             winner=indv2; loser = indv1;
         end
         
         %% Infection and mutation phase 
-        % mix winner and loser first
+        % winner infects loser
         population(loser) = config.recFcn(population(winner),population(loser),config);
         % mutate offspring/loser
         population(loser) = config.mutFcn(population(loser),config);
@@ -148,13 +159,13 @@ for tests = 1:config.num_tests
         
         % calculate offsprings neighbours in behaviour space - using
         % population and archive
-        dist = findKNN([archive; pop_behaviours],population(loser).behaviours,config.k_neighbours);
+        fit_offspring = findKNN([archive; pop_behaviours],population(loser).behaviours,config.k_neighbours);
         
         % add offspring details to database 
         database = [database population(loser)];
 
         %add offspring to archive under conditions
-        if  dist > config.p_min || rand < 0.001 
+        if  fit_offspring > config.p_min || rand < 0.001 % random chance of being added to archive
             archive = [archive; pop_behaviours(loser,:)];
             cnt_change(gen) = 1;
             cnt_no_change(gen) = 0;
@@ -180,16 +191,13 @@ for tests = 1:config.num_tests
             fprintf('Gen %d, time taken: %.4f sec(s)\n Winner is %d, Loser is %d \n',gen,toc/config.gen_print,winner,loser);
             fprintf('Length of archive: %d, p_min; %d \n',length(archive), config.p_min);
             tic;
-
             plotSearch(figure1,database,gen,config)        % plot details
         end
     
         % safe details to disk
        if mod(gen,config.save_gen) == 0
-            %% ------------------------------ Save data -----------------------------------------------------------------------------------
-            % measure voxel count and quality at this stage to gather
+            % measure voxel count and quality 
             plot_behaviours = reshape([database.behaviours],length(config.metrics),length(database))'; 
-            % generational data
             [quality(tests,config.param_indx),~]= measureSearchSpace(plot_behaviours,config.voxel_size);
             % add database to history of databases
             database_history{tests,config.param_indx} = plot_behaviours;
@@ -197,20 +205,16 @@ for tests = 1:config.num_tests
             
             plotQuality(figure2,quality,config);
             
-            if strcmp(config.res_type,'Graph')
-                save(strcat('substrate_',config.substrate,'_run',num2str(tests),'_gens',num2str(config.total_gens),'_Nres_',num2str(config.N),'_directed',num2str(config.directed_graph),'_self',num2str(config.self_loop),'_nSize.mat'),...
-                    'database_history','database','config','quality','-v7.3');     
-            else
-                save(strcat('Framework_substrate_',config.res_type,'_run',num2str(tests),'_gens',num2str(config.total_gens),'_',num2str(config.num_reservoirs),'Nres_',num2str(config.num_nodes),'_nSize.mat'),...
-                    'database_history','database','config','quality','-v7.3');
-            end
+            save(strcat('Framework_substrate_',config.res_type,'_run',num2str(tests),'_gens',num2str(config.total_gens),'_',num2str(config.num_reservoirs),'Nres_'),...
+                'database_history','database','config','quality','-v7.3');
+            
        end
     end
     
     % run entire database on set tasks to get performance of behaviours
     if config.get_prediction_data
         all_behaviours = reshape([database.behaviours],length(config.metrics),length(database))';
-        pred_dataset = assessDBonTasks(config,database,all_behaviours,tests);
+        pred_dataset{tests} = assessDBonTasks(config,database,all_behaviours,tests);
     end
 end
 

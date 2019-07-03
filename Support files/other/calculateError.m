@@ -13,8 +13,6 @@ if config.discrete
     system_output = binaryVector2doubleOutput(round((1+system_output)/2),config.q,config.nbits);
 end
 
-%round((1+systemOutput)/2)
-
 % final measured error type
 switch(config.err_type)
     

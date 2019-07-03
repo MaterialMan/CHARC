@@ -4,6 +4,8 @@ function metrics = getVirtualMetrics(individual,config)
 scurr = rng;
 temp_seed = scurr.Seed;
 metrics = [];
+% training reguliser
+config.reg_param = 10e-6;
 
 for metric_item = 1:length(config.metrics)
     switch config.metrics{metric_item}

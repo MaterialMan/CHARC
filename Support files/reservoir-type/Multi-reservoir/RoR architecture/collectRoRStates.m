@@ -18,19 +18,20 @@ end
 for n = 2:size(input_sequence,1)
     
     for i= 1:config.num_reservoirs
+        
         for k= 1:config.num_reservoirs
             x{i}(n,:) = x{i}(n,:) + ((individual.W{i,k}*individual.W_scaling(i,k))*states{k}(n-1,:)')';
         end
         
         if iscell(individual.activ_Fcn)
-            for p = 1:individual.nodes(i)            
-                states{i}(n,p) = feval(individual.activ_Fcn{p},((individual.input_weights{i}(p,:)*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,p)'); 
+            for p = 1:individual.nodes(i)
+                states{i}(n,p) = feval(individual.activ_Fcn{p},((individual.input_weights{i}(p,:)*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,p)');
             end
         else
-            states{i}(n,:) = feval(individual.activ_Fcn,((individual.input_weights{i}*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,:)'); 
+            states{i}(n,:) = feval(individual.activ_Fcn,((individual.input_weights{i}*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,:)');
         end
         
-    end    
+    end
 end
 
 % get leak states
