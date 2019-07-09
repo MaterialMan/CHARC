@@ -1,3 +1,4 @@
+
 %% Evolve substrate for a specific task
 % This script can be used to evolve any reservoir directly to a task. It
 % uses the steady-state Microbial Genetic Algorithm to evolve the best
@@ -23,38 +24,36 @@ end
 
 % type of network to evolve
 config.res_type = 'RoR';                    % state type of reservoir to use. E.g. 'RoR' (Reservoir-of-reservoirs/ESNs), 'ELM' (Extreme learning machine), 'Graph' (graph network of neurons), 'DL' (delay line reservoir) etc. Check 'selectReservoirType.m' for more.
-config.num_nodes = 25;                      % num of nodes in each sub-reservoir, e.g. if config.num_nodes = {10,5,15}, there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. For one reservoir, sate as a non-cell, e.g. config.num_nodes = 25
+config.num_nodes = [50];                   % num of nodes in each sub-reservoir, e.g. if config.num_nodes = [10,5,15], there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. 
 config = selectReservoirType(config);       % collect function pointers for the selected reservoir type 
 
 %% Evolutionary parameters
 config.num_tests = 1;                        % num of tests/runs
 config.pop_size = 100;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
 config.total_gens = 500;                    % number of generations to evolve 
-config.mut_rate = 0.1;                       % mutation rate
+config.mut_rate = 0.225;                       % mutation rate
 config.deme_percent = 0.2;                   % speciation percentage; determines interbreeding distance on a ring.
 config.deme = round(config.pop_size*config.deme_percent);
-config.rec_rate = 0.5;                       % recombination rate
+config.rec_rate = 0.25;                       % recombination rate
 
 %% Task parameters
 config.discrete = 0;               % select '1' for binary input for discrete systems
 config.nbits = 16;                 % only applied if config.discrete = 1; if wanting to convert data for binary/discrete systems
-config.preprocess = 0;             % basic preprocessing, e.g. scaling and mean variance
-config.dataset = 'NARMA10';          % Task to evolve for
-
+config.preprocess = 1;             % basic preprocessing, e.g. scaling and mean variance
+config.dataset = 'Laser';          % Task to evolve for
 
 % get dataset information
 [config] = selectDataset(config);
 
 % get any additional params stored in getDataSetInfo.m. This might include:
 % details on reservoir structure, extra task variables, etc. 
-[config,figure3,figure4] = getDataSetInfo(config);
+[config] = getDataSetInfo(config);
 
 %% general params
-config.gen_print = 10;                       % after 'gen_print' generations print task performance and show any plots
+config.gen_print = 25;                       % after 'gen_print' generations print task performance and show any plots
 config.start_time = datestr(now, 'HH:MM:SS');
-figure1 =figure;
-figure2 = figure;
-config.save_gen = 25;                       % save data at generation = save_gen
+config.figure_array = [figure figure];
+config.save_gen = inf;                       % save data at generation = save_gen
 
 % Only necessary if wanting to parallelise the microGA algorithm
 config.multi_offspring = 0;                 % multiple tournament selection and offspring in one cycle
@@ -67,7 +66,7 @@ config.record_metrics = 0;                  % save metrics
 %% Run experiments
 for test = 1:config.num_tests
     
-    clearvars -except config test best storeError figure1 figure2 figure3 figure4 
+    clearvars -except config test best storeError
     
     fprintf('\n Test: %d  ',test);
     fprintf('Processing genotype......... %s \n',datestr(now, 'HH:MM:SS'))
@@ -155,7 +154,7 @@ for test = 1:config.num_tests
             if (mod(gen,config.gen_print) == 0)
                 fprintf('Gen %d, time taken: %.4f sec(s)\n Best Error: %.4f \n',gen,toc/config.gen_print,best(test,gen));
                 tic;
-                plotReservoirDetails(figure1,population,store_error,test,best_indv,gen,loser,config)
+                plotReservoirDetails(population,store_error,test,best_indv,gen,loser,config)
             end
             
         else
@@ -197,7 +196,7 @@ for test = 1:config.num_tests
                 fprintf('Gen %d, time taken: %.4f sec(s)\n  Winner: %.4f, Loser: %.4f, Best Error: %.4f \n',gen,toc/config.gen_print,population(winner).val_error,population(loser).val_error,best(test,gen));
                 tic;
                 % plot reservoir structure, task simulations etc.
-                plotReservoirDetails(figure1,population,store_error,test,best_indv,gen,loser,config)
+                plotReservoirDetails(population,store_error,test,best_indv,gen,loser,config)
             end
         end
         
@@ -216,15 +215,9 @@ for test = 1:config.num_tests
 end
 
 function saveData(population,store_error,tests,config)
-
-switch(config.res_type)
-    case 'Graph'
-        save(strcat('substrate_',config.graph_type,'_run',num2str(tests),'_gens',num2str(config.total_gens),'_Nres_',num2str(config.N),'_directed',num2str(config.directed_graph),'_self',num2str(config.self_loop),'_nSize.mat'),...
+        config.figure_array =[];
+        save(strcat('EvolveToTask_substrate_',config.res_type,'_run',num2str(tests),'_gens',num2str(config.total_gens),'_',num2str(sum(config.num_reservoirs)),'Nres.mat'),...
             'population','store_error','config','-v7.3');
-    otherwise
-        save(strcat('Framework_substrate_',config.res_type,'_run',num2str(tests),'_gens',num2str(config.total_gens),'_',num2str(sum(config.num_reservoirs)),'Nres_',num2str(config.num_nodes),'_nSize.mat'),...
-            'population','store_error','config','-v7.3');
-end
 end
 
 

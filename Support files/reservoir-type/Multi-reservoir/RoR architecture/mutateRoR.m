@@ -6,12 +6,12 @@ function offspring = mutateRoR(offspring,config)
 
 % params - input scaling and leak rate
 input_scaling = offspring.input_scaling(:);
-pos =  randi([1 length(input_scaling)],rand < 0.25,1);
+pos =  randi([1 length(input_scaling)],rand < config.mut_rate,1);
 input_scaling(pos) = 2*rand(length(pos),1)-1;
 offspring.input_scaling = reshape(input_scaling,size(offspring.input_scaling));
 
 leak_rate = offspring.leak_rate(:);
-pos =  randi([1 length(leak_rate)],rand < 0.25,1);
+pos =  randi([1 length(leak_rate)],rand < config.mut_rate,1); % 0.25
 leak_rate(pos) = rand(length(pos),1);
 offspring.input_scaling = reshape(leak_rate,size(offspring.leak_rate));
 
@@ -32,7 +32,7 @@ for i = 1:config.num_reservoirs
         
     % W scaling
     W_scaling = offspring.W_scaling(i,:);
-    pos =  randi([1 length(W_scaling)],rand < 0.25,1);
+    pos =  randi([1 length(W_scaling)],rand < config.mut_rate,1);
     W_scaling(pos) = 2*rand(length(pos),1);
     offspring.W_scaling(i,:) = reshape(W_scaling,size(offspring.W_scaling(i,:)));
 

@@ -3,17 +3,23 @@
 
 function config = getShape(config)
 
-temp_num_nodes = 0;
+temp_num_nodes = [];
 
 for graph_indx = 1:length(config.num_nodes)
     
-    if iscell(config.num_nodes)
-        num_nodes= config.num_nodes{graph_indx};
-    else
-        num_nodes = config.num_nodes;
-    end
+    %if config.num_reservoirs > 1
+        num_nodes= config.num_nodes(graph_indx);
+        graph_type = config.graph_type{graph_indx};
+%     else
+%         num_nodes = config.num_nodes;
+%         if iscell(config.graph_type)
+%             graph_type = config.graph_type{1};
+%         else
+%             graph_type = config.graph_type;
+%         end
+%     end
     
-    switch(config.graph_type)
+    switch(graph_type)
         
         case 'Bucky'
             G = graph(bucky);
@@ -30,7 +36,8 @@ for graph_indx = 1:length(config.num_nodes)
             config.plot_3d = 1;    % plot graph in 3D.
             
         case 'Torus'
-            G = torusGraph(num_nodes,config.self_loop,config.num_reservoirs,config);
+            config.rule_type = 1;
+            G = torusGraph(num_nodes,config.self_loop(graph_indx),config.num_reservoirs,config);
             config.plot_3d = 1;    % plot graph in 3D.
             
         case 'Barbell'
@@ -39,25 +46,26 @@ for graph_indx = 1:length(config.num_nodes)
             config.plot_3d = 0;    % plot graph in 3D.
             
         case {'basicLattice','partialLattice','fullLattice','basicCube','partialCube','fullCube','ensembleLattice', 'ensembleCube','ensembleShape'}
-            G = createLattice(num_nodes,config.graph_type,config.self_loop,config.num_reservoirs);
+            G = createLattice(num_nodes,graph_type,config.self_loop(graph_indx),config.num_reservoirs);
             config.plot_3d = 0;    % plot graph in 3D.
             
         case 'Ring'
-            G = torusGraph(num_nodes,config.self_loop,1,config);
+            config.rule_type = 0;
+            G = torusGraph(num_nodes,config.self_loop(graph_indx),1,config);
             config.plot_3d = 0;    % plot graph in 3D.
             
         otherwise
-            error('Requires a substrate shape.')
+            error('Requires a substrate shape. Check graph type.')
     end
     
     
-    if iscell(config.num_nodes)
+%     if config.num_reservoirs > 1
         config.G{graph_indx} = G;
-        temp_num_nodes = size(config.G{graph_indx}.Nodes,1);
-    else
-        config.G = G;
-        temp_num_nodes =  size(config.G.Nodes,1);
-    end
+        temp_num_nodes(graph_indx) = size(config.G{graph_indx}.Nodes,1);
+%     else
+%         config.G = G;
+%         temp_num_nodes =  size(config.G.Nodes,1);
+%     end
        
 end
 

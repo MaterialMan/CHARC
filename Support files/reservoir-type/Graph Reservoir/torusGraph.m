@@ -32,7 +32,7 @@ if N_rings > 1
 end
 
 % looks odd if N <= N_rings
-if strcmp('Moores',config.ruleType)
+if strcmp('Moores',config.rule_type)
     for j = 1:N_rings
         %top right
         s(j+N_rings*2,:) = s(N_rings+j,:);

@@ -1,21 +1,20 @@
 %% Define additional params for particular reservoirs and tasks
 % overflow for params that can be changed
-function [config,figure3,figure4] = getDataSetInfo(config)
-                         
-figure3= 0; figure4 = 0;
+function [config] = getDataSetInfo(config)
+            
+% if multi-objective, update input/output units
 if ~isfield(config,'nsga2')
     config.task_num_inputs = size(config.train_input_sequence,2);
     config.task_num_outputs = size(config.train_output_sequence,2);
 end
 
-%% Network details
+%% Default network details
 config.num_reservoirs = length(config.num_nodes);% num of subreservoirs. Default ESN should be 1.
 config.leak_on = 1;                           % add leak states
 config.add_input_states = 1;                  %add input to states
 config.sparse_input_weights = 0;              % use sparse inputs
 config.evolve_output_weights = 0;             % evolve rather than train
 
-%config.activeFcn = 'tanh';                   % default activation function
 config.multi_activ = 0;                      % use different activation funcs
 config.activ_list = {'tanh'};                % what activations are in use when multiActiv = 1
 config.training_type = 'Ridge';              % blank is psuedoinverse. Other options: Ridge, Bias,RLS
@@ -29,21 +28,23 @@ switch(config.res_type)
     case 'BZ'
         config.plot_BZ =0;
         config.fft = 0;
-        config.BZ_figure1 = figure;
-        config.BZ_figure2 = figure;
+        config.figure_array = [config.figure_array figure figure];
         
     case 'Graph'
-        config.graph_type= 'fullLattice';            % Define substrate
+        
+        config.graph_type= {'fullLattice'};            % Define substrate. Add graph type to cell array for multi-reservoirs
         % Examples: 'Hypercube','Cube'
         % 'Torus','L-shape','Bucky','Barbell','Ring'
         % 'basicLattice','partialLattice','fullLattice','basicCube','partialCube','fullCube',ensembleLattice,ensembleCube,ensembleShape
+        config.self_loop = [1, 0 ,1];               % give node a loop to self. Must be defined as array.
+
+        if length(config.graph_type) ~= length(config.num_nodes) && length(config.self_loop) ~= length(config.num_nodes)
+            error('Number of graph types does not match number of reservoirs. Add more in getDataSetInfo.m')
+        end
         
         % node details and connectivity
-        config.nearest_neighbour = 0;           % choose radius of nearest neighbour, or set to 0 for direct neighbour.
-%        config.directed_graph = 0;               % directed graph (i.e. weight for all directions).
-        config.self_loop = 1;                   % give node a loop to self.
+        config.ensemble_graph = 0;              % no connections between mutli-graph reservoirs
         config = getShape(config);              % call function to make graph.
-        figure3= figure;
         
     case 'DNA'
         config.tau = 20;                         % settling time
@@ -181,7 +182,7 @@ switch(config.dataset)
     case 'autoencoder'
         config.leak_on = 0;                          % add leak states
         config.add_input_states = 0;
-        figure3= figure; figure4 = figure;
+        config.figure_array = [config.figure_array figure figure];
         config.sparse_input_weights = 0;
         
     case 'poleBalance'
@@ -192,6 +193,8 @@ switch(config.dataset)
         config.run_sim = 0;
         config.testFcn = @poleBalance;
         config.evolve_output_weights = 1;
+        config.add_input_states = 0;                  %add input to states
+
         
     case 'robot'
         % type of task
@@ -208,7 +211,7 @@ switch(config.dataset)
         config.sim_speed = 5;                       % speed of sim result/visualisation. e.g. if =2, 2x speed
         config.testFcn = @robot;                    % assess fcn for robot tasks
         config.evolve_output_weights = 1;             % must be on; unsupervised/reinforcement problem
-        config.figureHandle = figure;               % fig for sim
+
         %environment
         config.bounds_x = 5;                        % scaler for extending bounds of environment
         config.bounds_y = 5;
@@ -223,8 +226,8 @@ switch(config.dataset)
         config.sparse_input_weights = 0;              % use sparse inputs
         config.evolve_output_weights = 1;             % evolve rather than train
         
-        config.multi_activ = 1;                      % use different activation funcs
-        config.activ_list = {'tanh','linearNode','sawtooth','symFcn','sin','cos','gaussDist'};
+        config.multi_activ = 0;                      % use different activation funcs
+        config.activ_list = {'linearNode','sawtooth','symFcn','sin','cos','gaussDist'};
 
     otherwise
         

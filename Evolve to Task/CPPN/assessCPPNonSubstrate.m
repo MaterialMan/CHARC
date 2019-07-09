@@ -1,203 +1,103 @@
 function [substrate,config_sub,CPPN,config] =assessCPPNonSubstrate(substrate,config_sub,CPPN,config)
 
-max_num = substrate.total_units + substrate.n_output_units + substrate.n_input_units;
-min_num = 1;
-
-switch(config_sub.res_type)
-    
-    case 'Graph'
-        input_nodes{1,1} = substrate.w_in;
-        hidden_nodes{1,1} = substrate.G.Edges.EndNodes+size(substrate.w_in,2);
-        
-        for i = 1:length(hidden_nodes{1,1})
-            node(i).num = i;
-            node(i).pos = hidden_nodes{1,1}(i,:);
-        end
-
-        for i = 1:length(hidden_nodes{1,1})
-            xy1(i,:) = node(hidden_nodes{1,1}(i,1)).pos;
-            xy2(i,:) = node(hidden_nodes{1,1}(i,2)).pos;
-        end
-        
-        hidden_nodes{1,1} = [xy1 xy2];
-        
-    case 'ELM'
-         input_nodes = [];
-        
-          for n = 1:size(substrate.W,1)
-            for p = 1:size(substrate.W,2)
-                hidden_nodes{n,p} = substrate.W{n,p}';
-            end
-          end        
-         
-    case 'RoR_IA_v2'
-       
-        for n = 1:size(substrate.W,1)
-            input_nodes{n} = substrate.inputWeights{n};
-            for p = 1:size(substrate.W,2)
-                hidden_nodes{n,p} = substrate.W{n,p};
-            end
-        end
-        
-    otherwise
-        
-         for n = 1:size(substrate.W,1)
-            input_nodes{n} = substrate.input_weights{n};
-            for p = 1:size(substrate.W,2)
-                hidden_nodes{n,p} = substrate.W{n,p};
-            end
-        end
-end
-
+% get input and hidden node detials
+input = substrate.input_weights{1};
 %output weights always the same
-output_nodes = substrate.output_weights;
+output = substrate.output_weights;
 
-%% query input weights
-for n = 1:size(input_nodes,1) %loop over multiple networks/layers/reservoirs
-    for p = 1:size(input_nodes,2)
-        [input_sequence,input_X,input_Y] = getIndexes(input_nodes{n,p},substrate,'input',max_num,min_num);   
-        % run CPPN
-        [test_states,CPPN] = config.assessFcn(CPPN,input_sequence,config);
-        CPPN_input_weights{n,p} = test_states*CPPN.output_weights(:,p);
+%% define coordinates
+%for n = 1:size(substrate.W,2)
+    
+    num_inputs = size(input,2);
+    num_outputs = size(output,2);
+    subrate_size = floor(sqrt(substrate.nodes));
+    
+    % define hidden nodes
+    [X_grid,Y_grid] = ndgrid(linspace(-1,1,subrate_size));
+    
+    cnt = 1;
+    for i = 1:length(X_grid)
+        for j = 1:length(Y_grid)
+            hidden_node(cnt).X = X_grid(i,j);
+            hidden_node(cnt).Y = Y_grid(i,j);
+            hidden_node(cnt).Z = 0;
+            cnt = cnt+1;
+        end
+    end
+    
+    % define input nodes
+    input_loc = linspace(-0.5,0.5,num_inputs);
+    cnt = 1;
+    for i = 1:length(input_loc)
+        input_node(cnt).X = input_loc(i);
+        input_node(cnt).Y = 0;
+        input_node(cnt).Z = -1;
+        cnt = cnt+1;
+    end
+    
+    % define output nodes
+    output_loc = linspace(-0.5,0.5,num_outputs);
+    cnt = 1;
+    for i = 1:length(output_loc)
+        output_node(cnt).X = output_loc(i);
+        output_node(cnt).Y = 0;
+        output_node(cnt).Z = 1;
+        cnt = cnt+1;
+    end
+    
+
+% query input weights
+cnt = 1; from =[]; to =[];
+for i = 1:length(input_node)
+    for j = 1:length(hidden_node)
+        from(cnt,:) = [input_node(i).X input_node(i).Y input_node(i).Z];
+        to(cnt,:) = [hidden_node(j).X hidden_node(j).Y hidden_node(j).Z];
+        cnt = cnt +1;
     end
 end
 
-%% query hidden weights
-for n = 1:size(hidden_nodes,1) %loop over multiple networks/layers/reservoirs
-   for p = 1:size(hidden_nodes,2)
-        if strcmp(config_sub.res_type,'Graph')
-            hidden_sequence = [1 1 1 1; full(hidden_nodes{n,p})];
-        else
-            [hidden_sequence,hidden_X,hidden_Y]= getIndexes(full(hidden_nodes{n,p}),substrate,'hidden',max_num,min_num);
-        end
-        % run CPPN
-        [test_states,CPPN] = config.assessFcn(CPPN,hidden_sequence,config);
-        CPPN_hidden_weights{n,p} = test_states*CPPN.output_weights(:,size(input_nodes,2)+p);
-   end
+input_sequence = [zeros(1,6); from to];
+[test_states,CPPN] = config.assessFcn(CPPN,input_sequence,config);
+CPPN_input_weights = test_states*CPPN.output_weights(:,1);
+substrate.input_weights{1} = reshape(CPPN_input_weights,size(input));
+
+% query hidden weights
+cnt = 1; from =[]; to =[]; d =[];
+for i = 1:length(hidden_node)
+    for j = 1:length(hidden_node)
+        from(cnt,:) = [hidden_node(i).X hidden_node(i).Y hidden_node(i).Z];
+        to(cnt,:) = [hidden_node(j).X hidden_node(j).Y hidden_node(j).Z];
+        cd(cnt,:) = [i j];
+        cnt = cnt +1;
+    end
 end
 
-%% query output nodes
-if config.evolve_output_weights
-    [out_sequence] = getIndexes(output_nodes,substrate,'output',max_num,min_num);
-    
-    % run CPPN
-    [test_states,CPPN] = config.assessFcn(CPPN,out_sequence,config);
-    CPPN_output_weights = test_states*CPPN.output_weights(:,size(input_nodes,2)+size(hidden_nodes,2)+1);
-    
-    substrate.output_weights = CPPN_output_weights;%reshape(CPPN_output_weights,size(output_nodes));
-    
+hidden_sequence = [zeros(1,6); from to];
+[test_states,CPPN] = config.assessFcn(CPPN,hidden_sequence,config);
+CPPN_hidden_weights = test_states*CPPN.output_weights(:,2);
+%substrate.W{1} = reshape(CPPN_hidden_weights,size(substrate.W{1}));
+
+for i = 1:length(cd)
+    substrate.W{1}(cd(i,1),cd(i,2)) = CPPN_hidden_weights(i);
 end
 
-%% reassign weights
-switch(config_sub.res_type)
+% query output weights
+if config_sub.evolve_output_weights
+    cnt = 1; from =[]; to =[];
+    for i = 1:length(output_node)
+        for j = 1:length(hidden_node)
+            from(cnt,:) = [hidden_node(j).X hidden_node(j).Y hidden_node(j).Z];
+            to(cnt,:) = [output_node(i).X output_node(i).Y output_node(i).Z];
+            cnt = cnt +1;
+        end
+    end
     
-    case 'Graph'
-        %reassign input
-        substrate.w_in = CPPN_input_weights{1,1};
-        %reassign hidden
-        substrate.G.Edges.Weight = CPPN_hidden_weights{1,1};
-        
-       %idx2 = sub2ind(size(substrate.G.Edges.Weight), hiddenX, hiddenY);
-        %substrate.G.Edges.Weight(idx2) = CPPN_hidden_weights{n,p};
-                 
-        A = table2array(substrate.G.Edges);
-        substrate.w = zeros(size(substrate.G.Nodes,1));
-        
-        for j = 1:size(substrate.G.Edges,1)
-            substrate.w(A(j,1),A(j,2)) = A(j,3);
-        end
-        
-        
-        
-    case 'ELM'
-        
-         for n = 1:size(substrate.W,1)
-            for p = 1:size(substrate.W,2) 
-                substrate.W{n,p} = CPPN_hidden_weights{n,p}';
-            end
-         end
-         
-         
-        
-    case 'RoR_IA_v2'
-   
-        for n = 1:size(substrate.W,1)
-            idx = sub2ind(size(substrate.inputWeights{n}), input_X, input_Y);
-                 substrate.inputWeights{n}(idx) = CPPN_input_weights{n};
-                 
-            for p = 1:size(substrate.W,2)               
-                 idx2 = sub2ind(size(substrate.W{n,p}), hidden_X, hidden_Y);
-                 substrate.W{n,p}(idx2) = CPPN_hidden_weights{n,p};
-                 
-%                 for cnt = 1:length(inputX)
-%                     substrate.esnMinor(n,p).inputWeights(inputX(cnt),inputY(cnt)) = CPPN_input_weights{n,p}(cnt);
-%                 end
-% 
-%                 for cnt = 1:length(hiddenX)
-%                     substrate.connectWeights{n,p}(hiddenX(cnt),hiddenY(cnt)) = CPPN_hidden_weights{n,p}(cnt);
-%                 end
-            end
-        end
-        
-    otherwise
-        
-        for n = 1:size(substrate.W,1)
-            idx = sub2ind(size(substrate.input_weights{n}), input_X, input_Y);
-            substrate.input_weights{n}(idx) = CPPN_input_weights{n};
-            
-            for p = 1:size(substrate.W,2)
-                idx2 = sub2ind(size(substrate.W{n,p}), hidden_X, hidden_Y);
-                substrate.W{n,p}(idx2) = CPPN_hidden_weights{n,p};
-                
-            end
-        end
-        
+    output_sequence = [ones(1,6); from to];
+    [test_states,CPPN] = config.assessFcn(CPPN,output_sequence,config);
+    substrate.output_weights = test_states*CPPN.output_weights(:,3);
 end
 
 %assess substrate on task
 substrate = config_sub.testFcn(substrate,config_sub);
-
-end
-
-function [input_sequence, I , J] = getIndexes(sequence,substrate,type, max_num, min_num)
-
-        if size(sequence,2) < 2
-            I = ones(length(sequence),1)';
-            J = (1:length(sequence));
-        else
-            [I,J] = ind2sub([size(sequence)],1:length(sequence(:)));
-            
-        end
-                
-        grid = [I;J]';
-        
-        for i = 1:length(grid)
-            node(i).num = i;
-            node(i).pos = grid(i,:);
-        end
-
-        for i = 1:length(I)
-            xy1(i,:) = node(I(i)).pos;
-            xy2(i,:) = node(J(i)).pos;
-        end
-        
-        %inputSequence = [1 1; I' J'];
-        input_sequence = [1 1 1 1; xy1 xy2];
-        
-        switch(type)
-            case 'input'
-                %blank - okay as is
-               % inputSequence = inputSequence(:,1:3) -1;
-            case 'hidden'
-                input_sequence = input_sequence + substrate.n_input_units; %shift by num inputs
-            case 'output'
-                %inputSequence = [inputSequence(:,2) inputSequence(:,1)+length(inputSequence)]; %rearrange hidden nodes to outputs (index shifted by num hidden units)  
-                input_sequence(:,1:3) = input_sequence(:,1:3) + substrate.n_input_units + length(input_sequence);
-        end
-        
-          %normalise           
-          input_sequence = [[input_sequence(:,1); min_num; max_num] [input_sequence(:,2); min_num; max_num] [input_sequence(:,3); min_num; max_num] [input_sequence(:,4); min_num; max_num]];
-          input_sequence = mapminmax(input_sequence',-1,1);
-          input_sequence = input_sequence(:,1:end-2)';
 
 end

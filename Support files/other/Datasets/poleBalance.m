@@ -183,13 +183,13 @@ for  tests = 1:config.pole_tests
         
     end
     
-    figHandle = figure(2);
+
     %plot
     for n = 2:5:exited
         if config.run_sim && tests == config.pole_tests % only show last
             if config.simple_task < 3
 
-                set(0,'currentFigure',figHandle)
+                set(0,'currentFigure',config.figure_array(1))
                 subplot(2,2,1)
                 plot(x_pole(n),0,'k+','LineWidth',10);
                 hold on

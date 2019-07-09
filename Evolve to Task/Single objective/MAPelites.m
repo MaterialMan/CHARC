@@ -17,7 +17,7 @@ end
 
 %% type of network to evolve
 config.res_type = 'RoR';                 % can use different hierarchical reservoirs. RoR_IA is default ESN.
-config.num_nodes = 50;                      % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
+config.num_nodes = [50];                      % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
 config = selectReservoirType(config);       % get correct functions for type of reservoir
 
 %% Network details
@@ -26,7 +26,7 @@ config.metrics = {'KR','MC'}; % metrics to use (and order of metrics)
 %% Evolutionary parameters
 config.num_tests = 1;                        % num of runs
 config.initial_population = 100;             % large pop better
-config.total_iter = 50;                    % num of gens
+config.total_iter = 500;                    % num of gens
 config.mut_rate = 0.1;                       % mutation rate
 config.rec_rate = 0.5;                       % recombination rate
 
@@ -34,7 +34,7 @@ config.rec_rate = 0.5;                       % recombination rate
 config.discrete = 0;                                                        % binary input for discrete systems
 config.nbits = 16;                                                          % if using binary/discrete systems
 config.preprocess = 1;                                                      % basic preprocessing, e.g. scaling and mean variance
-config.dataset = 'NARMA10';                                                  % Task to evolve for
+config.dataset = 'Laser';                                                  % Task to evolve for
 
 % get dataset
 [config] = selectDataset(config);
@@ -43,7 +43,7 @@ config.dataset = 'NARMA10';                                                  % T
 [config] = getDataSetInfo(config);
 
 %% MAP of elites parameters
-config.batch_size = 10;                                                     % how many offspring to create in one iteration
+config.batch_size = 1;                                                     % how many offspring to create in one iteration
 config.local_breeding = 1;                                                  % if interbreeding is local or global
 config.k_neighbours = 5;                                                    % select second parent from neighbouring behaviours
 config.total_MAP_size = round(config.num_nodes*config.num_reservoirs + (config.add_input_states*config.task_num_inputs) + 1);  %size depends system used
@@ -52,9 +52,7 @@ config.change_MAP_iter = round(config.total_iter/(length(config.MAP_resolution)-
 config.start_MAP_resolution = config.MAP_resolution(1);                        % record of first resolution point
 config.voxel_size = 10;                                                     % to measure behaviour space
 
-figure1 = figure;
-figure2 = figure;
-figure3 = figure;
+config.figure_array = [figure figure];
 
 config.gen_print = 5;
 
@@ -190,14 +188,14 @@ for tests = 1:config.num_tests
         end
         
         store_global_best(tests,iter)  = global_best;
-        set(0,'currentFigure',figure2)
+        set(0,'currentFigure',config.figure_array(1))
         plot(store_global_best(tests,:));
         xlabel('Iterations (\times batch size)')
         ylabel('Test Error')
         drawnow;
         
         % plot MAP of elites
-        plotSearch(figure3,MAP,iter*config.batch_size,config)
+        plotSearch(MAP,iter*config.batch_size,config)
         
         if (mod(iter,config.gen_print) == 0)
             %plotReservoirDetails(figure1,MAP,store_global_best,tests,best_indv,1,prev_best,config)       
@@ -247,9 +245,9 @@ end
 
 end
 
-function plotSearch(figureHandle,database, gen,config)
+function plotSearch(database, gen,config)
 
-set(0,'currentFigure',figureHandle)
+set(0,'currentFigure',config.figure_array(2))
 
 v = 1:length(config.metrics);
 C = nchoosek(v,2);
