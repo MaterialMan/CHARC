@@ -31,7 +31,7 @@ end
 
 % type of network to evolve
 config.res_type = 'RoR';                % state type of reservoir to use. E.g. 'RoR' (Reservoir-of-reservoirs/ESNs), 'ELM' (Extreme learning machine), 'Graph' (graph network of neurons), 'DL' (delay line reservoir) etc. Check 'selectReservoirType.m' for more.
-config.num_nodes = 50;                  % num of nodes in each sub-reservoir, e.g. if config.num_nodes = {10,5,15}, there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. For one reservoir, sate as a non-cell, e.g. config.num_nodes = 25
+config.num_nodes = [50];                  % num of nodes in each sub-reservoir, e.g. if config.num_nodes = {10,5,15}, there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. For one reservoir, sate as a non-cell, e.g. config.num_nodes = 25
 config = selectReservoirType(config);   % collect function pointers for the selected reservoir type 
 
 % Network details
@@ -46,7 +46,7 @@ config.dataset = 'blank';
 
 % get any additional params stored in getDataSetInfo.m. This might include:
 % details on reservoir structure, extra task variables, etc. 
-[config,figure3,figure4] = getDataSetInfo(config);
+[config] = getDataSetInfo(config);
 
 %% Evolutionary parameters
 config.num_tests = 1;                        % num of tests/runs
@@ -63,11 +63,10 @@ config.p_min_start = 3;                     % novelty threshold. In general star
 config.p_min_check = 200;                   % change novelty threshold dynamically after "p_min_check" generations.
 
 % general params
-config.gen_print = 25;                       % after 'gen_print' generations display archive and database
+config.gen_print = 10;                       % after 'gen_print' generations display archive and database
 config.start_time = datestr(now, 'HH:MM:SS');
-figure1 =figure;
-figure2 = figure;
-config.save_gen = 25;                       % save data at generation = save_gen
+config.figure_array = [figure figure];
+config.save_gen = 10;                       % save data at generation = save_gen
 config.param_indx = 1;                      % index for recording database quality; start from 1
 
 % prediction parameters
@@ -191,7 +190,7 @@ for tests = 1:config.num_tests
             fprintf('Gen %d, time taken: %.4f sec(s)\n Winner is %d, Loser is %d \n',gen,toc/config.gen_print,winner,loser);
             fprintf('Length of archive: %d, p_min; %d \n',length(archive), config.p_min);
             tic;
-            plotSearch(figure1,database,gen,config)        % plot details
+            plotSearch(database,gen,config)        % plot details
         end
     
         % safe details to disk
@@ -203,11 +202,9 @@ for tests = 1:config.num_tests
             database_history{tests,config.param_indx} = plot_behaviours;
             config.param_indx = config.param_indx+1; % add to saved database counter
             
-            plotQuality(figure2,quality,config);
+            plotQuality(quality,config);
             
-            save(strcat('Framework_substrate_',config.res_type,'_run',num2str(tests),'_gens',num2str(config.total_gens),'_',num2str(config.num_reservoirs),'Nres_'),...
-                'database_history','database','config','quality','-v7.3');
-            
+            saveData(database_history,database,quality,tests,config);
        end
     end
     
@@ -226,11 +223,11 @@ avg_dist = mean(D);
 end
 
 %% plot the behaviour space
-function plotSearch(figureHandle,database, gen,config)
+function plotSearch(database, gen,config)
 
 all_behaviours = reshape([database.behaviours],length(config.metrics),length(database))';
 
-set(0,'currentFigure',figureHandle)
+set(0,'currentFigure',config.figure_array(1))
 title(strcat('Gen:',num2str(gen)))
 v = 1:length(config.metrics);
 C = nchoosek(v,2);
@@ -256,13 +253,20 @@ drawnow
 end
 
 %% plot quality
-function plotQuality(figureHandle,quality,config)
+function plotQuality(quality,config)
 
-set(0,'currentFigure',figureHandle)
+set(0,'currentFigure',config.figure_array(2))
 plot(1:length(quality),quality)
 xticks(1:length(quality))
 xticklabels((1:length(quality))*config.save_gen)
 xlabel('Generation')
 ylabel('Quality')
 
+end
+
+function saveData(database_history,database,quality,tests,config)
+        config.figure_array =[];
+  save(strcat('Framework_substrate_',config.res_type,'_run',num2str(tests),'_gens',num2str(config.total_gens),'_',num2str(config.num_reservoirs),'Nres_'),...
+                'database_history','database','config','quality','-v7.3');
+            
 end
