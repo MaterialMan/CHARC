@@ -62,7 +62,7 @@ for pop_indx = 1:config.pop_size
                 population(pop_indx).activ_Fcn{i,act} = config.activ_list{activ_positions(act)};
             end
         else
-            population(pop_indx).activ_Fcn = 'tanh';
+            population(pop_indx).activ_Fcn = config.activ_list;
         end
         
         population(pop_indx).last_state{i} = zeros(1,population(pop_indx).nodes(i));

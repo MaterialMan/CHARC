@@ -16,7 +16,7 @@ config.sparse_input_weights = 0;              % use sparse inputs
 config.evolve_output_weights = 0;             % evolve rather than train
 
 config.multi_activ = 0;                      % use different activation funcs
-config.activ_list = {'tanh'};                % what activations are in use when multiActiv = 1
+config.activ_list = {@tanh};                % what activations are in use when multiActiv = 1
 config.training_type = 'Ridge';              % blank is psuedoinverse. Other options: Ridge, Bias,RLS
 
 %% change/add parameters depending on reservoir type

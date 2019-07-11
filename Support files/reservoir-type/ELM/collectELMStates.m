@@ -28,12 +28,13 @@ for n = 2:size(input_sequence,1)
             input = ([individual.bias_node states{i-1}(n,:)]*individual.W{i,i}'*individual.W_scaling(i,i))';
         end
         
-        if iscell(individual.activ_Fcn)
+        if size(individual.activ_Fcn,2) > 1
             for p = 1:individual.nodes(i)            
                 %states{i}(n,p) = feval(individual.activ_Fcn{p},((individual.input_weights{i}(p,:)*individual.input_scaling(i))*input )); 
-                states{i}(n,p) = feval(individual.activ_Fcn{p},input(p,:)); 
+                %states{i}(n,p) = feval(individual.activ_Fcn{p},input(p,:)); 
                 %states{i}(n,p) = feval(individual.activ_Fcn{p},((individual.input_weights{i}(p,:)*individual.input_scaling(i))*input )); 
-               
+               states{i}(n,p) = individual.activ_Fcn{p}(input(p,:));
+
             end
         else
             states{i}(n,:) = feval(individual.activ_Fcn,input); 

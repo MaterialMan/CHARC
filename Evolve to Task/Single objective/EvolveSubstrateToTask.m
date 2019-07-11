@@ -15,7 +15,7 @@ close all
 rng(1,'twister');
 
 %% Setup
-config.parallel = 1;                        % use parallel toolbox
+config.parallel = 0;                        % use parallel toolbox
 
 %start paralllel pool if empty
 if isempty(gcp) && config.parallel
@@ -29,8 +29,8 @@ config = selectReservoirType(config);       % collect function pointers for the 
 
 %% Evolutionary parameters
 config.num_tests = 1;                        % num of tests/runs
-config.pop_size = 100;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
-config.total_gens = 500;                    % number of generations to evolve 
+config.pop_size = 10;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
+config.total_gens = 100;                    % number of generations to evolve 
 config.mut_rate = 0.225;                       % mutation rate
 config.deme_percent = 0.2;                   % speciation percentage; determines interbreeding distance on a ring.
 config.deme = round(config.pop_size*config.deme_percent);
@@ -40,7 +40,7 @@ config.rec_rate = 0.25;                       % recombination rate
 config.discrete = 0;               % select '1' for binary input for discrete systems
 config.nbits = 16;                 % only applied if config.discrete = 1; if wanting to convert data for binary/discrete systems
 config.preprocess = 1;             % basic preprocessing, e.g. scaling and mean variance
-config.dataset = 'Laser';          % Task to evolve for
+config.dataset = 'NARMA10';          % Task to evolve for
 
 % get dataset information
 [config] = selectDataset(config);

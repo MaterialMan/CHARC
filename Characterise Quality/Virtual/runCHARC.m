@@ -31,7 +31,7 @@ end
 
 % type of network to evolve
 config.res_type = 'RoR';                % state type of reservoir to use. E.g. 'RoR' (Reservoir-of-reservoirs/ESNs), 'ELM' (Extreme learning machine), 'Graph' (graph network of neurons), 'DL' (delay line reservoir) etc. Check 'selectReservoirType.m' for more.
-config.num_nodes = [50];                  % num of nodes in each sub-reservoir, e.g. if config.num_nodes = {10,5,15}, there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. For one reservoir, sate as a non-cell, e.g. config.num_nodes = 25
+config.num_nodes = [25,25];                  % num of nodes in each sub-reservoir, e.g. if config.num_nodes = {10,5,15}, there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. For one reservoir, sate as a non-cell, e.g. config.num_nodes = 25
 config = selectReservoirType(config);   % collect function pointers for the selected reservoir type 
 
 % Network details
@@ -51,7 +51,7 @@ config.dataset = 'blank';
 %% Evolutionary parameters
 config.num_tests = 1;                        % num of tests/runs
 config.pop_size = 100;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
-config.total_gens = 1000;                    % number of generations to evolve 
+config.total_gens = 2000;                    % number of generations to evolve 
 config.mut_rate = 0.1;                       % mutation rate
 config.deme_percent = 0.2;                   % speciation percentage; determines interbreeding distance on a ring.
 config.deme = round(config.pop_size*config.deme_percent);
@@ -63,10 +63,10 @@ config.p_min_start = 3;                     % novelty threshold. In general star
 config.p_min_check = 200;                   % change novelty threshold dynamically after "p_min_check" generations.
 
 % general params
-config.gen_print = 10;                       % after 'gen_print' generations display archive and database
+config.gen_print = 50;                       % after 'gen_print' generations display archive and database
 config.start_time = datestr(now, 'HH:MM:SS');
 config.figure_array = [figure figure];
-config.save_gen = 10;                       % save data at generation = save_gen
+config.save_gen = inf;                       % save data at generation = save_gen
 config.param_indx = 1;                      % index for recording database quality; start from 1
 
 % prediction parameters
@@ -191,19 +191,19 @@ for tests = 1:config.num_tests
             fprintf('Length of archive: %d, p_min; %d \n',length(archive), config.p_min);
             tic;
             plotSearch(database,gen,config)        % plot details
-        end
-    
-        % safe details to disk
-       if mod(gen,config.save_gen) == 0
+            
             % measure voxel count and quality 
             plot_behaviours = reshape([database.behaviours],length(config.metrics),length(database))'; 
             [quality(tests,config.param_indx),~]= measureSearchSpace(plot_behaviours,config.voxel_size);
             % add database to history of databases
             database_history{tests,config.param_indx} = plot_behaviours;
             config.param_indx = config.param_indx+1; % add to saved database counter
-            
+                        
             plotQuality(quality,config);
-            
+        end
+    
+        % safe details to disk
+       if mod(gen,config.save_gen) == 0           
             saveData(database_history,database,quality,tests,config);
        end
     end
@@ -258,7 +258,7 @@ function plotQuality(quality,config)
 set(0,'currentFigure',config.figure_array(2))
 plot(1:length(quality),quality)
 xticks(1:length(quality))
-xticklabels((1:length(quality))*config.save_gen)
+xticklabels((1:length(quality))*config.gen_print)
 xlabel('Generation')
 ylabel('Quality')
 
