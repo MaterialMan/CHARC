@@ -3,12 +3,13 @@ function metrics = getVirtualMetrics(individual,config)
 
 scurr = rng;
 temp_seed = scurr.Seed;
+
+% set parameters
 metrics = [];
-% training reguliser
 config.reg_param = 10e-6;
 config.wash_out = 100;
 metrics_type =  config.metrics;
-num_timesteps = 200;
+num_timesteps = individual.total_units*2 + config.wash_out; % input should be twice the size of network + wash out
 N = individual.n_input_units;
 
 for metric_item = 1:length(config.metrics)
@@ -106,9 +107,9 @@ for metric_item = 1:length(config.metrics)
         case 'MC'
 
             % measure MC multiple times
-            for num_tests = 1:3
-                temp_MC(num_tests) = memoryLengthTest(individual,config,num_tests);
-            end
+            %for 
+            temp_MC = testMC(individual,config,1);
+            %end
            
             MC = mean(temp_MC);
     

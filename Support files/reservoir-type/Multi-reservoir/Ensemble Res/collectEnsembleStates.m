@@ -29,7 +29,7 @@ for n = 2:size(input_sequence,1)
 
             end
         else
-            states{i}(n,:) = feval(individual.activ_Fcn,((individual.input_weights{i}*individual.input_scaling(i))* ([individual.bias_node input_sequence(n,:)])') + x{i}(n,:)'); 
+            states{i}(n,:) = individual.activ_Fcn{1}(((individual.input_weights{i}*individual.input_scaling(i))* ([individual.bias_node input_sequence(n,:)])') + x{i}(n,:)'); 
         end
         
     end

@@ -32,11 +32,11 @@ switch(config.res_type)
         
     case 'Graph'
         
-        config.graph_type= {'fullLattice'};            % Define substrate. Add graph type to cell array for multi-reservoirs
+        config.graph_type= {'Ring'};            % Define substrate. Add graph type to cell array for multi-reservoirs
         % Examples: 'Hypercube','Cube'
         % 'Torus','L-shape','Bucky','Barbell','Ring'
         % 'basicLattice','partialLattice','fullLattice','basicCube','partialCube','fullCube',ensembleLattice,ensembleCube,ensembleShape
-        config.self_loop = [1, 0 ,1];               % give node a loop to self. Must be defined as array.
+        config.self_loop = [1];               % give node a loop to self. Must be defined as array.
 
         if length(config.graph_type) ~= length(config.num_nodes) && length(config.self_loop) ~= length(config.num_nodes)
             error('Number of graph types does not match number of reservoirs. Add more in getDataSetInfo.m')

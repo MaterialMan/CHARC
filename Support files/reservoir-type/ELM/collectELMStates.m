@@ -37,7 +37,7 @@ for n = 2:size(input_sequence,1)
 
             end
         else
-            states{i}(n,:) = feval(individual.activ_Fcn,input); 
+            states{i}(n,:) = individual.activ_Fcn{1}(input); 
         end
         
     end

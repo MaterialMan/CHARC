@@ -12,36 +12,32 @@ for i= 1:config.num_reservoirs
         states{i} = zeros(size(input_sequence,1),individual.nodes(i));
     end
     x{i} = zeros(size(input_sequence,1),individual.nodes(i));
+    
+    % reset weights to correct graph structure 
+    graph_indx{i} = logical(full(adjacency(individual.G{i})));
+    individual.W{i,i}(~graph_indx{i}) = 0;
 end
 
 %% collect states
 for n = 2:size(input_sequence,1)
     
     for i= 1:config.num_reservoirs
+        
         for k= 1:config.num_reservoirs
-            if i ==k % remove excess weights added through mutation
-                % find indices for graph weights
-                graph_indx = logical(full(adjacency(individual.G{i})));
-                % assign weights
-                individual.W{i,k}(~graph_indx) = 0;
-            end
-            x{i}(n,:) = x{i}(n,:) + ((individual.W{i,k}*individual.W_scaling(i,k))*states{k}(n-1,:)')';
+            x{i}(n,:) = x{i}(n,:) + ((individual.W{i,k}*individual.W_scaling(i,k))*states{k}(n-1,:)')';            
         end
         
         if size(individual.activ_Fcn,2) > 1
             for p = 1:individual.nodes(i)            
-                %states{i}(n,p) = feval(individual.activ_Fcn{p},((individual.input_weights{i}(p,:)*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,p)'); 
-                states{i}(n,p) = individual.activ_Fcn{p}(((individual.input_weights{i}(p,:)*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,p)');
+               states{i}(n,p) = individual.activ_Fcn{p}(((individual.input_weights{i}(p,:)*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,p)');
             end
         else
-            states{i}(n,:) = feval(individual.activ_Fcn,((individual.input_weights{i}*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,:)'); 
+            states{i}(n,:) = individual.activ_Fcn{1}(((individual.input_weights{i}*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,:)'); 
         end
     end
 end
 
-% for t= 2:size(inputSequence,1)
-%     x(t,:) = feval(config.actvFunc,genotype.w_in*genotype.inputScaling*inputSequence(t,:)' + (genotype.w*genotype.Wscaling*x(t-1,:)'));
-% end
+
 
 % get leak states
 if config.leak_on
