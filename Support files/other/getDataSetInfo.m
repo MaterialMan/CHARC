@@ -52,30 +52,16 @@ switch(config.res_type)
         config.concat_states = 0;                % use all states
         
     case 'RBN'
-        config.k = 2;
-        config.mono_rule = 1;
         
-        mode = 'DGARBN';
-        switch mode
-            case 'CRBN'
-                config.RBNtype = @evolveCRBN;
-            case 'ARBN'
-                config.RBNtype = @evolveARBN;
-            case 'DARBN'
-                config.RBNtype = @evolveDARBN;
-            case 'GARBN'
-                config.RBNtype = @evolveGARBN;
-            case 'DGARBN'
-                config.RBNtype = @evolveDGARBN;
-            otherwise
-                error('Unknown update mode. Type ''help displayEvolution'' to see supported modes')
-        end
-        
+        config.k = 2; % number of inputs
+        config.mono_rule = 1; % use one rule for every cell/reservoir
+        config.rule_list = {@evolveDARBN}; %list of evaluation types: {'CRBN','ARBN','DARBN','GARBN','DGARBN'};
+       
     case 'basicCA'
         % update type
-        config.RBN_type = @evolveCRBN;
-        config.mono_rule = 0;               %stick to rule rule set, individual cells cannot have different rules
-        
+        config.mono_rule = 1;               %stick to rule rule set, individual cells cannot have different rules
+        config.rule_list = {@evolveDARBN}; %list of evaluation types: {'CRBN','ARBN','DARBN','GARBN','DGARBN'};
+       
         % Define CA connectivity
         A = ones(config.num_nodes);
         B = tril(A,-2);
@@ -100,15 +86,15 @@ switch(config.res_type)
         
         switch mode
             case 'CRBN'
-                config.RBNtype = @evolveCRBN;
+                config.RBN_type = @evolveCRBN;
             case 'ARBN'
-                config.RBNtype = @evolveARBN;
+                config.RBN_type = @evolveARBN;
             case 'DARBN'
-                config.RBNtype = @evolveDARBN;
+                config.RBN_type = @evolveDARBN;
             case 'GARBN'
-                config.RBNtype = @evolveGARBN;
+                config.RBN_type = @evolveGARBN;
             case 'DGARBN'
-                config.RBNtype = @evolveDGARBN;
+                config.RBN_type = @evolveDGARBN;
         end
         
         config.mono_rule = 1;                   %stick to rule rule set, individual cells cannot have different rules

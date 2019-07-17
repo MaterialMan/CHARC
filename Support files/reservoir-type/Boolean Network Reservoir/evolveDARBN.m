@@ -27,21 +27,23 @@ function [nodeUpdated, timeStateMatrix] = evolveDARBN(node, varargin)
 %   CreationDate: 20.11.2002 LastModified: 30.11.2018 (Matt Dale)
 
 
-k = varargin{1};
-inputSequence = varargin{2};
-genotype = varargin{3};
+%k = varargin{1};
+input_sequence = varargin{1};
+k = size(input_sequence,2);
+%genotype = varargin{3};
 
 nodeUpdated = resetNodeStats(node);
 
-timeStateMatrix = zeros(length(nodeUpdated), k+1);
+timeStateMatrix = zeros(length(nodeUpdated), k); %k+1
 timeStateMatrix(1:length(nodeUpdated),1) = getStateVector(nodeUpdated)';
 
 n = length(nodeUpdated);
 
 % evolve network
-for i=2:k+1
+for i=1:k%2:k+1
     
-    timeNow = i-1;
+    %timeNow = i-1;
+    timeNow = i;
     nodeSelected = [];
     for j=1:n
         if(mod(timeNow,nodeUpdated(j).p) == nodeUpdated(j).q)
@@ -49,9 +51,10 @@ for i=2:k+1
         end
     end
     
+    nodeUpdated = setLUTLines(nodeUpdated);
+    nodeUpdated = setNodeNextState(nodeUpdated,input_sequence);
+        
     for j=1:length(nodeSelected)
-        nodeUpdated = setLUTLines(nodeUpdated);
-        nodeUpdated = setNodeNextState(nodeUpdated,genotype,inputSequence(i-1,:));
         
         nodeUpdated(nodeSelected(j)).state = nodeUpdated(nodeSelected(j)).nextState;
         nodeUpdated(nodeSelected(j)).nbUpdates = nodeUpdated(nodeSelected(j)).nbUpdates + 1;

@@ -41,7 +41,16 @@ for i=1:length(node)
     for k=1:length(node(i).input)
         statevector(k) = node(node(i).input(k)).state;
     end  
-    nodeUpdated(i).lineNumber = polyval(statevector,2)+1;   
+
+    %statevector = [node(node(i).input).state];
+    %nodeUpdated(i).lineNumber = polyval(statevector,2)+1;   
+    
+    y = statevector(1);%repmat(statevector(1),size(2));
+    for k = 2:length(statevector)
+        y = y.*2+statevector(k);
+    end
+    nodeUpdated(i).lineNumber = y+1;
+    
 end
 
 else

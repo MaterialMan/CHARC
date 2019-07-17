@@ -12,7 +12,7 @@ config.parallel = 1;                        % use parallel toolbox
 
 %start paralllel pool if empty
 if isempty(gcp) && config.parallel
-    parpool; % create parallel pool
+    parpool('local',4,'IdleTimeout', Inf); % create parallel pool
 end
 
 %% type of network to evolve
