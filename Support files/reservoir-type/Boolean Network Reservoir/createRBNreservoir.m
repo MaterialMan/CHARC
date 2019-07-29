@@ -10,7 +10,7 @@ for pop_indx = 1:config.pop_size
     population(pop_indx).test_error = 1;
     
     % add single bias node
-    population(pop_indx).bias_node = 1;
+    %population(pop_indx).bias_node = 1;
     
     % assign input/output count
     if isempty(config.train_input_sequence)
@@ -33,12 +33,12 @@ for pop_indx = 1:config.pop_size
         
         %inputweights
         if config.sparse_input_weights
-            input_weights = sprand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1, 0.1);
+            input_weights = sprand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units, 0.1);
             input_weights(input_weights ~= 0) = ...
                 2*input_weights(input_weights ~= 0)  - 1;
             population(pop_indx).input_weights{i} = input_weights;
         else
-            population(pop_indx).input_weights{i} = 2*rand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1)-1;
+            population(pop_indx).input_weights{i} = 2*rand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units)-1;
         end
         
         
@@ -46,6 +46,9 @@ for pop_indx = 1:config.pop_size
         population(pop_indx).RBN_type{i} = config.rule_list{randi([1 length(config.rule_list)])};% more than one rule & evolve config.RBN_type{i};
         
         population(pop_indx).last_state{i} = zeros(1,population(pop_indx).nodes(i));
+    
+        population(pop_indx).input_location{i} = round(rand(1,population(pop_indx).nodes(i)));
+    
     end
     
     %track total nodes in use
@@ -56,13 +59,27 @@ for pop_indx = 1:config.pop_size
                
         switch(config.res_type)
             
-            case 'basicCA'
-                %         population(pop_indx).initialStates = round(rand(population(pop_indx).nodes(i),1));
-                %         population(pop_indx).conn= config.conn;
-                %         population(pop_indx).rules = config.rules;
-                %         population(pop_indx).node = initNodes(population(pop_indx).nodes(i),population(pop_indx).initialStates,zeros(population(pop_indx).nodes(i),1),zeros(population(pop_indx).nodes(i),1));
+            case 'elementary_CA'
+
+                % Define CA connectivity
+                A = ones(population(pop_indx).nodes(i));
+                B = tril(A,-2);
+                C = triu(A, 2);
+                D = B + C;
+                D(1,config.num_nodes) = 0;
+                D(config.num_nodes,1) = 0;
+                D(find(D == 1)) = 2;
+                D(find(D == 0)) = 1;
+                D(find(D == 2)) = 0;
+                CA_W{i}=D;
+                
+                population(pop_indx).initial_states{i} = round(rand(population(pop_indx).nodes(i),1));
+                % pick random rule
+                rules = repmat(round(rand(8,1)),1,population(pop_indx).nodes(i));
+                population(pop_indx).rules{i} = initRules(rules);
+                population(pop_indx).RBN_node{i} = initNodes(population(pop_indx).nodes(i),population(pop_indx).initial_states{i},zeros(population(pop_indx).nodes(i),1),zeros(population(pop_indx).nodes(i),1));
                 %
-            case '2dCA'
+            case '2D_CA'
                 
                 %         population(pop_indx).conn = zeros(config.maxMinorUnits); %needs to be sparse
                 %         population(pop_indx).G = config.G;
@@ -82,7 +99,11 @@ for pop_indx = 1:config.pop_size
                 
                 population(pop_indx).RBN_node{i} = initNodes(population(pop_indx).nodes(i));
                 %population(pop_indx).W{i} = initConnections(population(pop_indx).nodes(i), config.k);
-                population(pop_indx).rules{i} = initRules(population(pop_indx).nodes(i), config.k);
+                if config.mono_rule
+                     population(pop_indx).rules{i} = int8(repmat(round(rand(2^config.k,1)),1,population(pop_indx).nodes(i)));
+                else
+                    population(pop_indx).rules{i} = initRules(population(pop_indx).nodes(i), config.k);
+                end
         end
         
 
@@ -97,7 +118,16 @@ for pop_indx = 1:config.pop_size
             % assign scaling for inner weights 
             population(pop_indx).W_scaling(i,j) = 2*rand;   
             if i == j
-                population(pop_indx).W{i,j} = initConnections(population(pop_indx).nodes(i), config.k);
+                switch(config.res_type)
+                    
+                    case 'elementary_CA'
+                        population(pop_indx).W{i,j} = CA_W{i};
+                        
+                    case '2D_CA'
+                            
+                    otherwise
+                        population(pop_indx).W{i,j} = initConnections(population(pop_indx).nodes(i), config.k);     
+                end
             else
                 population(pop_indx).W{i,j} = internal_weights; 
             end

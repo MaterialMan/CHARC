@@ -61,8 +61,8 @@ switch(config.res_type)
     case {'RoR','Pipeline','Ensemble'}
         plotRoR(config.figure_array(2),population,best_indv(gen),loser,config);
         
-    case 'RBN'
-        plotRBN(individual,config)
+    case {'RBN','elementary_CA'}
+        plotRBN(population(best_indv(gen)),config)
 end
 
 end

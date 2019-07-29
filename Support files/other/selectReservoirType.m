@@ -50,7 +50,7 @@ switch(config.res_type)
         config.mutFcn = @mutateRBN;
         config.recFcn = @recombRBN;
         
-    case 'basicCA'
+    case 'elementary_CA'
         config.createFcn = @createRBNreservoir;
         config.assessFcn = @assessRBNreservoir;
         config.mutFcn = @mutateRBN;

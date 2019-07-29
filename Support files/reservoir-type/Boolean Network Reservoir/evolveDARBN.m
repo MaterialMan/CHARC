@@ -28,9 +28,9 @@ function [nodeUpdated, timeStateMatrix] = evolveDARBN(node, varargin)
 
 
 %k = varargin{1};
-input_sequence = varargin{1};
+input_loc = varargin{1};
+input_sequence = varargin{2};
 k = size(input_sequence,2);
-%genotype = varargin{3};
 
 nodeUpdated = resetNodeStats(node);
 
@@ -40,10 +40,10 @@ timeStateMatrix(1:length(nodeUpdated),1) = getStateVector(nodeUpdated)';
 n = length(nodeUpdated);
 
 % evolve network
-for i=1:k%2:k+1
+for i= 2:k
     
-    %timeNow = i-1;
-    timeNow = i;
+    timeNow = i-1;
+    %timeNow = i;
     nodeSelected = [];
     for j=1:n
         if(mod(timeNow,nodeUpdated(j).p) == nodeUpdated(j).q)
@@ -52,7 +52,7 @@ for i=1:k%2:k+1
     end
     
     nodeUpdated = setLUTLines(nodeUpdated);
-    nodeUpdated = setNodeNextState(nodeUpdated,input_sequence);
+    nodeUpdated = setNodeNextState(nodeUpdated,input_loc,input_sequence(:,i-1));
         
     for j=1:length(nodeSelected)
         

@@ -33,8 +33,8 @@ config.rec_rate = 0.5;                       % recombination rate
 
 %% substrate details
 config_sub.pop_size = config.pop_size;
-config_sub.num_nodes = [7]; % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
-config_sub.res_type ='Graph';
+config_sub.num_nodes = [7];                 % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
+config_sub.res_type ='Graph';               % currently only works with lattice as CPPN configured substrate
 
 config_sub = selectReservoirType(config_sub);       % get correct functions for type of reservoir
 config_sub.parallel = config.parallel;                        % use parallel toolbox
@@ -61,7 +61,7 @@ config.dataset = 'CPPN';                 % Task to evolve for
 config_sub.discrete = 0;               % binary input for discrete systems
 config_sub.nbits = 16;                       % if using binary/discrete systems
 config_sub.preprocess = 1;                   % basic preprocessing, e.g. scaling and mean variance
-config_sub.dataset = 'Laser';                 % Task to evolve for
+config_sub.dataset = 'NARMA10';                 % Task to evolve for
 
 % get dataset
 [config_sub] = selectDataset(config_sub);
@@ -102,14 +102,14 @@ for test = 1:config.num_tests
         parfor pop_indx = 1:config.pop_size
             warning('off','all')
             % assign weights through CPPN
-            [substrate(pop_indx),~,CPPN(pop_indx),~] = assessCPPNonSubstrate2(substrate(pop_indx),config_sub,CPPN(pop_indx),config);
+            [substrate(pop_indx),~,CPPN(pop_indx),~] = assessCPPNonSubstrate(substrate(pop_indx),config_sub,CPPN(pop_indx),config);
             ppm.increment();
             %fprintf('\n i = %d, error = %.4f, took: %.4f\n',popEval,substrate(popEval).valError,toc);
         end
     else
         for pop_indx = 1:config.pop_size
             % assign weights through CPPN
-            [substrate(pop_indx),~,CPPN(pop_indx),~] = assessCPPNonSubstrate2(substrate(pop_indx),config_sub,CPPN(pop_indx),config);
+            [substrate(pop_indx),~,CPPN(pop_indx),~] = assessCPPNonSubstrate(substrate(pop_indx),config_sub,CPPN(pop_indx),config);
             fprintf('\n i = %d, error = %.4f, took: %.4f\n',pop_indx,substrate(pop_indx).val_error,toc);
         end
     end
@@ -157,7 +157,7 @@ for test = 1:config.num_tests
         CPPN(loser) = config.mutFcn(CPPN(loser),config);
         
         %% Evaluate and update fitness
-        [substrate(loser),~,CPPN(loser),~] = assessCPPNonSubstrate2(substrate(loser),config_sub,CPPN(loser),config);
+        [substrate(loser),~,CPPN(loser),~] = assessCPPNonSubstrate(substrate(loser),config_sub,CPPN(loser),config);
         
         %update errors
         store_error(test,gen,:) =  store_error(test,gen-1,:);

@@ -16,19 +16,20 @@ for i= 1:config.num_reservoirs
 end
 
 %equation: x(n) = f(Win*u(n) + S)
-for n = 2:size(input_sequence,1)
+%for n = 2:size(input_sequence,1)
     
     for i= 1:config.num_reservoirs
         
-        for k= 1:config.num_reservoirs
-            x{i}(n,:) = x{i}(n,:) + ((individual.W{i,k}*individual.W_scaling(i,k))*states{k}(n-1,:)')';
-        end
-        
-        input = (1 + sign((individual.input_weights{i}*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])'))/2;
-        [individual.RBN_node{i}, states{i}(n,:)] = individual.RBN_type{i}(individual.RBN_node{i},input);
+%         for k= 1:config.num_reservoirs
+%             x{i}(n,:) = x{i}(n,:) + ((individual.W{i,k}*individual.W_scaling(i,k))*states{k}(n-1,:)')';
+%         end
+          
+        input = floor(heaviside((individual.input_weights{i}*individual.input_scaling(i))*(input_sequence)')); % assign as 0 or 1
+         
+        [individual.RBN_node{i}, states{i}] = individual.RBN_type{i}(individual.RBN_node{i},individual.input_location{i},input);
         
     end
-end
+%end
 
 % get leak states
 if config.leak_on
@@ -38,7 +39,7 @@ end
 % concat all states for output weights
 final_states = [];
 for i= 1:config.num_reservoirs
-    final_states = [final_states states{i}];
+    final_states = [final_states states{i}'];
     
     %assign last state variable
     individual.last_state{i} = states{i}(end,:);
@@ -51,6 +52,8 @@ end
 
 final_states = final_states(config.wash_out+1:end,:); % remove washout
 
+% imagesc(states{i})
+% drawnow
 %% RBN
 % node = genotype.node;                       % nodes in RBN
 % fHandle = genotype.RBN_type;                 % update routine
@@ -63,3 +66,7 @@ final_states = final_states(config.wash_out+1:end,:); % remove washout
 % [node, states] = feval(fHandle,node,datalength,inputSequence,genotype);
 % states = states(:,2:end)';      
 
+
+% previous_states = reshape(states{i}(n-1,[individual.RBN_node{i}.input]),50,2);
+% apply rule
+% states{i}(n-1,:) =  previous_node_states(:,1) == rule(1) & previous_node_states(:,2) == rule(2) & 

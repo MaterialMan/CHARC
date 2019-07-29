@@ -15,8 +15,8 @@ config.add_input_states = 1;                  %add input to states
 config.sparse_input_weights = 0;              % use sparse inputs
 config.evolve_output_weights = 0;             % evolve rather than train
 
-config.multi_activ = 0;                      % use different activation funcs
-config.activ_list = {@tanh};                % what activations are in use when multiActiv = 1
+config.multi_activ = 1;                      % use different activation funcs
+config.activ_list = {@tanh,@linearNode};                % what activations are in use when multiActiv = 1
 config.training_type = 'Ridge';              % blank is psuedoinverse. Other options: Ridge, Bias,RLS
 
 %% change/add parameters depending on reservoir type
@@ -32,7 +32,7 @@ switch(config.res_type)
         
     case 'Graph'
         
-        config.graph_type= {'Ring'};            % Define substrate. Add graph type to cell array for multi-reservoirs
+        config.graph_type= {'fullLattice'};            % Define substrate. Add graph type to cell array for multi-reservoirs
         % Examples: 'Hypercube','Cube'
         % 'Torus','L-shape','Bucky','Barbell','Ring'
         % 'basicLattice','partialLattice','fullLattice','basicCube','partialCube','fullCube',ensembleLattice,ensembleCube,ensembleShape
@@ -56,29 +56,32 @@ switch(config.res_type)
         config.k = 2; % number of inputs
         config.mono_rule = 1; % use one rule for every cell/reservoir
         config.rule_list = {@evolveDARBN}; %list of evaluation types: {'CRBN','ARBN','DARBN','GARBN','DGARBN'};
-       
-    case 'basicCA'
-        % update type
+        config.leak_on = 0;
+        
+     case 'elementary_CA'
+%         % update type
+        config.k = 3;
         config.mono_rule = 1;               %stick to rule rule set, individual cells cannot have different rules
         config.rule_list = {@evolveDARBN}; %list of evaluation types: {'CRBN','ARBN','DARBN','GARBN','DGARBN'};
-       
-        % Define CA connectivity
-        A = ones(config.num_nodes);
-        B = tril(A,-2);
-        C = triu(A, 2);
-        D = B + C;
-        D(1,config.num_nodes) = 0;
-        D(config.num_nodes,1) = 0;
-        D(find(D == 1)) = 2;
-        D(find(D == 0)) = 1;
-        D(find(D == 2)) = 0;
-        config.conn = initConnections(D);
-        
-        % define rules - 2 cell update
-        for i=1:config.num_nodes
-            rules(:,i) = [1 0 1 0 0 1 0 1]';
-        end
-        config.rules = initRules(rules);
+        config.leak_on = 0;
+        %        
+%         % Define CA connectivity
+%         A = ones(config.num_nodes);
+%         B = tril(A,-2);
+%         C = triu(A, 2);
+%         D = B + C;
+%         D(1,config.num_nodes) = 0;
+%         D(config.num_nodes,1) = 0;
+%         D(find(D == 1)) = 2;
+%         D(find(D == 0)) = 1;
+%         D(find(D == 2)) = 0;
+%         config.conn = initConnections(D);
+%         
+%         % define rules - 2 cell update
+%         for i=1:config.num_nodes
+%             rules(:,i) = [1 0 1 0 0 1 0 1]';
+%         end
+%          config.rules = initRules(rules);
         
     case '2dCA'
         % update type
@@ -212,8 +215,11 @@ switch(config.dataset)
         config.sparse_input_weights = 0;              % use sparse inputs
         config.evolve_output_weights = 1;             % evolve rather than train
         
-        config.multi_activ = 0;                      % use different activation funcs
-        config.activ_list = {'linearNode','sawtooth','symFcn','sin','cos','gaussDist'};
+        % define lattice substrate
+        config.graph_type= {'fullLattice'}; 
+        
+        config.multi_activ = 1;                      % use different activation funcs
+        config.activ_list = {@linearNode,@sawtooth,@symFcn,@sin,@cos,@gaussDist};
 
     otherwise
         

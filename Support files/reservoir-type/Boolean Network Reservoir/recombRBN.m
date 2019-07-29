@@ -3,70 +3,87 @@ function loser = recombRBN(winner,loser,config)
 % params - input_scaling, leak_rate,
 W= winner.input_scaling(:);
 L = loser.input_scaling(:);
-pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+%pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+pos = randperm(length(L),ceil(config.rec_rate*length(L)));
 L(pos) = W(pos);
 loser.input_scaling = reshape(L,size(loser.input_scaling));
 
 W= winner.leak_rate(:);
 L = loser.leak_rate(:);
-pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+%pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+pos = randperm(length(L),ceil(config.rec_rate*length(L)));
 L(pos) = W(pos);
 loser.leak_rate = reshape(L,size(loser.leak_rate));
 
 W= winner.RBN_type;
 L = loser.RBN_type;
-pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+%pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+pos = randperm(length(L),ceil(config.rec_rate*length(L)));
 L(pos) = W(pos);
 loser.RBN_type = reshape(L,size(loser.RBN_type));
 
 W= winner.W_scaling;
 L = loser.W_scaling;
-pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+%pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+pos = randperm(length(L),ceil(config.rec_rate*length(L)));
 L(pos) = W(pos);
 loser.W_scaling = reshape(L,size(loser.W_scaling));
 
-
 for i = 1:config.num_reservoirs
+
+    % location of input - nodes nextstate is set as input
+    W= winner.input_location{i};
+    L = loser.input_location{i};
+    %pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+    pos = randperm(length(L),ceil(config.rec_rate*length(L)));
+    L(pos) = W(pos);
+    loser.input_location{i} = reshape(L,size(loser.input_location{i}));
 
   % input weights
     W= winner.input_weights{i}(:);
     L = loser.input_weights{i}(:);
-    pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+    %pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+    pos = randperm(length(L),ceil(config.rec_rate*length(L)));
     L(pos) = W(pos);
     loser.input_weights{i} = reshape(L,size(loser.input_weights{i}));
-        
-   
+           
     % rules
     if config.mono_rule
         W= winner.rules{i}(:,1);
         L = loser.rules{i}(:,1);
-        pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+        %pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+        pos = randperm(length(L),ceil(config.rec_rate*length(L)));
         L(pos) = W(pos);
         loser.rules{i} = int8(repmat(L,1,size(loser.rules{i},2)));
     else
         W= winner.rules{i}(:);
         L = loser.rules{i}(:);
-        pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+        %pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+        pos = randperm(length(L),ceil(config.rec_rate*length(L)));
         L(pos) = W(pos);
         loser.rules{i} = int8(reshape(L,size(loser.rules{i})));       
     end
 
-    % swap nodes          
-    W = winner.RBN_node{i};
-    L = loser.RBN_node{i};
-    pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
-    L(pos) = W(pos);
-    loser.RBN_node{i} = L;
-    
-    % reformate W
-    loser.W{i,i} = getAdjacenyMatrix(loser,i,config);
+    if strcmp(config.res_type,'RBN')       
+        % swap nodes
+        W = winner.RBN_node{i};
+        L = loser.RBN_node{i};
+        %pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+        pos = randperm(length(L),ceil(config.rec_rate*length(L)));
+        L(pos) = W(pos);
+        loser.RBN_node{i} = L;
+        
+        % reformate W
+        loser.W{i,i} = getAdjacenyMatrix(loser,i,config);
+    end
     
     % inner weights % recombing connecting weights
     for j = 1:config.num_reservoirs
         if i ~= j
             W= winner.W{i,j}(:);
             L = loser.W{i,j}(:);
-            pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+            %pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+            pos = randperm(length(L),ceil(config.rec_rate*length(L)));
             L(pos) = W(pos);
             loser.W{i,j} = reshape(L,size(loser.W{i,j}));
         end
@@ -76,6 +93,15 @@ for i = 1:config.num_reservoirs
     loser.RBN_node{i} = assocRules(loser.RBN_node{i}, loser.rules{i});
     %loser.RBN_node{i} = assocNeighbours(loser.RBN_node{i}, loser.W{i,i});
       
+    % recomb initial conditions of CA
+    if strcmp(config.res_type,'elementary_CA')
+        W= winner.initial_states{i}(:);
+        L = loser.initial_states{i}(:);
+        %pos = randi([1 length(L)],ceil(config.rec_rate*length(L)),1);
+        pos = randperm(length(L),ceil(config.rec_rate*length(L)));
+        L(pos) = W(pos);
+        loser.initial_states{i} = reshape(L,size(loser.initial_states{i}));
+     end
 end
 
 % %%rules

@@ -1,3 +1,3 @@
 function y = symFcn(x)
 
-y = -abs(x);
+y = 1-abs(x);

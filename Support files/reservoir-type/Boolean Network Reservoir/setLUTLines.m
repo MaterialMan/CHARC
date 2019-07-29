@@ -38,6 +38,7 @@ nodeUpdated = node;
 %------------------------------------------
 for i=1:length(node)
     statevector = zeros(1,length(node(i).input));
+    
     for k=1:length(node(i).input)
         statevector(k) = node(node(i).input(k)).state;
     end  

@@ -11,5 +11,7 @@ for j = 1:config.num_reservoirs
     plot(G{j})    
 end
 
+drawnow
+
 
 

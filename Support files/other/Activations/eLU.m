@@ -1,7 +1,4 @@
 function y = eLU(x,a)
 %exponential linear unit
-if x > 0 
-    y=x;
-else
-   y = a*(exp(x)-1);
-end
+y=x;
+y(x > 0) = a*(exp(x(x > 0))-1);

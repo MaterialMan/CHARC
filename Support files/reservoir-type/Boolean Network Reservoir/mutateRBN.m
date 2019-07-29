@@ -2,18 +2,18 @@ function offspring = mutateRBN(offspring,config)
 
 % params - input scaling and leak rate
 input_scaling = offspring.input_scaling(:);
-pos =  randi([1 length(input_scaling)],rand < config.mut_rate,1);
+pos =  randperm(length(input_scaling),sum(rand(length(input_scaling),1) < config.mut_rate));
 input_scaling(pos) = 2*rand(length(pos),1)-1;
 offspring.input_scaling = reshape(input_scaling,size(offspring.input_scaling));
 
 leak_rate = offspring.leak_rate(:);
-pos =  randi([1 length(leak_rate)],rand < config.mut_rate,1); % 0.25
+pos =  randperm(length(leak_rate),sum(rand(length(leak_rate),1) < config.mut_rate));
 leak_rate(pos) = rand(length(pos),1);
 offspring.input_scaling = reshape(leak_rate,size(offspring.leak_rate));
 
 % change evaluation method
 RBN_type = offspring.RBN_type;
-pos =  randi([1 length(RBN_type)],rand < config.mut_rate,1); % 0.25
+pos =  randperm(length(RBN_type),sum(rand(length(RBN_type),1) < config.mut_rate));
 if ~isempty(pos)
     RBN_type{pos} = config.rule_list{randi(length(pos),1)};
     offspring.RBN_type = RBN_type;
@@ -22,9 +22,15 @@ end
 % cycle through all sub-reservoirs
 for i = 1:config.num_reservoirs
     
+    % add/remove input locations
+    input_loc = offspring.input_location{i};
+    pos =  randperm(length(input_loc),ceil(config.mut_rate*length(input_loc)));
+    input_loc(pos) = round(rand(length(pos),1));
+    offspring.input_location{i} = reshape(input_loc,size(offspring.input_location{i}));
+    
     % input weights
     input_weights = offspring.input_weights{i};
-    pos =  randi([1 length(input_weights)],ceil(config.mut_rate*length(input_weights)),1);
+    pos =  randperm(length(input_weights),ceil(config.mut_rate*length(input_weights)));
     for n = 1:length(pos)
         if rand < 0.5 % 50% chance to zero weight
             input_weights(pos(n)) = 0;
@@ -34,17 +40,17 @@ for i = 1:config.num_reservoirs
     end
     offspring.input_weights{i} = reshape(input_weights,size(offspring.input_weights{i}));
     
-
+    
     % rules
     if config.mono_rule
         rules = offspring.rules{i}(:,1);
-        pos =  randi([1 length(rules)],rand < config.mut_rate,1);
-        rules(pos) = rand(length(pos),1);
+        pos =  randperm(length(rules),double(rand < config.mut_rate));
+        rules(pos) = round(rand(length(pos),1));
         offspring.rules{i} = int8(repmat(rules,1,size(offspring.rules{i},2)));
     else
         rules = offspring.rules{i}(:);
-        pos =  randi([1 length(rules)],rand < config.mut_rate,1);
-        rules(pos) = rand(length(pos),1);
+        pos =  randperm(length(rules),ceil(config.mut_rate*length(rules)));
+        rules(pos) = round(rand(length(pos),1));
         offspring.rules{i} = int8(reshape(rules,size(offspring.rules{i})));
     end
     
@@ -52,19 +58,21 @@ for i = 1:config.num_reservoirs
     for j = 1:config.num_reservoirs
         
         if i == j
-            % mutate RBN node inputs
-            RBN_inputs = [offspring.RBN_node{i}.input];
-            pos =  randi([1 length(RBN_inputs)],ceil(config.mut_rate*length(RBN_inputs)),1);
-            RBN_inputs(pos) = randi([1 offspring.nodes(j)],length(pos),1); 
-            RBN_inputs = reshape(RBN_inputs,offspring.nodes(i),config.k);
-            for k = 1:length(RBN_inputs)
-                offspring.RBN_node{i}(k).input = RBN_inputs(k,:);%reshape(RBN_inputs,offspring.nodes(i),config.k);
-            end                       
-            offspring.W{i,j} = getAdjacenyMatrix(offspring,i,config);
+            if strcmp(config.res_type,'RBN')
+                % mutate RBN node inputs
+                RBN_inputs = [offspring.RBN_node{i}.input];
+                pos =  randperm(length(RBN_inputs),ceil(config.mut_rate*length(RBN_inputs)));
+                RBN_inputs(pos) = randi([1 offspring.nodes(j)],length(pos),1);
+                RBN_inputs = reshape(RBN_inputs,offspring.nodes(i),config.k);
+                for k = 1:length(RBN_inputs)
+                    offspring.RBN_node{i}(k).input = RBN_inputs(k,:);%reshape(RBN_inputs,offspring.nodes(i),config.k);
+                end
+                offspring.W{i,j} = getAdjacenyMatrix(offspring,i,config);
+            end
         else
             W = offspring.W{i,j}(:);
             % select weights to change
-            pos =  randi([1 length(W)],ceil(config.mut_rate*length(W)),1);
+            pos =  randperm(length(W),ceil(config.mut_rate*length(W)));  
             for n = 1:length(pos)
                 if rand < 0.5 % 50% chance to zero weight
                     W(pos(n)) = 0;
@@ -80,6 +88,13 @@ for i = 1:config.num_reservoirs
     offspring.RBN_node{i} = assocRules(offspring.RBN_node{i}, offspring.rules{i});
     %offspring.RBN_node{i} = assocNeighbours(offspring.RBN_node{i}, offspring.W{i,i});
     
+    % mutate initial conditions of CA
+    if strcmp(config.res_type,'elementary_CA')
+        initial_states = offspring.initial_states{i}(:);
+        pos =  randperm(length(initial_states),ceil(config.mut_rate*length(initial_states)));  
+        initial_states(pos) = round(rand(length(pos),1));
+        offspring.initial_states{i} = reshape(initial_states,size(offspring.initial_states{i}));
+    end
 end
 
 
@@ -87,7 +102,7 @@ end
 % mutate output weights
 if config.evolve_output_weights
     output_weights = offspring.output_weights(:);
-    pos =  randi([1 length(output_weights)],ceil(config.mut_rate*length(output_weights)),1);
+    pos =  randperm(length(output_weights),ceil(config.mut_rate*length(output_weights)));  
     for n = 1:length(pos)
         if rand > 0.75 % 75% chance to zero weight
             output_weights(pos(n)) = 0;
