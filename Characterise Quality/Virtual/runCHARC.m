@@ -32,8 +32,8 @@ if isempty(gcp) && config.parallel
 end
 
 % type of network to evolve
-config.res_type = 'RoR';                % state type of reservoir to use. E.g. 'RoR' (Reservoir-of-reservoirs/ESNs), 'ELM' (Extreme learning machine), 'Graph' (graph network of neurons), 'DL' (delay line reservoir) etc. Check 'selectReservoirType.m' for more.
-config.num_nodes = [100];                  % num of nodes in each sub-reservoir, e.g. if config.num_nodes = {10,5,15}, there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. For one reservoir, sate as a non-cell, e.g. config.num_nodes = 25
+config.res_type = 'CNT';                % state type of reservoir to use. E.g. 'RoR' (Reservoir-of-reservoirs/ESNs), 'ELM' (Extreme learning machine), 'Graph' (graph network of neurons), 'DL' (delay line reservoir) etc. Check 'selectReservoirType.m' for more.
+config.num_nodes = [64];                  % num of nodes in each sub-reservoir, e.g. if config.num_nodes = {10,5,15}, there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. For one reservoir, sate as a non-cell, e.g. config.num_nodes = 25
 config = selectReservoirType(config);   % collect function pointers for the selected reservoir type 
 
 % Network details
@@ -98,7 +98,7 @@ for tests = 1:config.num_tests
     
     % Evaluate population and assess novelty
     ppm = ParforProgMon('Initial population: ', config.pop_size);
-    parfor pop_indx = 1:config.pop_size
+    for pop_indx = 1:config.pop_size
         population(pop_indx).behaviours = getVirtualMetrics(population(pop_indx),config);
         ppm.increment();
     end

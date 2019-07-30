@@ -11,22 +11,23 @@
 function [inputArray]= setUpSwitch(switch_session,electrode_type)
 
 %% Assign switch config from genotype
-config = zeros(1024,1);
+switch_config = zeros(1024,1);
+
 %identify what genes are being used as inputs
-inputArray = find(electrode_type(:,1));
+inputArray = find(electrode_type);
 
 %encode into string
 xpos = [16:-1:1 16:-1:1 16:-1:1 16:-1:1];
 for i = 1:length(inputArray)
     ypos(i) = 1024-inputArray(i)*16;
-    config((ypos(i)+xpos(inputArray(i)))) = 1;
+    switch_config((ypos(i)+xpos(inputArray(i)))) = 1;
 end
 
 
 %% Load crosspoint switches - Brute force
 cpswSIN=[1 0 0]; % set PLCK high before transfer
 for t = 1:1024
-    cpswSIN = [cpswSIN; 1 0 config(t); 1 1 config(t); 1 0 config(t)]; % %set initial config, output one bit of config data
+    cpswSIN = [cpswSIN; 1 0 switch_config(t); 1 1 switch_config(t); 1 0 switch_config(t)]; % %set initial config, output one bit of config data
 end
 cpswSIN = [cpswSIN; 0 0 0; 1 0 0]; % pulse PLCK low to transfer
 
@@ -37,28 +38,20 @@ cpswSIN = [cpswSIN; 0 0 0; 1 0 0]; % pulse PLCK low to transfer
 %example: shiftConfig = round(rand(64,1));
 
 % Reset shift reg and shift memory, i.e. OE = HIGH Z-state, MR = LOW reset 
-shiftConfig = electrode_type(:,1);
+shift_config = electrode_type > 0;
 
 %NEW setup%[MR SD SHCP STCP OE]
-shiftReg = [1 0 1 0 0 ; 0 0 0 0 0; 0 0 1 0 0; 1 shiftConfig(length(electrode_type(:,1))) 1 0 0]; 
+shift_reg = [1 0 1 0 0 ; 0 0 0 0 0; 0 0 1 0 0; 1 shift_config(length(shift_config)) 1 0 0]; 
 
-for r = length(electrode_type(:,1)):-1:1 
-%      if mod(r,4) == 0 %&& mod(r,16) ~= 0 
-%         shiftConfig(r) = 1-genotype(1,r,1); %flip 4th bit - due to reverse connection on the Quad switch
-%         if mod(r,16) == 0 %Annoying hardware implementation, shift reg switched for every 16 connection
-%             shiftConfig(r) = genotype(1,r,1);
-%             shiftConfig(r-1) = 1-genotype(1,r-1,1);
-%         end
-%      end
-                            %push & latch previous data      clock data (SHCP HIGH)        
-      shiftReg = [shiftReg;   1 shiftConfig(r) 0 1 0;      1 shiftConfig(r) 1 0 0];  
+for r = length(shift_config):-1:1 
+      %push & latch previous data      clock data (SHCP HIGH)        
+      shift_reg = [shift_reg;   1 shift_config(r) 0 1 0;      1 shift_config(r) 1 0 0];  
 end
  
-shiftReg = [shiftReg;   1 shiftConfig(1) 0 1 0];  
+shift_reg = [shift_reg;   1 shift_config(1) 0 1 0];  
 
 %% % Queue all data outputs
-%s2.queueOutputData([cpswSIN [shiftReg; ones(6014,1) zeros(6014,4)]]);
-switch_session.queueOutputData([cpswSIN [shiftReg; ones(length(cpswSIN)-length(shiftReg),1) zeros(length(cpswSIN)-length(shiftReg),4)]]);
+switch_session.queueOutputData([cpswSIN [shift_reg; ones(length(cpswSIN)-length(shift_reg),1) zeros(length(cpswSIN)-length(shift_reg),4)]]);
 
 %% Output the queued data at SclkFreq rate
 switch_session.startForeground;

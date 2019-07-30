@@ -18,11 +18,13 @@ end
 for i= 1:config.num_reservoirs
 
     % reset switch
-    setUp64Switch(individual.switch_session, individual.electrode_type(i,:));
+    setUpSwitch(individual.switch_session, individual.electrode_type(i,:));
 
     % queue output
     input_sequence = (((individual.input_weights{i}*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,:)');
 
+    input_sequence = input_sequence(:, individual.electrode_type(i,:) > 0);
+    
     % collect states
     %individual.read_session.queueOutputData([zeros(25,maxInputs);input_sequence; zeros(10,maxInputs)]);
     individual.read_session.queueOutputData(input_sequence);

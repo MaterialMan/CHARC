@@ -161,7 +161,7 @@ switch(config.res_type)
         %     %config.tau = 100;
         config.preprocess = 0;
         
-    case 'Hardware'
+    case 'CNT'
         
         config.volt_range = 5;
         config.num_input_electrodes = 64;

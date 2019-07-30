@@ -1,7 +1,7 @@
 function population = createCNT(config)
 
 %setup DAQ cards
-[read_session,switch_session] = createDaqSessions(0:config.num_output_electrodes-1,0:config.num_input_electrodes-1);
+%[read_session,switch_session] = createDaqSessions(0:config.num_output_electrodes-1,0:config.num_input_electrodes-1);
 
 %% Reservoir Parameters
 for pop_indx = 1:config.pop_size
@@ -23,8 +23,8 @@ for pop_indx = 1:config.pop_size
         population(pop_indx).n_output_units = size(config.train_output_sequence,2);
     end
     
-    population(pop_indx).read_session = read_session;
-    population(pop_indx).switch_session = switch_session;
+    population(pop_indx).read_session = [];%read_session;
+    population(pop_indx).switch_session = [];%switch_session;
     
     % iterate through subreservoirs
     for i = 1:config.num_reservoirs
@@ -59,6 +59,7 @@ for pop_indx = 1:config.pop_size
      for i= 1:config.num_reservoirs
          
          population(pop_indx).electrode_type(i,:) = zeros(population(pop_indx).nodes(i),1);
+         population(pop_indx).electrode_type(i,randi([1 population(pop_indx).nodes(i)])) = 1;
          
          population(pop_indx).config_voltage(i,:) = 2*rand(population(pop_indx).nodes(i),1)-1;
          
