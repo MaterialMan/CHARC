@@ -21,13 +21,18 @@ for i= 1:config.num_reservoirs
     setUpSwitch(individual.switch_session, individual.electrode_type(i,:));
 
     % queue output
-    input_sequence = (((individual.input_weights{i}*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,:)');
+    weighted_input = (((individual.input_weights{i}*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,:)');
 
-    input_sequence = input_sequence(:, individual.electrode_type(i,:) > 0);
+    % set non-inputs to zero
+    input_2_CNT = zeros(weighted_input);
+    % add weighted inputs
+    input_2_CNT(:,individual.electrode_type(i,:) == 1) = weighted_input(:, individual.electrode_type(i,:) == 1);
+    % add config signals
+    input_2_CNT(:,individual.electrode_type(i,:) == 2) = individual.config_voltage(:, individual.electrode_type(i,:) == 2)*individual.input_scaling(i);
     
     % collect states
     %individual.read_session.queueOutputData([zeros(25,maxInputs);input_sequence; zeros(10,maxInputs)]);
-    individual.read_session.queueOutputData(input_sequence);
+    individual.read_session.queueOutputData(input_2_CNT);
     
     states = read_session.startForeground;%startBackground;%
     
