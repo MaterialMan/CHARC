@@ -15,8 +15,8 @@ config.add_input_states = 1;                  %add input to states
 config.sparse_input_weights = 0;              % use sparse inputs
 config.evolve_output_weights = 0;             % evolve rather than train
 
-config.multi_activ = 1;                      % use different activation funcs
-config.activ_list = {@tanh,@linearNode};                % what activations are in use when multiActiv = 1
+config.multi_activ = 0;                      % use different activation funcs
+config.activ_list = {@tanh};                % what activations are in use when multiActiv = 1
 config.training_type = 'Ridge';              % blank is psuedoinverse. Other options: Ridge, Bias,RLS
 
 %% change/add parameters depending on reservoir type
@@ -160,6 +160,13 @@ switch(config.res_type)
         %     config.DLtype = 'mackey_glass2';%'ELM';%'virtualNodes';
         %     %config.tau = 100;
         config.preprocess = 0;
+        
+    case 'Hardware'
+        
+        config.volt_range = 5;
+        config.num_input_electrodes = 64;
+        config.num_output_electrodes = 32;
+        
     otherwise
         
 end

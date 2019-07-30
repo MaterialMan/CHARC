@@ -8,21 +8,18 @@ switch(config.res_type)
         config.assessFcn = @collectELMStates;
         config.mutFcn = @mutateRoR;
         config.recFcn = @recombRoR;
-        config.hierarchy = 1;
         
     case 'RoR' 
         config.createFcn = @createRoR;
         config.assessFcn = @collectRoRStates;
         config.mutFcn = @mutateRoR;
-        config.recFcn = @recombRoR;
-        config.hierarchy = 1;                
+        config.recFcn = @recombRoR;              
         
     case 'Pipeline'
         config.createFcn = @createPipeline;
         config.assessFcn = @collectPipelineStates;
         config.mutFcn = @mutateRoR;
-        config.recFcn = @recombRoR;
-        config.hierarchy = 1;       
+        config.recFcn = @recombRoR;     
          
     case 'Ensemble'
         config.createFcn = @createEnsemble;
@@ -36,7 +33,6 @@ switch(config.res_type)
         config.assessFcn = @assessGraphReservoir;
         config.mutFcn = @mutateRoR;
         config.recFcn = @recombRoR;
-         config.hierarchy = 1;
          
     case 'BZ'
         config.createFcn = @createBZReservoir;
@@ -80,6 +76,11 @@ switch(config.res_type)
         config.mutFcn = @mutateInstru;
         config.recFcn = @recombInstru;
         
+    case 'CNT' 
+        config.createFcn = @createCNT;
+        config.assessFcn = @collectCNTStates;
+        config.mutFcn = @mutateRoR;
+        config.recFcn = @recombRoR; 
 end
 
 config.testFcn = @testReservoir; % default for all
