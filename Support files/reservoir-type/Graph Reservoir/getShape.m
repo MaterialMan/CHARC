@@ -1,7 +1,7 @@
 %% called from getDataSetInfo
 % Create graph structure G to use
 
-function config = getShape(config)
+function [config,new_num_nodes] = getShape(config)
 
 temp_num_nodes = [];
 
@@ -61,7 +61,7 @@ for graph_indx = 1:length(config.num_nodes)
     
 %     if config.num_reservoirs > 1
         config.G{graph_indx} = G;
-        temp_num_nodes(graph_indx) = size(config.G{graph_indx}.Nodes,1);
+        new_num_nodes(graph_indx) = size(config.G{graph_indx}.Nodes,1);
 %     else
 %         config.G = G;
 %         temp_num_nodes =  size(config.G.Nodes,1);
@@ -69,5 +69,5 @@ for graph_indx = 1:length(config.num_nodes)
        
 end
 
-config.rule_type = config.graph_type;       % used with Torus, 5 neighbours (Von Neumann) or 8 neighbours (Moore's)
-config.num_nodes = temp_num_nodes;
+%config.rule_type = config.graph_type;       % used with Torus, 5 neighbours (Von Neumann) or 8 neighbours (Moore's)
+%config.num_nodes = temp_num_nodes;

@@ -1,4 +1,4 @@
-function [Command, Exp_status]= explore_maze(Exp_status,Initialization,genotype,config)
+function [Command, Exp_status]= explore_maze(Exp_status,Initialization,individual,config)
 % Demo of obstacle avoidance
 % The "Map" addon is used in this demo
 
@@ -35,11 +35,11 @@ if Initialization
     % set sensors
     Exp_status=Add_sensor(Exp_status,1,{'RangeFinder'});  % add sensors to robot 1
     if config.evolve_sensor_range
-        if isfield(genotype,'esnMinor')
-            Exp_status.Agent(1).Sensor(1).Range= genotype.esnMinor.leakRate; % use leakRate as a dummy
-        else
-            Exp_status.Agent(1).Sensor(1).Range= genotype.leakRate;
-        end
+        %if isfield(individual,'esnMinor')
+         %   Exp_status.Agent(1).Sensor(1).Range= individual.esnMinor.leakRate; % use leakRate as a dummy
+        %else
+            Exp_status.Agent(1).Sensor(1).Range= individual.leak_rate;
+       % end
     else
         Exp_status.Agent(1).Sensor(1).Range= config.sensor_range;
     end
@@ -58,12 +58,14 @@ Pose=Exp_status.Pose;
 %Obstacle Avoidance Potential Field Method
 for j=1:Exp_status.Robots
     
-    inputSequence = [0; Exp_status.Agent.Sensor.Measured_distance]'; %add constant input
+    input = Exp_status.Agent.Sensor.Measured_distance.*config.scaler;
+    
+    input_sequence = [0; Exp_status.Agent.Sensor.Measured_distance]'; %add constant input
     
     %-----------insert NN code
-    [testStates,genotype] = config.assessFcn(genotype,inputSequence,config); %[testStates,genotype]
+    [testStates,individual] = config.assessFcn(individual,input_sequence,config); %[testStates,genotype]
     
-    output = testStates*genotype.outputWeights;
+    output = testStates*individual.output_weights;
     
     F_rep_obs = output(1:2);
     k_omega = output(3);

@@ -15,19 +15,13 @@ offspring.input_scaling = reshape(leak_rate,size(offspring.leak_rate));
 RBN_type = offspring.RBN_type;
 pos =  randperm(length(RBN_type),sum(rand(length(RBN_type),1) < config.mut_rate));
 if ~isempty(pos)
-    RBN_type{pos} = config.rule_list{randi(length(pos),1)};
+    RBN_type(pos) = config.rule_list(randi([1 length(config.rule_list)],length(pos),1));
     offspring.RBN_type = RBN_type;
 end
 
 % cycle through all sub-reservoirs
 for i = 1:config.num_reservoirs
-    
-    % add/remove input locations
-    input_loc = offspring.input_location{i};
-    pos =  randperm(length(input_loc),ceil(config.mut_rate*length(input_loc)));
-    input_loc(pos) = round(rand(length(pos),1));
-    offspring.input_location{i} = reshape(input_loc,size(offspring.input_location{i}));
-    
+      
     % input weights
     input_weights = offspring.input_weights{i};
     pos =  randperm(length(input_weights),ceil(config.mut_rate*length(input_weights)));
@@ -88,13 +82,12 @@ for i = 1:config.num_reservoirs
     offspring.RBN_node{i} = assocRules(offspring.RBN_node{i}, offspring.rules{i});
     %offspring.RBN_node{i} = assocNeighbours(offspring.RBN_node{i}, offspring.W{i,i});
     
-    % mutate initial conditions of CA
-    if strcmp(config.res_type,'elementary_CA')
-        initial_states = offspring.initial_states{i}(:);
-        pos =  randperm(length(initial_states),ceil(config.mut_rate*length(initial_states)));  
-        initial_states(pos) = round(rand(length(pos),1));
-        offspring.initial_states{i} = reshape(initial_states,size(offspring.initial_states{i}));
-    end
+    % mutate evolution time of CA
+    time_period = offspring.time_period(i);
+    pos =  randperm(length(time_period),ceil(config.mut_rate*length(time_period)));
+    time_period(pos) = randi([1 10],length(pos),1);
+    offspring.time_period(i) = reshape(time_period,size(offspring.time_period(i)));
+
 end
 
 
@@ -113,61 +106,3 @@ if config.evolve_output_weights
     offspring.output_weights = reshape(output_weights,size(offspring.output_weights));
 end
 
-% %% rules
-% if ~config.mono_rule
-%     rules = genotype.rules(:);
-%     pos =  randi([1 length(rules)],ceil(config.mutRate*length(rules)),1);
-%     rules(pos) = round(rand(length(pos),1));
-%     genotype.rules = int8(reshape(rules,size(genotype.rules)));
-% else
-%     new_rule = genotype.rules(:,1);
-%     pos =  randi([1 length(new_rule)],ceil(config.mutRate*length(new_rule)),1);
-%     new_rule(pos) = round(rand(length(pos),1));
-%     genotype.rules = int8(repmat(new_rule,1,size(genotype.rules,2)));
-% end
-%
-% % check rules, etc.
-% genotype.node = assocRules(genotype.node, genotype.rules);
-%
-%
-% % w_in
-% w_in = genotype.w_in(:);
-% pos =  randi([1 length(w_in)],ceil(config.mutRate*length(w_in)),1);
-% if config.restricedWeight
-%     w_in(pos) = datasample(0.2:0.2:1,length(pos));%2*rand(length(pos),1)-1;
-% else
-%     w_in(pos) = 2*rand(length(pos),1)-1;
-% end
-% genotype.w_in = reshape(w_in,size(genotype.w_in));
-%
-%
-% % input_loc
-% for i = 1:length(genotype.input_loc)
-%     if rand < config.mutRate
-%         genotype.input_loc(i) = round(rand);
-%     end
-% end
-% genotype.totalInputs = sum(genotype.input_loc);
-%
-% % initial states
-% if strcmp(config.resType,'basicCA')
-%     initialStates = genotype.initialStates(:);
-%     pos =  randi([1 length(initialStates)],ceil(config.mutRate*length(initialStates)),1);
-%     initialStates(pos) = round(rand(length(pos),1));
-%     genotype.initialStates = reshape(initialStates,size(genotype.initialStates));
-% end
-%
-% if config.evolvedOutputStates
-%     if rand < config.mutRate %not really used, yet
-%         genotype.state_perc = rand;
-%     end
-%
-%     % state_loc
-%     for i = 1:length(genotype.state_loc)
-%         if rand < config.mutRate
-%             genotype.state_loc(i) = round(rand);
-%         end
-%     end
-%
-% end
-%

@@ -479,15 +479,15 @@ switch config.dataset
 end
 
 %% preprocessing
-if config.preprocess
-    for i = 1:size(input_sequence,2)
-        input_sequence(input_sequence(:,i) ~= 0,i) = (input_sequence(input_sequence(:,i) ~= 0,i)-mean(input_sequence(:,i)))/(max(input_sequence(:,i))-min(input_sequence(:,i)));
-    end
-    
-    for i = 1:size(output_sequence,2)
-        output_sequence(output_sequence(:,i) ~= 0,i) = (output_sequence(output_sequence(:,i) ~= 0,i)-mean(output_sequence(:,i)))/(max(output_sequence(:,i))-min(output_sequence(:,i)));
-    end
-end
+% if config.preprocess
+%     for i = 1:size(input_sequence,2)
+%         input_sequence(input_sequence(:,i) ~= 0,i) = (input_sequence(input_sequence(:,i) ~= 0,i)-mean(input_sequence(:,i)))/(max(input_sequence(:,i))-min(input_sequence(:,i)));
+%     end
+%     
+%     for i = 1:size(output_sequence,2)
+%         output_sequence(output_sequence(:,i) ~= 0,i) = (output_sequence(output_sequence(:,i) ~= 0,i)-mean(output_sequence(:,i)))/(max(output_sequence(:,i))-min(output_sequence(:,i)));
+%     end
+% end
 
 if config.discrete %choose n-bit word length if needed by adding s,w,f to func() parameters
     
@@ -505,6 +505,21 @@ end
 
 [train_output_sequence,val_output_sequence,test_output_sequence] = ...
     split_train_test3way(output_sequence,train_fraction,val_fraction,test_fraction);
+
+
+if config.preprocess
+    % rescale training data
+    [train_input_sequence,config.input_scaler] = mapminmax(train_input_sequence);
+    [train_output_sequence,config.target_scaler] = mapminmax(train_output_sequence);
+    
+    % apply scalers to validation sets
+    val_input_sequence = mapminmax('apply',val_input_sequence,config.input_scaler);
+    val_output_sequence = mapminmax('apply',val_output_sequence,config.target_scaler);
+    
+    test_input_sequence = mapminmax('apply',test_input_sequence,config.input_scaler);
+    test_output_sequence = mapminmax('apply',test_output_sequence,config.target_scaler);
+    
+end
 
 % Go back to old seed
 rng(temp_seed,'twister');

@@ -21,7 +21,7 @@ function [OUTPUT_DATA,individual]= robotSim(filename,stop_time,speed,options,ind
 %
 % -- Copyright 2016-19, Marco Casini, Andrea Garulli
 %
-
+warning('off','all')
 %========================== Set default values ==========================
 %-- Experiment variables
 EXP.Version='1.7';     % Version of the simulator
@@ -52,7 +52,7 @@ EXP.Animation.Grid=true;                 % enable/disable grid
 EXP.Animation.Title='[Simulation]';      % animation title
 EXP.Animation.Base_colors=['k';'r';'g';'b';'m';'c';'y'];    % colors to be used for multi-robot experiments (automatically cycled if needed)
 EXP.Animation.Playback_speed=1;          % animation speed (0=manual mode)
-if config.runSim 
+if config.run_sim 
     EXP.Animation.Enable=true;               % show/hide animation
 else
     EXP.Animation.Enable=false;               % show/hide animation
@@ -79,7 +79,7 @@ EXP.Filename=filename;
 %-- Read experiment data from user function (run user function with second argument = true)
 clear global
 
-eval(['[Command , EXP]=' EXP.Filename '(EXP,true,genotype,config);']);
+eval(['[Command , EXP]=' EXP.Filename '(EXP,true,individual,config);']);
 %[Command, EXP]= Demo_Obstacles_Sensor(EXP,1,genotype,config);
 
 %------
@@ -179,7 +179,7 @@ for T1=0:EXP.Sampling_time:EXP.Stop_time
     
     if (EXP.Animation.Enable)
         if mod(T1,config.sim_speed) == 0
-            EXP=plot_robots(EXP,config.figureHandle);        % draw animation at time T1
+            EXP=plot_robots(EXP,config.figure_array(1));        % draw animation at time T1
         end
         EXP=Run_Functions(EXP,2);    % run addons loop functions (index=2)
         if EXP.Exp_over             % Check if the experiment is termitated (XXXX)
@@ -192,7 +192,7 @@ for T1=0:EXP.Sampling_time:EXP.Stop_time
         EXP=Manage_sensors(EXP);    % run sensors functions
     end
     
-    eval(['[Command, EXP]=' EXP.Filename '(EXP,false,genotype,config);']); %-- Run user-defined function
+    eval(['[Command, EXP]=' EXP.Filename '(EXP,false,individual,config);']); %-- Run user-defined function
     
     Command=check_saturation(EXP,Command);
     EXP.History.Command(EXP.Iteration,:,:)=Command;

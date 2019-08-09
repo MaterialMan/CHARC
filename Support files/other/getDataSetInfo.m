@@ -19,6 +19,9 @@ config.multi_activ = 0;                      % use different activation funcs
 config.activ_list = {@tanh};                % what activations are in use when multiActiv = 1
 config.training_type = 'Ridge';              % blank is psuedoinverse. Other options: Ridge, Bias,RLS
 
+% default reservoir input scale
+config.scaler = 1;                          % this may need to change for different reservoir systems that don't fit to the typical neuron range, e.g. [-1 1]
+
 %% change/add parameters depending on reservoir type
 switch(config.res_type)
     
@@ -44,7 +47,7 @@ switch(config.res_type)
         
         % node details and connectivity
         config.ensemble_graph = 0;              % no connections between mutli-graph reservoirs
-        config = getShape(config);              % call function to make graph.
+        [config,config.num_nodes] = getShape(config);              % call function to make graph.
         
     case 'DNA'
         config.tau = 20;                         % settling time
@@ -54,107 +57,23 @@ switch(config.res_type)
     case 'RBN'
         
         config.k = 2; % number of inputs
-        config.mono_rule = 1; % use one rule for every cell/reservoir
-        config.rule_list = {@evolveDARBN}; %list of evaluation types: {'CRBN','ARBN','DARBN','GARBN','DGARBN'};
+        config.mono_rule = 0; % use one rule for every cell/reservoir
+        config.rule_list = {@evolveCRBN_test}; %list of evaluation types: {'CRBN','ARBN','DARBN','GARBN','DGARBN'};
         config.leak_on = 0;
         
      case 'elementary_CA'
-%         % update type
+       % update type
         config.k = 3;
         config.mono_rule = 1;               %stick to rule rule set, individual cells cannot have different rules
-        config.rule_list = {@evolveDARBN}; %list of evaluation types: {'CRBN','ARBN','DARBN','GARBN','DGARBN'};
+        config.rule_list = {@evolveCRBN_test}; %list of evaluation types: {'CRBN','ARBN','DARBN','GARBN','DGARBN'};
         config.leak_on = 0;
-        %        
-%         % Define CA connectivity
-%         A = ones(config.num_nodes);
-%         B = tril(A,-2);
-%         C = triu(A, 2);
-%         D = B + C;
-%         D(1,config.num_nodes) = 0;
-%         D(config.num_nodes,1) = 0;
-%         D(find(D == 1)) = 2;
-%         D(find(D == 0)) = 1;
-%         D(find(D == 2)) = 0;
-%         config.conn = initConnections(D);
-%         
-%         % define rules - 2 cell update
-%         for i=1:config.num_nodes
-%             rules(:,i) = [1 0 1 0 0 1 0 1]';
-%         end
-%          config.rules = initRules(rules);
         
-    case '2dCA'
+    case '2D_CA'
         % update type
-        mode = 'CRBN';
-        
-        switch mode
-            case 'CRBN'
-                config.RBN_type = @evolveCRBN;
-            case 'ARBN'
-                config.RBN_type = @evolveARBN;
-            case 'DARBN'
-                config.RBN_type = @evolveDARBN;
-            case 'GARBN'
-                config.RBN_type = @evolveGARBN;
-            case 'DGARBN'
-                config.RBN_type = @evolveDGARBN;
-        end
-        
-        config.mono_rule = 1;                   %stick to rule rule set, individual cells cannot have different rules
+        config.mono_rule = 1;               %stick to rule rule set, individual cells cannot have different rules
+        config.rule_list = {@evolveCRBN_test}; %list of evaluation types: {'CRBN','ARBN','DARBN','GARBN','DGARBN'};
+        config.leak_on = 0;
         config.rule_type = 'Moores';
-        
-        % Define CA connectivity
-        config.graph_type= 'fullLattice';    % Define substrate
-        config.self_loop = 1;                   % give node a loop to self.
-        config.directed_graph = 0;               % directed graph (i.e. weight for all directions).
-                    
-        % define rules
-        switch(config.rule_type)
-            case 'Moores'
-%                 switch(config.lattice_type)
-%                     case 'fullCube'
-%                         config.num_nodes = config.N_Grid.^3;
-%                         %                     base_rule = round(rand(1,2^(8*3+1)))';
-%                     case 'fullLattice'
-%                         config.num_nodes = config.N_Grid*config.N_rings;
-%                         base_rule = round(rand(1,2^9))';
-%                     case 'ensembleLattice'
-%                         config.num_nodes = config.NGrid*config.N_rings * config.num_ensemble;
-%                         base_rule = round(rand(1,2^9))';
-%                     case 'ensembleCube'
-%                         config.num_nodes = config.N_Grid.^3 * config.num_ensemble;
-%                         %                     base_rule = round(rand(1,2^(8*3+1)))';
-%                 end
-                
-                for i=1:config.num_nodes
-                    if  config.mono_rule
-                        rules(:,i) = base_rule;
-                    else
-                        rules(:,i) =round(rand(1,length(base_rule)))';
-                    end
-                end
-                
-                
-            case 'VonNeu'
-%                 switch(config.lattice_type)
-%                     case 'basicCube'
-%                         config.maxMinorUnits = config.N_Grid.^3;
-%                     case 'basicLattice'
-%                         config.maxMinorUnits = config.N_Grid*config.N_rings;
-%                 end
-                
-                base_rule = round(rand(1,2^5))';
-                for i=1:config.num_nodes
-                    if  config.mono_rule
-                        rules(:,i) = base_rule;
-                    else
-                        rules(:,i) = round(rand(1,2^5))';
-                    end
-                end
-        end
-        
-        config = getShape(config);              % call function to make graph.
-        config.rules = initRules(rules);
         
     case 'DL'
         %     config.DLtype = 'mackey_glass2';%'ELM';%'virtualNodes';
@@ -184,7 +103,7 @@ switch(config.dataset)
     case 'poleBalance'
         config.time_steps = 1000;
         config.simple_task = 2;
-        config.pole_tests = 3;
+        config.pole_tests = 2;
         config.velocity = 1;
         config.run_sim = 0;
         config.testFcn = @poleBalance;
@@ -202,9 +121,9 @@ switch(config.dataset)
         config.sensor_radius = 2*pi;
         % sim parameters
         config.run_sim = 0;                          % whether to run/watch sim
-        config.robot_tests = 2;                     % how many tests to conduct: to provide avg fitness
-        config.show_robot_tests = 2;                % how many tests to watch/check visually
-        config.sim_speed = 5;                       % speed of sim result/visualisation. e.g. if =2, 2x speed
+        config.robot_tests = 1;                     % how many tests to conduct: to provide avg fitness
+        config.show_robot_tests = config.robot_tests; % how many tests to watch/check visually
+        config.sim_speed = 25;                       % speed of sim result/visualisation. e.g. if =2, 2x speed
         config.testFcn = @robot;                    % assess fcn for robot tasks
         config.evolve_output_weights = 1;             % must be on; unsupervised/reinforcement problem
 

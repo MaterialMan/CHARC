@@ -36,17 +36,15 @@ nodeUpdated = node;
 
 % The new version (10x faster than the old!)
 %------------------------------------------
+
 for i=1:length(node)
-    statevector = zeros(1,length(node(i).input));
     
+    statevector = zeros(1,length(node(i).input));      
     for k=1:length(node(i).input)
         statevector(k) = node(node(i).input(k)).state;
     end  
-
-    %statevector = [node(node(i).input).state];
-    %nodeUpdated(i).lineNumber = polyval(statevector,2)+1;   
     
-    y = statevector(1);%repmat(statevector(1),size(2));
+    y = statevector(1);
     for k = 2:length(statevector)
         y = y.*2+statevector(k);
     end

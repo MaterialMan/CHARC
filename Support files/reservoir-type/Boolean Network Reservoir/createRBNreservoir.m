@@ -25,7 +25,11 @@ for pop_indx = 1:config.pop_size
     for i = 1:config.num_reservoirs
         
         %define num of units
-        population(pop_indx).nodes(i) = config.num_nodes(i);
+        if strcmp(config.res_type,'2D_CA')
+            population(pop_indx).nodes(i) = config.num_nodes(i).^2;
+        else
+            population(pop_indx).nodes(i) = config.num_nodes(i);
+        end
         
         % Scaling and leak rate
         population(pop_indx).input_scaling(i) = 2*rand-1; %increases nonlinearity
@@ -46,9 +50,8 @@ for pop_indx = 1:config.pop_size
         population(pop_indx).RBN_type{i} = config.rule_list{randi([1 length(config.rule_list)])};% more than one rule & evolve config.RBN_type{i};
         
         population(pop_indx).last_state{i} = zeros(1,population(pop_indx).nodes(i));
-    
-        population(pop_indx).input_location{i} = round(rand(1,population(pop_indx).nodes(i)));
-    
+      
+        population(pop_indx).time_period(i) = randi([1 10]);
     end
     
     %track total nodes in use
@@ -57,47 +60,52 @@ for pop_indx = 1:config.pop_size
     %% weights and connectivity of all reservoirs
     for i= 1:config.num_reservoirs
                
+        population(pop_indx).initial_states{i} = round(rand(population(pop_indx).nodes(i),1));
+        
         switch(config.res_type)
             
             case 'elementary_CA'
 
                 % Define CA connectivity
-                A = ones(population(pop_indx).nodes(i));
-                B = tril(A,-2);
-                C = triu(A, 2);
-                D = B + C;
-                D(1,config.num_nodes) = 0;
-                D(config.num_nodes,1) = 0;
-                D(find(D == 1)) = 2;
-                D(find(D == 0)) = 1;
-                D(find(D == 2)) = 0;
-                CA_W{i}=D;
+                config.graph_type= repmat({'Ring'},1,config.num_reservoirs);     % Define substrate
+                config.self_loop = ones(1,config.num_reservoirs);                   % give node a loop to self.
+                config = getShape(config);              % call function to make graph.
                 
-                population(pop_indx).initial_states{i} = round(rand(population(pop_indx).nodes(i),1));
+               % population(pop_indx).initial_states{i} = round(rand(population(pop_indx).nodes(i),1));
                 % pick random rule
                 rules = repmat(round(rand(8,1)),1,population(pop_indx).nodes(i));
                 population(pop_indx).rules{i} = initRules(rules);
-                population(pop_indx).RBN_node{i} = initNodes(population(pop_indx).nodes(i),population(pop_indx).initial_states{i},zeros(population(pop_indx).nodes(i),1),zeros(population(pop_indx).nodes(i),1));
-                %
+
             case '2D_CA'
                 
-                %         population(pop_indx).conn = zeros(config.maxMinorUnits); %needs to be sparse
-                %         population(pop_indx).G = config.G;
-                %         population(pop_indx).G.Edges.Weight = 2*rand(size(genotype(res).G.Edges,1),1)-1;
-                %         A = table2array(genotype(res).G.Edges);
-                %         for j = 1:size(genotype(res).G.Edges,1)
-                %             genotype(res).conn(A(j,1),A(j,2)) = 1;%A(j,3);
-                %             genotype(res).conn(A(j,2),A(j,1)) = 1;%A(j,3);
-                %         end
-                %         population(pop_indx).conn = sparse(genotype(res).conn);
-                %
-                %         population(pop_indx).initialStates = round(rand(config.maxMinorUnits,1));
-                %         population(pop_indx).rules = config.rules;
-                %         population(pop_indx).node = initNodes(genotype(res).size,genotype(res).initialStates,zeros(genotype(res).size,1),zeros(genotype(res).size,1));
-                %
+                % Define CA connectivity
+                config.graph_type= repmat({'fullLattice'},1,length(population(pop_indx).nodes));     % Define substrate
+                config.self_loop = ones(1,config.num_reservoirs);                   % give node a loop to self.
+                %config.directed_graph = 0;               % directed graph (i.e. weight for all directions).
+                config = getShape(config);              % call function to make graph.
+                
+               % population(pop_indx).initial_states{i} = round(rand(population(pop_indx).nodes(i),1));
+                % pick random rule
+                switch(config.rule_type)
+                    case 'Moores' % 9 input RBN
+                        if config.mono_rule
+                            rules = repmat(round(rand(2^9,1)),1,population(pop_indx).nodes(i));
+                        else
+                            rules = round(rand(2^9,population(pop_indx).nodes(i)));
+                        end
+                    case 'VonN' % 5 input RBN
+                        if config.mono_rule
+                            rules = repmat(round(rand(2^5,1)),1,population(pop_indx).nodes(i));
+                        else
+                            rules = round(rand(2^5,population(pop_indx).nodes(i)));
+                        end
+                        
+                end
+                population(pop_indx).rules{i} = initRules(rules);
+             
             otherwise
                 
-                population(pop_indx).RBN_node{i} = initNodes(population(pop_indx).nodes(i));
+                %population(pop_indx).RBN_node{i} = initNodes(population(pop_indx).nodes(i));
                 %population(pop_indx).W{i} = initConnections(population(pop_indx).nodes(i), config.k);
                 if config.mono_rule
                      population(pop_indx).rules{i} = int8(repmat(round(rand(2^config.k,1)),1,population(pop_indx).nodes(i)));
@@ -106,6 +114,9 @@ for pop_indx = 1:config.pop_size
                 end
         end
         
+        %initialise nodes
+        population(pop_indx).RBN_node{i} = initNodes(population(pop_indx).nodes(i),population(pop_indx).initial_states{i},randi([1 4],population(pop_indx).nodes(i),1),randi([1 4],population(pop_indx).nodes(i),1));              
+                       
 
         for j= 1:config.num_reservoirs
             
@@ -121,10 +132,11 @@ for pop_indx = 1:config.pop_size
                 switch(config.res_type)
                     
                     case 'elementary_CA'
-                        population(pop_indx).W{i,j} = CA_W{i};
+                        population(pop_indx).W{i,j} = full(adjacency(config.G{i}));%CA_W{i};
                         
                     case '2D_CA'
-                            
+                        population(pop_indx).W{i,j} = full(adjacency(config.G{i}));
+                        
                     otherwise
                         population(pop_indx).W{i,j} = initConnections(population(pop_indx).nodes(i), config.k);     
                 end

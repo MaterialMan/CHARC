@@ -19,6 +19,7 @@ if config.robot_tests <= 4 && config.run_sim == 0
     %temp_geno = genotype;
       parfor i = 1:num_tests
         [~,temp_geno(i)]= robotSim(config.robot_behaviour,config.time_steps,'max',[],individual,config);
+        
         %record fitness
         train_error(i) = temp_geno(i).train_error;
         val_error(i) = temp_geno(i).val_error;

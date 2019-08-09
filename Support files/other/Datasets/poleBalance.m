@@ -90,6 +90,9 @@ for  tests = 1:config.pole_tests
             end
         end
         
+        % rescale inputs
+        input_sequence(n,:) = ((input_sequence(n,:)--10)./(10--10)-0.5)*2;
+           
         [test_states,individual] = config.assessFcn(individual,input_sequence(n,:),config); %[testStates,genotype]
         
         force = test_states*individual.output_weights;
@@ -208,7 +211,7 @@ for  tests = 1:config.pole_tests
                 
                 % force
                 subplot(2,2,2)
-                plot(force_record(1:n,1))
+                plot(force_record(1:n,:))
                 title('Force(n)')
                 
                 %pole angle
@@ -218,7 +221,8 @@ for  tests = 1:config.pole_tests
                 
                 % cart position
                 subplot(2,2,4)
-                plot(x_pole(1:n))
+                %plot(x_pole(1:n))
+                plot(input_sequence)
                 title('cart position')
                 
                 drawnow
@@ -247,7 +251,7 @@ for  tests = 1:config.pole_tests
                 
                 % force
                 subplot(2,2,2)
-                plot(force_record(1:n,1))
+                plot(force_record(1:n,:))
                 title('Force(n)')
                 
                 %pole angle
@@ -273,22 +277,22 @@ for  tests = 1:config.pole_tests
     
     % Reward F2
     F2_bottom = 0;
-    if config.velocity
-        if longest_balance < 100
-            F2 = 0;
-        else
-            %F2_bottom = sum(abs(x_pole(exited-100:exited)) + abs(x_dot(exited-100:exited)) + abs(theta(exited-100:exited,1)) +abs(theta_dot(exited-100:exited,1)));
-            for p = 101:exited
-                F2_bottom = F2_bottom + abs(x_pole(p)) + abs(x_dot(p)) + abs(theta(p,1)) +abs(theta_dot(p,1));
-            end
-            
-            F2 = 0.75/F2_bottom;
-        end
-        
-        fitness(tests) = 1-(F1*0.1 +0.9*F2);
-    else
+%     if config.velocity
+%         if longest_balance < 100
+%             F2 = 0;
+%         else
+%             %F2_bottom = sum(abs(x_pole(exited-100:exited)) + abs(x_dot(exited-100:exited)) + abs(theta(exited-100:exited,1)) +abs(theta_dot(exited-100:exited,1)));
+%             for p = 101:exited
+%                 F2_bottom = F2_bottom + abs(x_pole(p)) + abs(x_dot(p)) + abs(theta(p,1)) +abs(theta_dot(p,1));
+%             end
+%             
+%             F2 = 0.75/F2_bottom;
+%         end
+%         
+%         fitness(tests) = 1-(F1*0.1 +0.9*F2);
+%     else
         fitness(tests) = 1-F1;
-    end
+   % end
 end
 
 individual.train_error = mean(fitness);

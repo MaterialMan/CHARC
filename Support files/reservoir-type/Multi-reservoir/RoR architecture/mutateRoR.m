@@ -63,7 +63,7 @@ end
 % mutate output weights
 if config.evolve_output_weights
     output_weights = offspring.output_weights(:);
-    pos =  randperm(length(output_weights),ceil(config.mut_rate*length(output_weights)),1);
+    pos =  randperm(length(output_weights),ceil(config.mut_rate*length(output_weights)));
  
     for n = 1:length(pos)
         if rand > 0.75 % 75% chance to zero weight

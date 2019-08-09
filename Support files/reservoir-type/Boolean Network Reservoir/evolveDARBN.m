@@ -1,4 +1,4 @@
-function [nodeUpdated, timeStateMatrix] = evolveDARBN(node, varargin)
+function [individual, timeStateMatrix] = evolveDARBN(individual, varargin)
 
 %  EVOLVEDARBN Develop network gradually K discrete time-steps according to DARBN (Deterministic
 %  Asynchronous Random Boolean Network) update scheme
@@ -24,42 +24,58 @@ function [nodeUpdated, timeStateMatrix] = evolveDARBN(node, varargin)
 
 
 %   Author: Christian Schwarzer - SSC EPFL
-%   CreationDate: 20.11.2002 LastModified: 30.11.2018 (Matt Dale)
+%   CreationDate: 20.11.2002 LastModified: 08.08.2019 (Matt Dale)
 
 
-%k = varargin{1};
-input_loc = varargin{1};
-input_sequence = varargin{2};
-k = size(input_sequence,2);
+input_sequence = varargin{1};
+k = size(input_sequence,1);
 
-nodeUpdated = resetNodeStats(node);
-
-timeStateMatrix = zeros(length(nodeUpdated), k); %k+1
-timeStateMatrix(1:length(nodeUpdated),1) = getStateVector(nodeUpdated)';
-
-n = length(nodeUpdated);
-
-% evolve network
-for i= 2:k
+for i= 1:length(individual.RBN_node)
     
-    timeNow = i-1;
-    %timeNow = i;
-    nodeSelected = [];
-    for j=1:n
-        if(mod(timeNow,nodeUpdated(j).p) == nodeUpdated(j).q)
-            nodeSelected = [nodeSelected j];
+    nodeUpdated = resetNodeStats(individual.RBN_node{i});
+    
+    timeStateMatrix{i} = zeros(k,length(nodeUpdated));
+    timeStateMatrix{i}(1,1:length(nodeUpdated)) = getStateVector(nodeUpdated);
+    
+    N = length(nodeUpdated);
+    
+    input = input_sequence*(individual.input_weights{i}*individual.input_scaling(i))';
+    
+    % time multiplex -
+    input_mul = zeros(size(input_sequence,1)*individual.time_period(i),size(input,2));
+    if individual.time_period > 1
+        input_mul(mod(1:length(input_mul),individual.time_period(i)) == 1,:) = input;
+    else
+        input_mul = input;
+    end
+    
+    % evolve network
+    cnt = 1;
+    for n= 1:size(input_mul,1)
+        % add input to states
+        if mod(n,individual.time_period(i)) == 1
+            timeStateMatrix{i}(cnt,:) = getStateVector(nodeUpdated);
+            cnt = cnt +1;
+            state = int8(floor(heaviside(double([nodeUpdated.state]) + input_mul(n,:))));
+            
+            for j=1:length(nodeUpdated)
+                nodeUpdated(j).state = state(j);
+            end
         end
-    end
-    
-    nodeUpdated = setLUTLines(nodeUpdated);
-    nodeUpdated = setNodeNextState(nodeUpdated,input_loc,input_sequence(:,i-1));
         
-    for j=1:length(nodeSelected)
+        nodeSelected = [];
+        for j=1:N
+            if(mod(n,nodeUpdated(j).p) == nodeUpdated(j).q)
+                nodeSelected = [nodeSelected j];
+            end
+        end
         
-        nodeUpdated(nodeSelected(j)).state = nodeUpdated(nodeSelected(j)).nextState;
-        nodeUpdated(nodeSelected(j)).nbUpdates = nodeUpdated(nodeSelected(j)).nbUpdates + 1;
+        nodeUpdated = setLUTLines(nodeUpdated);
+        nodeUpdated = setNodeNextState(nodeUpdated);
+        
+        for j=1:length(nodeSelected)
+            nodeUpdated(nodeSelected(j)).state = nodeUpdated(nodeSelected(j)).nextState;
+            nodeUpdated(nodeSelected(j)).nbUpdates = nodeUpdated(nodeSelected(j)).nbUpdates + 1;
+        end       
     end
-    
-    timeStateMatrix(1:length(nodeUpdated),i) = getStateVector(nodeUpdated)';
-    
 end

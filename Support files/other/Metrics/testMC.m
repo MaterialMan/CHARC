@@ -10,12 +10,10 @@ n_input_units = individual.n_input_units;
 %% Assign input data and collect target output
 data_length = n_internal_units*4 + config.wash_out*2;%400; 
 sequence_length = data_length/2;%200; 
+data_sequence = 2*rand(1,data_length+1+n_output_units)-1;
 
-if strcmp(config.res_type,'basicCA') || strcmp(config.res_type,'2dCA') || strcmp(config.res_type,'RBN')
-    data_sequence = sign(rand(1,data_length+1++n_output_units)-0.5);
-else
-    data_sequence = 1*rand(1,data_length+1+n_output_units)-0.5;
-end
+% rescale for each reservoir
+data_sequence = data_sequence.*config.scaler;
 
 mem_input_sequence = data_sequence(n_output_units+1:data_length+n_output_units)';
 
@@ -43,26 +41,17 @@ else
 end
 
 MC_k= 0; Cm = 0; 
-test_in_var = test_input_sequence(config.wash_out+1:end,:);
+test_in_var = test_input_sequence(config.wash_out+1:end,1);
 targVar = 1/(length(test_in_var)-1) * sum((test_in_var-mean(test_in_var)).*(test_in_var-mean(test_in_var)));
 
 for i = 1:n_output_units
-    
-%     coVar = cov(test_output_sequence(config.wash_out+1:end,i),Y(:,i));
-%     outVar = var(Y(:,i));
-%     targVar = var(test_input_sequence(config.wash_out+1:end,:));
-%     totVar = (outVar*targVar(1)');
-%     MC_k(i) = (coVar(1,2)*coVar(1,2))/totVar;
-    
+       
     coVar = 1/(length(Y(:,i))-1) * sum((test_output_sequence(config.wash_out+1:end,i)-mean(test_output_sequence(config.wash_out+1:end,i)))...
        .*(Y(:,i)-mean(Y(:,i))));    
     outVar = 1/(length(Y(:,i))-1) * sum((Y(:,i)-mean(Y(:,i))).*(Y(:,i)-mean(Y(:,i))));    
     totVar = (outVar*targVar);    
     MC_k(i) = (coVar*coVar)/totVar;
     
-    
-    %R = corrcoef(test_Output_sequence(config.wash_out+1:end,i),Y(:,i));
-    %Cm = Cm + R(1,2).^2;
 end
 
 MC = sum(MC_k);

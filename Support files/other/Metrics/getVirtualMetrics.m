@@ -21,9 +21,12 @@ for metric_item = 1:length(config.metrics)
         case 'KR'            
             
             %define input signal
-            ui = 2*rand(num_timesteps,N)-1;
+            ui = 2*rand(num_timesteps,N)-1;            
             
             input_sequence = repmat(ui(:,1),1,N);
+            
+            % rescale for each reservoir
+            input_sequence =input_sequence.*config.scaler;
             
             %kernel matrix - pick 'to' at halfway point
             M = config.assessFcn(individual,input_sequence,config);
@@ -52,8 +55,11 @@ for metric_item = 1:length(config.metrics)
             %% Genralization Rank
         case 'GR'
             % define input signal
-            input_sequence = 1 + 0.1*rand(num_timesteps,N)-0.05;
-
+            input_sequence = 0.5 + 0.1*rand(num_timesteps,N)-0.05;
+            
+            % rescale for each reservoir
+            input_sequence =input_sequence.*config.scaler;
+            
             %collect states
             G = config.assessFcn(individual,input_sequence,config);
             

@@ -24,23 +24,23 @@ end
 
 % type of network to evolve
 config.res_type = 'RoR';                    % state type of reservoir to use. E.g. 'RoR' (Reservoir-of-reservoirs/ESNs), 'ELM' (Extreme learning machine), 'Graph' (graph network of neurons), 'DL' (delay line reservoir) etc. Check 'selectReservoirType.m' for more.
-config.num_nodes = [100];                   % num of nodes in each sub-reservoir, e.g. if config.num_nodes = [10,5,15], there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. 
+config.num_nodes = [40];                   % num of nodes in each sub-reservoir, e.g. if config.num_nodes = [10,5,15], there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. 
 config = selectReservoirType(config);       % collect function pointers for the selected reservoir type 
 
 %% Evolutionary parameters
-config.num_tests = 10;                        % num of tests/runs
-config.pop_size = 100;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
-config.total_gens = 2000;                    % number of generations to evolve 
+config.num_tests = 1;                        % num of tests/runs
+config.pop_size = 10;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
+config.total_gens = 10000;                    % number of generations to evolve 
 config.mut_rate = 0.1;                       % mutation rate
 config.deme_percent = 0.2;                   % speciation percentage; determines interbreeding distance on a ring.
 config.deme = round(config.pop_size*config.deme_percent);
-config.rec_rate = 0.50;                       % recombination rate
+config.rec_rate = 1;                       % recombination rate
 
 %% Task parameters
 config.discrete = 0;               % select '1' for binary input for discrete systems
 config.nbits = 16;                 % only applied if config.discrete = 1; if wanting to convert data for binary/discrete systems
 config.preprocess = 1;             % basic preprocessing, e.g. scaling and mean variance
-config.dataset = 'NARMA10';          % Task to evolve for
+config.dataset = 'poleBalance';          % Task to evolve for
 
 % get dataset information
 [config] = selectDataset(config);
@@ -50,7 +50,7 @@ config.dataset = 'NARMA10';          % Task to evolve for
 [config] = getDataSetInfo(config);
 
 %% general params
-config.gen_print = 10;                       % after 'gen_print' generations print task performance and show any plots
+config.gen_print = 100;                       % after 'gen_print' generations print task performance and show any plots
 config.start_time = datestr(now, 'HH:MM:SS');
 config.figure_array = [figure figure];
 config.save_gen = inf;                       % save data at generation = save_gen
@@ -196,7 +196,7 @@ for test = 1:config.num_tests
                 fprintf('Gen %d, time taken: %.4f sec(s)\n  Winner: %.4f, Loser: %.4f, Best Error: %.4f \n',gen,toc/config.gen_print,population(winner).val_error,population(loser).val_error,best(test,gen));
                 tic;
                 % plot reservoir structure, task simulations etc.
-                plotReservoirDetails(population,store_error,test,best_indv,gen,loser,config)
+                %plotReservoirDetails(population,store_error,test,best_indv,gen,loser,config)
             end
         end
         

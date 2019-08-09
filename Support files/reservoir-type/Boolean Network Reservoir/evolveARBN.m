@@ -27,7 +27,7 @@ function [nodeUpdated, timeStateMatrix] = evolveARBN(node, varargin)
 %   CreationDate: 20.11.2002 LastModified: 30.11.2018 (Matt Dale)
 
 input_sequence = varargin{1};
-k = size(input_sequence,2);
+k = size(input_sequence,1);
 
 nodeUpdated = resetNodeStats(node);
 timeStateMatrix = zeros(length(nodeUpdated), k);
@@ -41,7 +41,7 @@ for i=1:k
     nodeSelected = randi([1 n],1,1);        %pick node at random    
     
     nodeUpdated = setLUTLines(nodeUpdated);
-    nodeUpdated = setNodeNextState(nodeUpdated,input_sequence);
+    nodeUpdated = setNodeNextState(nodeUpdated);
     
     nodeUpdated(nodeSelected).state = nodeUpdated(nodeSelected).nextState;
     nodeUpdated(nodeSelected).nbUpdates = nodeUpdated(nodeSelected).nbUpdates + 1;

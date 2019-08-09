@@ -17,7 +17,7 @@ end
 
 %% type of network to evolve
 config.res_type = 'RoR';                 % can use different hierarchical reservoirs. RoR_IA is default ESN.
-config.num_nodes = [50];                      % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
+config.num_nodes = [25];                      % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
 config = selectReservoirType(config);       % get correct functions for type of reservoir
 
 %% Network details
@@ -34,7 +34,7 @@ config.rec_rate = 0.5;                       % recombination rate
 config.discrete = 0;                                                        % binary input for discrete systems
 config.nbits = 16;                                                          % if using binary/discrete systems
 config.preprocess = 1;                                                      % basic preprocessing, e.g. scaling and mean variance
-config.dataset = 'Laser';                                                  % Task to evolve for
+config.dataset = 'poleBalance';                                                  % Task to evolve for
 
 % get dataset
 [config] = selectDataset(config);
@@ -43,7 +43,7 @@ config.dataset = 'Laser';                                                  % Tas
 [config] = getDataSetInfo(config);
 
 %% MAP of elites parameters
-config.batch_size = 1;                                                     % how many offspring to create in one iteration
+config.batch_size = 10;                                                     % how many offspring to create in one iteration
 config.local_breeding = 1;                                                  % if interbreeding is local or global
 config.k_neighbours = 5;                                                    % select second parent from neighbouring behaviours
 config.total_MAP_size = round(config.num_nodes*config.num_reservoirs + (config.add_input_states*config.task_num_inputs) + 1);  %size depends system used
@@ -52,7 +52,7 @@ config.change_MAP_iter = round(config.total_iter/(length(config.MAP_resolution)-
 config.start_MAP_resolution = config.MAP_resolution(1);                        % record of first resolution point
 config.voxel_size = 10;                                                     % to measure behaviour space
 
-config.figure_array = [figure figure];
+config.figure_array = [figure figure figure];
 
 config.gen_print = 5;
 
@@ -78,13 +78,20 @@ for tests = 1:config.num_tests
     config.pop_size = config.initial_population;
     population = config.createFcn(config);    
     
-    % Evaluate offspring    
-    ppm = ParforProgMon('Initial population: ', config.pop_size);
-    parfor pop_indx = 1:config.pop_size
-        warning('off','all')
-        population(pop_indx).behaviours = round(getVirtualMetrics(population(pop_indx),config))+1;
-        population(pop_indx) = config.testFcn(population(pop_indx),config);
-        ppm.increment();
+    % Evaluate offspring  
+    if config.parallel % use parallel toolbox - faster
+        ppm = ParforProgMon('Initial population: ', config.pop_size);
+        parfor pop_indx = 1:config.pop_size
+            warning('off','all')
+            population(pop_indx).behaviours = round(getVirtualMetrics(population(pop_indx),config))+1;
+            population(pop_indx) = config.testFcn(population(pop_indx),config);
+            ppm.increment();
+        end
+    else
+        for pop_indx = 1:config.pop_size
+            population(pop_indx).behaviours = round(getVirtualMetrics(population(pop_indx),config))+1;
+            population(pop_indx) = config.testFcn(population(pop_indx),config);
+        end
     end
     
     % find behaviour match
@@ -198,7 +205,7 @@ for tests = 1:config.num_tests
         plotSearch(MAP,iter*config.batch_size,config)
         
         if (mod(iter,config.gen_print) == 0)
-            %plotReservoirDetails(figure1,MAP,store_global_best,tests,best_indv,1,prev_best,config)       
+            %plotReservoirDetails(MAP,store_global_best,tests,best_indv,1,prev_best,config)       
         end
         fprintf('\n iteration: %d, best error: %.4f  ',iter,global_best);
     end

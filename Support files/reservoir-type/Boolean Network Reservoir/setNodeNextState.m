@@ -1,4 +1,4 @@
-function nodeUpdated = setNodeNextState(node,input_loc,input_sequence)
+function nodeUpdated = setNodeNextState(node)
 
 % SETNODENEXTSTATE Look up next state for each node and update "nextState" field of the NODE
 % structure-array. Make sure that assocRules() has been called on NODE before using this function.  
@@ -23,14 +23,11 @@ function nodeUpdated = setNodeNextState(node,input_loc,input_sequence)
 nodeUpdated = node;
 
 for i=1:length(node)
-     if input_loc(i) % Apply input (somehow)
-        nodeUpdated(i).nextState = input_sequence(i);
-     else
-        nodeUpdated(i).nextState = nodeUpdated(i).rule(nodeUpdated(i).lineNumber,1);
-        if(isempty(nodeUpdated(i).nextState))
-            nodeUpdated(i).nextState = nodeUpdated(i).state;
-        end
-       %nodeUpdated(i).state = nodeUpdated(i).nextState;
-    end
+
+        nodeUpdated(i).nextState = nodeUpdated(i).rule(nodeUpdated(i).lineNumber);
+%         if(isempty(nodeUpdated(i).nextState))
+%             nodeUpdated(i).nextState = nodeUpdated(i).state;
+%         end
+
 end
   
