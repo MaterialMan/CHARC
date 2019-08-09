@@ -38,10 +38,10 @@ if strcmp(evalType, 'train')
     states = reshape(median(state_comp),size(state_comp,2),size(state_comp,3));
     %states = reshape(state_comp,size(state_comp,2),size(state_comp,3));
     
-%     %temp plot
-%     subplot(1,2,1)
-%     plot(states)
-%     drawnow
+%     %temp plot%     
+    subplot(1,2,1)
+    plot(states)
+    drawnow
     
     %calculate state variance
     C = combnk(1:totEval,2);
@@ -67,11 +67,13 @@ if strcmp(evalType, 'train')
     end
     
 %     %temp plot
-    %subplot(1,2,2)
+    subplot(1,2,2)
     %plot(states)
 %     imagesc(states)
 %     colormap('gray')
 %     drawnow
+    plot(states)
+    drawnow
     
 else
      read_session.queueOutputData([zeros(25,maxInputs);outputData; zeros(10,maxInputs)]);

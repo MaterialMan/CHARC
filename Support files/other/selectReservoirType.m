@@ -79,8 +79,12 @@ switch(config.res_type)
     case 'CNT' 
         config.createFcn = @createCNT;
         config.assessFcn = @collectCNTStates;
-        config.mutFcn = @mutateRoR;
-        config.recFcn = @recombRoR; 
+        config.mutFcn = @mutateCNT;
+        config.recFcn = @recombCNT; 
 end
 
-config.testFcn = @testReservoir; % default for all
+if strcmp(config.res_type,'CNT')
+    config.testFcn = @testHardwareReservoir;
+else
+    config.testFcn = @testReservoir; % default for all
+end

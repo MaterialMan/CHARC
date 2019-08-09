@@ -82,10 +82,10 @@ switch(config.res_type)
         
     case 'CNT'
         
-        config.volt_range = 5;
-        config.num_input_electrodes = 64;
-        config.num_output_electrodes = 32;
-        
+        config.volt_range = 1;
+        config.num_input_electrodes = 32;
+        config.num_output_electrodes = 64;
+        config.add_input_states = 0;                  %add input to states
     otherwise
         
 end
@@ -101,11 +101,11 @@ switch(config.dataset)
         config.sparse_input_weights = 0;
         
     case 'poleBalance'
-        config.time_steps = 1000;
+        config.time_steps = 200;
         config.simple_task = 2;
-        config.pole_tests = 2;
+        config.pole_tests = 1;
         config.velocity = 1;
-        config.run_sim = 0;
+        config.run_sim = 1;
         config.testFcn = @poleBalance;
         config.evolve_output_weights = 1;
         config.add_input_states = 0;                  %add input to states

@@ -58,7 +58,7 @@ for i = 1:nOutputUnits
     Cm = Cm + R(1,2).^2;
 end
 
-MC = sum(1-calculateError(Y,testOutputSequence,nForgetPoints,'NMSE_mem'));
+%MC = sum(1-calculateError(Y,testOutputSequence,nForgetPoints,'NMSE_mem'));
 
 if isnan(MC) || MC < 0
     MC = 0;
