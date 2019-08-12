@@ -1,10 +1,6 @@
 function G = torusGraph(Nodes,self_loop,config)
 %%  N > 8 tends to visualise better
 
-if nargin < 2
-    self_loop = 0;
-end
-
 s = [];
 t=[];
 N_rings = config.torus_rings;

@@ -74,6 +74,8 @@ switch(config.res_type)
         config.rule_list = {@evolveCRBN}; %list of evaluation types: {'CRBN','ARBN','DARBN','GARBN','DGARBN'};
         config.leak_on = 0;
         config.discrete = 1;
+        config.torus_rings = 1;
+        config.rule_type = 0;
         
     case '2D_CA'
         % update type
@@ -82,6 +84,7 @@ switch(config.res_type)
         config.leak_on = 0;
         config.rule_type = 'Moores';
         config.discrete = 1;
+        config.torus_rings = 1;
         
     case 'DL'
         %     config.DLtype = 'mackey_glass2';%'ELM';%'virtualNodes';
@@ -94,6 +97,10 @@ switch(config.res_type)
         config.num_input_electrodes = 64;
         config.num_output_electrodes = 32;
         config.discrete = 0;
+        
+    case 'Wave'
+        config.run_sim = 0; 
+        config.sim_speed = 0.025;
         
     otherwise
         
