@@ -51,6 +51,7 @@ for pop_indx = 1:config.pop_size
         
         population(pop_indx).last_state{i} = zeros(1,population(pop_indx).nodes(i));
       
+        % set time period for CA/RBN to evolve
         population(pop_indx).time_period(i) = randi([1 10]);
     end
     

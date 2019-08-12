@@ -24,7 +24,7 @@ close all
 rng(1,'twister');
 
 %% Setup
-config.parallel = 0;                        % use parallel toolbox
+config.parallel = 1;                        % use parallel toolbox
 
 %start paralllel pool if empty
 if isempty(gcp) && config.parallel
@@ -32,12 +32,12 @@ if isempty(gcp) && config.parallel
 end
 
 % type of network to evolve
-config.res_type = 'elementary_CA';                % state type of reservoir to use. E.g. 'RoR' (Reservoir-of-reservoirs/ESNs), 'ELM' (Extreme learning machine), 'Graph' (graph network of neurons), 'DL' (delay line reservoir) etc. Check 'selectReservoirType.m' for more.
-config.num_nodes = [10,10,10];                  % num of nodes in each sub-reservoir, e.g. if config.num_nodes = {10,5,15}, there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. For one reservoir, sate as a non-cell, e.g. config.num_nodes = 25
+config.res_type = 'RoR';                % state type of reservoir to use. E.g. 'RoR' (Reservoir-of-reservoirs/ESNs), 'ELM' (Extreme learning machine), 'Graph' (graph network of neurons), 'DL' (delay line reservoir) etc. Check 'selectReservoirType.m' for more.
+config.num_nodes = [25];                  % num of nodes in each sub-reservoir, e.g. if config.num_nodes = {10,5,15}, there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. For one reservoir, sate as a non-cell, e.g. config.num_nodes = 25
 config = selectReservoirType(config);   % collect function pointers for the selected reservoir type
 
 % Network details
-config.metrics = {'KR','MC'};       % behaviours that will be used; name metrics to use and order of metrics
+config.metrics = {'KR','GR','MC'};       % behaviours that will be used; name metrics to use and order of metrics
 config.voxel_size = 10;                  % when measuring quality, this will determine the voxel size. Depends on systems being compared. Rule of thumb: around 10 is good
 
 % dummy variables for dataset; not used but still needed for functions to
@@ -48,12 +48,12 @@ config.dataset = 'blank';
 
 % get any additional params stored in getDataSetInfo.m. This might include:
 % details on reservoir structure, extra task variables, etc.
-[config] = getDataSetInfo(config);
+[config] = getAdditionalParameters(config);
 
 %% Evolutionary parameters
 config.num_tests = 1;                        % num of tests/runs
 config.pop_size = 50;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
-config.total_gens = 1000;                    % number of generations to evolve
+config.total_gens = 2000;                    % number of generations to evolve
 config.mut_rate = 0.1;                       % mutation rate
 config.deme_percent = 0.2;                   % speciation percentage; determines interbreeding distance on a ring.
 config.deme = round(config.pop_size*config.deme_percent);
@@ -74,8 +74,8 @@ config.param_indx = 1;                      % index for recording database quali
 % prediction parameters
 config.get_prediction_data = 0;             % collect task performances after experiment. Variables below are applied if '1'.
 config.task_list = {'NARMA10','NARMA30','Laser','NonChanEqRodan'}; % tasks to assess
-config.discrete = 0;                        % binary or continious input to system
-config.nbits = 16;                          % set bit conversion if using binary/discrete systems
+%config.discrete = 0;                        % binary or continious input to system
+%config.nbits = 16;                          % set bit conversion if using binary/discrete systems
 config.preprocess = 1;                      % apply basic preprocessing, e.g. scaling and mean variance
 
 %% Run experiments

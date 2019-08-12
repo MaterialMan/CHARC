@@ -34,7 +34,8 @@ for n = 2:size(input_sequence,1)
         if i == 1
             input = ([individual.bias_node input_sequence(n,:)])';
         else
-            input = ([individual.bias_node input_sequence(n,:) states{i-1}(n,:)])';
+            %input = ([individual.bias_node input_sequence(n,:) states{i-1}(n,:)])';
+            input = ([individual.bias_node states{i-1}(n,:)])';
         end
         
         if size(individual.activ_Fcn,2) > 1

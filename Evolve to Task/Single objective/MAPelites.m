@@ -39,8 +39,8 @@ config.dataset = 'poleBalance';                                                 
 % get dataset
 [config] = selectDataset(config);
 
-% get any additional params stored in getDataSetInfo.m
-[config] = getDataSetInfo(config);
+% get any additional params
+[config] = getAdditionalParameters(config);
 
 %% MAP of elites parameters
 config.batch_size = 10;                                                     % how many offspring to create in one iteration

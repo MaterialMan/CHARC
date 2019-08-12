@@ -1,3 +1,4 @@
+%% mutation function for RBNs and CAs
 function offspring = mutateRBN(offspring,config)
 
 % params - input scaling and leak rate
@@ -89,8 +90,6 @@ for i = 1:config.num_reservoirs
     offspring.time_period(i) = reshape(time_period,size(offspring.time_period(i)));
 
 end
-
-
 
 % mutate output weights
 if config.evolve_output_weights

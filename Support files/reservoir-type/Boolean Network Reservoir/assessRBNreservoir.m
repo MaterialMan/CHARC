@@ -39,5 +39,5 @@ end
 
 final_states = final_states(config.wash_out+1:end,:); % remove washout
 
-imagesc(final_states)
-drawnow
+% imagesc(final_states)
+% drawnow

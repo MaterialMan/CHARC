@@ -1,4 +1,7 @@
 %% Types of reservoirs available
+% If creating a new reservoir, add a case statement here to point to
+% necessary functions
+
 function config = selectReservoirType(config)
 
 switch(config.res_type)

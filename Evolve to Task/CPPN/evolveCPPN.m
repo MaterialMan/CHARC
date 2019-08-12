@@ -33,39 +33,34 @@ config.rec_rate = 0.5;                       % recombination rate
 
 %% substrate details
 config_sub.pop_size = config.pop_size;
-config_sub.num_nodes = [7];                 % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
+config_sub.num_nodes = [8];                 % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
 config_sub.res_type ='Graph';               % currently only works with lattice as CPPN configured substrate
 
 config_sub = selectReservoirType(config_sub);       % get correct functions for type of reservoir
 config_sub.parallel = config.parallel;                        % use parallel toolbox
 
 %% CPPN details
-config.res_type = 'RoR';                      % can use different hierarchical reservoirs. RoR_IA is default ESN.
-config.num_nodes = [10];                  % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
+config.res_type = 'ELM';                      % can use different hierarchical reservoirs. RoR_IA is default ESN.
+config.num_nodes = [5,5,5];                  % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
 config = selectReservoirType(config);       % get correct functions for type of reservoir
 config.CPPN_inputs = 6;                     % coord of node A(x,y) and node B(x,y)
 config.CPPN_outputs = length(config_sub.num_nodes)*2 +1; % Output 1: input layer, 2: hidden layer, 3: outputlayer
 
-config.discrete = 0;               % binary input for discrete systems
-config.nbits = 16;                       % if using binary/discrete systems
 config.preprocess = 1;                   % basic preprocessing, e.g. scaling and mean variance
 config.dataset = 'CPPN';                 % Task to evolve for
 
 [config] = selectDataset(config);
 
-% get any additional params stored in getDataSetInfo.m
-[config] = getDataSetInfo(config);
-
+% get any additional params
+[config] = getAdditionalParameters(config);
 
 %% Task parameters
-config_sub.discrete = 0;               % binary input for discrete systems
-config_sub.nbits = 16;                       % if using binary/discrete systems
 config_sub.preprocess = 1;                   % basic preprocessing, e.g. scaling and mean variance
-config_sub.dataset = 'NARMA10';                 % Task to evolve for
+config_sub.dataset = 'Laser';                 % Task to evolve for
 
 % get dataset
 [config_sub] = selectDataset(config_sub);
-[config_sub] = getDataSetInfo(config_sub);
+[config_sub] = getAdditionalParameters(config_sub);
 
 %% general params
 config.gen_print = 15;                       % gens to display achive and database

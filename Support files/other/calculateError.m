@@ -8,11 +8,6 @@ else
     desired_output = desired_output(config.wash_out+1:end,:);
 end
 
-if config.discrete
-    desired_output = binaryVector2doubleOutput(desired_output,config.q,config.nbits);
-    system_output = binaryVector2doubleOutput(round((1+system_output)/2),config.q,config.nbits);
-end
-
 % final measured error type
 switch(config.err_type)
     

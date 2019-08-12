@@ -1,6 +1,6 @@
 %% Define additional params for particular reservoirs and tasks
-% overflow for params that can be changed
-function [config] = getDataSetInfo(config)
+% overflow for params that can be changed. This is called by all main scripts
+function [config] = getAdditionalParameters(config)
             
 % if multi-objective, update input/output units
 if ~isfield(config,'nsga2')
@@ -8,7 +8,7 @@ if ~isfield(config,'nsga2')
     config.task_num_outputs = size(config.train_output_sequence,2);
 end
 
-%% Default network details
+%% Set Default parameters
 config.num_reservoirs = length(config.num_nodes);% num of subreservoirs. Default ESN should be 1.
 config.leak_on = 1;                           % add leak states
 config.add_input_states = 1;                  %add input to states
@@ -21,8 +21,12 @@ config.training_type = 'Ridge';              % blank is psuedoinverse. Other opt
 
 % default reservoir input scale
 config.scaler = 1;                          % this may need to change for different reservoir systems that don't fit to the typical neuron range, e.g. [-1 1]
+config.discrete = 0;
+%% Change/add parameters depending on reservoir type
+% This section is for additional parameters needed for different reservoir
+% types. If something is not here, it is most likely in the
+% reservoir-specific @createFcn
 
-%% change/add parameters depending on reservoir type
 switch(config.res_type)
     
     case 'ELM'
@@ -35,12 +39,13 @@ switch(config.res_type)
         
     case 'Graph'
         
-        config.graph_type= {'fullLattice'};            % Define substrate. Add graph type to cell array for multi-reservoirs
+        config.graph_type= {'Torus'};            % Define substrate. Add graph type to cell array for multi-reservoirs
         % Examples: 'Hypercube','Cube'
         % 'Torus','L-shape','Bucky','Barbell','Ring'
         % 'basicLattice','partialLattice','fullLattice','basicCube','partialCube','fullCube',ensembleLattice,ensembleCube,ensembleShape
         config.self_loop = [1];               % give node a loop to self. Must be defined as array.
-
+        config.torus_rings = config.num_nodes;
+        
         if length(config.graph_type) ~= length(config.num_nodes) && length(config.self_loop) ~= length(config.num_nodes)
             error('Number of graph types does not match number of reservoirs. Add more in getDataSetInfo.m')
         end
@@ -58,22 +63,25 @@ switch(config.res_type)
         
         config.k = 2; % number of inputs
         config.mono_rule = 0; % use one rule for every cell/reservoir
-        config.rule_list = {@evolveCRBN_test}; %list of evaluation types: {'CRBN','ARBN','DARBN','GARBN','DGARBN'};
+        config.rule_list = {@evolveCRBN}; %list of evaluation types: {'CRBN','ARBN','DARBN','GARBN','DGARBN'};
         config.leak_on = 0;
+        config.discrete = 1;
         
      case 'elementary_CA'
        % update type
         config.k = 3;
         config.mono_rule = 1;               %stick to rule rule set, individual cells cannot have different rules
-        config.rule_list = {@evolveCRBN_test}; %list of evaluation types: {'CRBN','ARBN','DARBN','GARBN','DGARBN'};
+        config.rule_list = {@evolveCRBN}; %list of evaluation types: {'CRBN','ARBN','DARBN','GARBN','DGARBN'};
         config.leak_on = 0;
+        config.discrete = 1;
         
     case '2D_CA'
         % update type
         config.mono_rule = 1;               %stick to rule rule set, individual cells cannot have different rules
-        config.rule_list = {@evolveCRBN_test}; %list of evaluation types: {'CRBN','ARBN','DARBN','GARBN','DGARBN'};
+        config.rule_list = {@evolveCRBN}; %list of evaluation types: {'CRBN','ARBN','DARBN','GARBN','DGARBN'};
         config.leak_on = 0;
         config.rule_type = 'Moores';
+        config.discrete = 1;
         
     case 'DL'
         %     config.DLtype = 'mackey_glass2';%'ELM';%'virtualNodes';
@@ -82,18 +90,19 @@ switch(config.res_type)
         
     case 'CNT'
         
-        config.volt_range = 1;
-        config.num_input_electrodes = 32;
-        config.num_output_electrodes = 64;
-        config.add_input_states = 0;                  %add input to states
+        config.volt_range = 5;
+        config.num_input_electrodes = 64;
+        config.num_output_electrodes = 32;
+        config.discrete = 0;
+        
     otherwise
         
 end
 
-
-%% Task parameters
-switch(config.dataset)
-    
+%% Task parameters - now apply task specific parameters
+% If a task requires additional parameters, or resetting from defaults, add
+% here.
+switch(config.dataset)  
     case 'autoencoder'
         config.leak_on = 0;                          % add leak states
         config.add_input_states = 0;
@@ -101,16 +110,15 @@ switch(config.dataset)
         config.sparse_input_weights = 0;
         
     case 'poleBalance'
-        config.time_steps = 200;
+        config.time_steps = 1000;
         config.simple_task = 2;
-        config.pole_tests = 1;
+        config.pole_tests = 2;
         config.velocity = 1;
-        config.run_sim = 1;
+        config.run_sim = 0;
         config.testFcn = @poleBalance;
         config.evolve_output_weights = 1;
         config.add_input_states = 0;                  %add input to states
-
-        
+      
     case 'robot'
         % type of task
         config.robot_behaviour = 'explore_maze';    %select behaviour/file to simulate
