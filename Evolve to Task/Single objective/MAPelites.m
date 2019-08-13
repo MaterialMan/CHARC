@@ -16,8 +16,8 @@ if isempty(gcp) && config.parallel
 end
 
 %% type of network to evolve
-config.res_type = 'RoR';                 % can use different hierarchical reservoirs. RoR_IA is default ESN.
-config.num_nodes = [25];                      % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
+config.res_type = 'Graph';                 % can use different hierarchical reservoirs. RoR_IA is default ESN.
+config.num_nodes = [5];                      % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
 config = selectReservoirType(config);       % get correct functions for type of reservoir
 
 %% Network details
@@ -25,7 +25,7 @@ config.metrics = {'KR','MC'}; % metrics to use (and order of metrics)
 
 %% Evolutionary parameters
 config.num_tests = 1;                        % num of runs
-config.initial_population = 100;             % large pop better
+config.initial_population = 25;             % large pop better
 config.total_iter = 500;                    % num of gens
 config.mut_rate = 0.1;                       % mutation rate
 config.rec_rate = 0.5;                       % recombination rate
@@ -34,7 +34,7 @@ config.rec_rate = 0.5;                       % recombination rate
 config.discrete = 0;                                                        % binary input for discrete systems
 config.nbits = 16;                                                          % if using binary/discrete systems
 config.preprocess = 1;                                                      % basic preprocessing, e.g. scaling and mean variance
-config.dataset = 'poleBalance';                                                  % Task to evolve for
+config.dataset = 'NARMA10';                                                  % Task to evolve for
 
 % get dataset
 [config] = selectDataset(config);
@@ -46,7 +46,7 @@ config.dataset = 'poleBalance';                                                 
 config.batch_size = 10;                                                     % how many offspring to create in one iteration
 config.local_breeding = 1;                                                  % if interbreeding is local or global
 config.k_neighbours = 5;                                                    % select second parent from neighbouring behaviours
-config.total_MAP_size = round(config.num_nodes*config.num_reservoirs + (config.add_input_states*config.task_num_inputs) + 1);  %size depends system used
+config.total_MAP_size = round((config.num_nodes)*config.num_reservoirs + (config.add_input_states*config.task_num_inputs) + 1);  %size depends system used
 config.MAP_resolution = flip(recursiveDivision(config.total_MAP_size));     % list to define MAP of elites resolution, i.e., how many cells
 config.change_MAP_iter = round(config.total_iter/(length(config.MAP_resolution)-1)); % change the resolution after I iterations
 config.start_MAP_resolution = config.MAP_resolution(1);                        % record of first resolution point
@@ -59,7 +59,7 @@ config.gen_print = 5;
 %% Run MicroGA
 for tests = 1:config.num_tests
     
-    clearvars -except config tests figure1 figure2 figure3 store_global_best quality
+    clearvars -except config tests store_global_best quality
     
     fprintf('\n Test: %d  ',tests);
     fprintf('Processing genotype......... %s \n',datestr(now, 'HH:MM:SS'))

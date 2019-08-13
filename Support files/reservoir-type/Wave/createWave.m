@@ -25,7 +25,7 @@ for pop_indx = 1:config.pop_size
     for i = 1:config.num_reservoirs
         
         %define num of units
-        population(pop_indx).nodes(i) = config.num_nodes(i).^2;
+        population(pop_indx).nodes(i) = config.num_nodes(i);
 
         % Scaling and leak rate
         population(pop_indx).input_scaling(i) = 2*rand-1; %increases nonlinearity

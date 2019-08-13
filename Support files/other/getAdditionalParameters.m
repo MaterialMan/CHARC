@@ -99,8 +99,12 @@ switch(config.res_type)
         config.discrete = 0;
         
     case 'Wave'
-        config.run_sim = 0; 
+        config.run_sim = 0;
         config.sim_speed = 0.025;
+        for i = 1:length(config.num_nodes)
+            config.num_nodes(i) =  config.num_nodes(i).^2;
+        end
+        
         
     otherwise
         

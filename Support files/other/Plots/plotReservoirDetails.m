@@ -72,6 +72,12 @@ switch(config.res_type)
         
     case {'RBN','elementary_CA'}
         plotRBN(best_individual,config)
+        
+    case 'Wave'
+%         set(0,'currentFigure',config.figure_array(1))
+%         config.run_sim = 1;
+%         config.testFcn(best_individual,config);
+%         config.run_sim = 0;
 end
 
 end

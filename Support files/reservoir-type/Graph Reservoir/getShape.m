@@ -26,8 +26,8 @@ for graph_indx = 1:length(config.num_nodes)
             G = graph(A);
             config.plot_3d = 1;    % plot graph in 3D.
             
-        case {'Torus','Ring'}
-            %config.rule_type = 1;
+        case 'Torus'
+            config.rule_type = 'Moores';
             G = torusGraph(num_nodes,config.self_loop(graph_indx),config);
             config.plot_3d = 1;    % plot graph in 3D.
             
@@ -40,10 +40,10 @@ for graph_indx = 1:length(config.num_nodes)
             G = createLattice(num_nodes,graph_type,config.self_loop(graph_indx),config.num_reservoirs);
             config.plot_3d = 0;    % plot graph in 3D.
             
-%         case 'Ring'
-%             %config.rule_type = 0;
-%             G = torusGraph(num_nodes,config.self_loop(graph_indx),config);
-%             config.plot_3d = 0;    % plot graph in 3D.
+        case 'Ring'
+            config.rule_type = 0;
+            G = torusGraph(num_nodes,config.self_loop(graph_indx),config);
+            config.plot_3d = 0;    % plot graph in 3D.
             
         otherwise
             error('Requires a substrate shape. Check graph type.')
