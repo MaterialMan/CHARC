@@ -83,13 +83,13 @@ for tests = 1:config.num_tests
         ppm = ParforProgMon('Initial population: ', config.pop_size);
         parfor pop_indx = 1:config.pop_size
             warning('off','all')
-            population(pop_indx).behaviours = round(getVirtualMetrics(population(pop_indx),config))+1;
+            population(pop_indx).behaviours = round(getMetrics(population(pop_indx),config))+1;
             population(pop_indx) = config.testFcn(population(pop_indx),config);
             ppm.increment();
         end
     else
         for pop_indx = 1:config.pop_size
-            population(pop_indx).behaviours = round(getVirtualMetrics(population(pop_indx),config))+1;
+            population(pop_indx).behaviours = round(getMetrics(population(pop_indx),config))+1;
             population(pop_indx) = config.testFcn(population(pop_indx),config);
         end
     end
@@ -159,7 +159,7 @@ for tests = 1:config.num_tests
             offspring(b) = config.mutFcn(offspring(b),config);
             
             % Evaluate offspring
-            offspring(b).behaviours = round(getVirtualMetrics(offspring(b),config))+1;
+            offspring(b).behaviours = round(getMetrics(offspring(b),config))+1;
             offspring(b) = config.testFcn(offspring(b),config);
             
         end

@@ -174,7 +174,7 @@ for test = 1:config.num_tests
         %get metric details
         if config.record_metrics
             parfor pop_indx = 1:config.pop_size
-                metrics(pop_indx,:) = getVirtualMetrics(genotype(pop_indx),config);
+                metrics(pop_indx,:) = getMetrics(genotype(pop_indx),config);
             end
         end
         

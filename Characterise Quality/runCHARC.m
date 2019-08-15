@@ -33,7 +33,7 @@ end
 
 % type of network to evolve
 config.res_type = 'RoR';                % state type of reservoir to use. E.g. 'RoR' (Reservoir-of-reservoirs/ESNs), 'ELM' (Extreme learning machine), 'Graph' (graph network of neurons), 'DL' (delay line reservoir) etc. Check 'selectReservoirType.m' for more.
-config.num_nodes = [25];                  % num of nodes in each sub-reservoir, e.g. if config.num_nodes = {10,5,15}, there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. For one reservoir, sate as a non-cell, e.g. config.num_nodes = 25
+config.num_nodes = [50];                  % num of nodes in each sub-reservoir, e.g. if config.num_nodes = {10,5,15}, there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. For one reservoir, sate as a non-cell, e.g. config.num_nodes = 25
 config = selectReservoirType(config);   % collect function pointers for the selected reservoir type
 
 % Network details
@@ -52,8 +52,8 @@ config.dataset = 'blank';
 
 %% Evolutionary parameters
 config.num_tests = 1;                        % num of tests/runs
-config.pop_size = 50;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
-config.total_gens = 10000;                    % number of generations to evolve
+config.pop_size = 100;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
+config.total_gens = 20000;                    % number of generations to evolve
 config.mut_rate = 0.1;                       % mutation rate
 config.deme_percent = 0.2;                   % speciation percentage; determines interbreeding distance on a ring.
 config.deme = round(config.pop_size*config.deme_percent);
@@ -65,7 +65,7 @@ config.p_min_start = 3;%sum(config.num_nodes)/10;                     % novelty 
 config.p_min_check = 200;                   % change novelty threshold dynamically after "p_min_check" generations.
 
 % general params
-config.gen_print = 25;                       % after 'gen_print' generations display archive and database
+config.gen_print = 200;                       % after 'gen_print' generations display archive and database
 config.start_time = datestr(now, 'HH:MM:SS');
 config.figure_array = [figure figure];
 config.save_gen = inf;                       % save data at generation = save_gen
@@ -102,13 +102,13 @@ for tests = 1:config.num_tests
         ppm = ParforProgMon('Initial population: ', config.pop_size);
         parfor pop_indx = 1:config.pop_size
             warning('off','all')
-            population(pop_indx).behaviours = getVirtualMetrics(population(pop_indx),config);
+            population(pop_indx).behaviours = getMetrics(population(pop_indx),config);
             ppm.increment();
         end
     else
         for pop_indx = 1:config.pop_size
             tic
-            population(pop_indx).behaviours = getVirtualMetrics(population(pop_indx),config);
+            population(pop_indx).behaviours = getMetrics(population(pop_indx),config);
             fprintf('\n i = %d, took: %.4f\n',pop_indx,toc);
         end
     end
@@ -163,7 +163,7 @@ for tests = 1:config.num_tests
         population(loser) = config.mutFcn(population(loser),config);
         
         %% Evaluate and update fitness of offspring/loser
-        population(loser).behaviours = getVirtualMetrics(population(loser),config);
+        population(loser).behaviours = getMetrics(population(loser),config);
         
         % Store behaviours
         pop_behaviours(loser,:) = population(loser).behaviours;

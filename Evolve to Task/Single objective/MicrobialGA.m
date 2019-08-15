@@ -210,7 +210,7 @@ for test = 1:config.num_tests
     % apply metrics to final population
     if config.record_metrics
         parfor pop_indx = 1:config.pop_size
-            metrics(pop_indx,:) = getVirtualMetrics(population(pop_indx),config);
+            metrics(pop_indx,:) = getMetrics(population(pop_indx),config);
         end
     end
 end

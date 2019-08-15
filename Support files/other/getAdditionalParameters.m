@@ -110,7 +110,7 @@ switch(config.res_type)
         
 end
 
-%% Task parameters - now apply task specific parameters
+%% Task parameters - now apply task-specific parameters
 % If a task requires additional parameters, or resetting from defaults, add
 % here.
 switch(config.dataset)  
