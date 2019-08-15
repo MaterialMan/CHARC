@@ -51,7 +51,8 @@ for pop_indx = 1:config.pop_size
         
         population(pop_indx).last_state{i} = zeros(1,population(pop_indx).nodes(i));
       
-        % set time period for CA/RBN to evolve
+        % set time period for CA/RBN to evolve - boundaries are currently
+        % arbitary
         population(pop_indx).time_period(i) = randi([1 10]);
     end
     
@@ -61,7 +62,7 @@ for pop_indx = 1:config.pop_size
     %% weights and connectivity of all reservoirs
     for i= 1:config.num_reservoirs
                
-        population(pop_indx).initial_states{i} = round(rand(population(pop_indx).nodes(i),1));
+        population(pop_indx).initial_states{i} = round(rand(population(pop_indx).nodes(i),1)); %zeros(population(pop_indx).nodes(i),1);%
         
         switch(config.res_type)
             

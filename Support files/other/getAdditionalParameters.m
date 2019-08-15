@@ -62,7 +62,7 @@ switch(config.res_type)
     case 'RBN'
         
         config.k = 2; % number of inputs
-        config.mono_rule = 0; % use one rule for every cell/reservoir
+        config.mono_rule = 1; % use one rule for every cell/reservoir
         config.rule_list = {@evolveCRBN}; %list of evaluation types: {'CRBN','ARBN','DARBN','GARBN','DGARBN'};
         config.leak_on = 0;
         config.discrete = 1;

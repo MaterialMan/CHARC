@@ -22,12 +22,6 @@ function nodeUpdated = setNodeNextState(node)
 
 nodeUpdated = node;
 
-for i=1:length(node)
-
-        nodeUpdated(i).nextState = nodeUpdated(i).rule(nodeUpdated(i).lineNumber);
-%         if(isempty(nodeUpdated(i).nextState))
-%             nodeUpdated(i).nextState = nodeUpdated(i).state;
-%         end
-
-end
-  
+for i=1:length(node)    
+   nodeUpdated(i).nextState = nodeUpdated(i).rule(nodeUpdated(i).lineNumber);
+end  

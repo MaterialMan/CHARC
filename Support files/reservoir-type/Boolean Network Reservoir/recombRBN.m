@@ -32,6 +32,7 @@ L(pos) = W(pos);
 loser.time_period = reshape(L,size(loser.time_period));
 
 
+
 for i = 1:config.num_reservoirs
 
   % input weights
@@ -78,6 +79,16 @@ for i = 1:config.num_reservoirs
             loser.W{i,j} = reshape(L,size(loser.W{i,j}));
         end
     end  
+    
+    % initial states
+    W= winner.initial_states{i}(:);
+    L = loser.initial_states{i}(:);
+    pos = randperm(length(L),ceil(config.rec_rate*length(L)));
+    L(pos) = W(pos);
+    loser.initial_states{i} = reshape(L,size(loser.initial_states{i}));
+    for s=1:length(loser.RBN_node{i}) % update initial states
+        loser.RBN_node{i}(s).state = int8(loser.initial_states{i}(s));
+    end
     
     % check and update rules, etc.
     loser.RBN_node{i} = assocRules(loser.RBN_node{i}, loser.rules{i});

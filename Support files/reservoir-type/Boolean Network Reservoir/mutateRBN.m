@@ -79,6 +79,15 @@ for i = 1:config.num_reservoirs
         end
     end
     
+    % initial states
+    initial_states = offspring.initial_states{i};
+    pos =  randperm(length(initial_states),ceil(config.mut_rate*length(initial_states)));
+    initial_states(pos) = round(rand(length(pos),1));
+    offspring.initial_states{i} = reshape(initial_states,size(offspring.initial_states{i}));
+    for s=1:length(offspring.RBN_node{i}) % update initial states
+        offspring.RBN_node{i}(s).state = int8(offspring.initial_states{i}(s));
+    end
+    
     % check and update rules, etc.
     offspring.RBN_node{i} = assocRules(offspring.RBN_node{i}, offspring.rules{i});
     %offspring.RBN_node{i} = assocNeighbours(offspring.RBN_node{i}, offspring.W{i,i});
