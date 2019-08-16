@@ -1,22 +1,14 @@
-function G = torusGraph(N,self_loop,N_rings,config)
+function G = torusGraph(Nodes,self_loop,config)
 %%  N > 8 tends to visualise better
-
-if nargin < 2
-    N_rings = N;
-    self_loop = 0;
-else
-    if nargin < 3
-        N_rings = N;
-    end
-end
 
 s = [];
 t=[];
+N_rings = config.torus_rings;
 
 %rings
 for i = 1:N_rings
-    s(i,:) = (i-1)*N+1:i*N;
-    t(i,:) = [(i-1)*N+2:i*N (i-1)*N+1];   
+    s(i,:) = (i-1)*Nodes+1:i*Nodes;
+    t(i,:) = [(i-1)*Nodes+2:i*Nodes (i-1)*Nodes+1];   
 end
 
 %connecting rings
@@ -32,7 +24,7 @@ if N_rings > 1
 end
 
 % looks odd if N <= N_rings
-if strcmp('Moores',config.ruleType)
+if strcmp('Moores',config.rule_type)
     for j = 1:N_rings
         %top right
         s(j+N_rings*2,:) = s(N_rings+j,:);
@@ -50,8 +42,8 @@ end
 %add self connections
 if self_loop
     for j = 1:N_rings
-        s = [s; (j-1)*N+1:j*N];
-        t = [t; (j-1)*N+1:j*N];
+        s = [s; (j-1)*Nodes+1:j*Nodes];
+        t = [t; (j-1)*Nodes+1:j*Nodes];
     end
 end
 

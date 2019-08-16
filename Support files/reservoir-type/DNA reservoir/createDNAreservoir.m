@@ -1,72 +1,94 @@
-function genotype = createDNAreservoir(config)
+function population = createDNAreservoir(config)
 
-genotype = [];
-for res = 1:config.popSize
+%% Reservoir Parameters
+for pop_indx = 1:config.pop_size
     
-    genotype(res).trainError = 1;
-    genotype(res).valError = 1;
-    genotype(res).testError = 1;
-    genotype(res).inputShift = 1;
-    genotype(res).inputScaling = 2*rand;
+    % add performance records
+    population(pop_indx).train_error = 1;
+    population(pop_indx).val_error = 1;
+    population(pop_indx).test_error = 1;
     
-    if isempty(config.trainInputSequence)
-        genotype(res).nInputUnits = 1;
-        genotype(res).nOutputUnits = 1;
-        config.task_num_inputs = 1;
-        config.task_num_outputs = 1;
+    % add single bias node
+    population(pop_indx).bias_node = 1;
+    
+    % assign input/output count
+    if isempty(config.train_input_sequence)
+        population(pop_indx).n_input_units = 1;
+        population(pop_indx).n_output_units = 1;
     else
-        genotype(res).nInputUnits = size(config.trainInputSequence,2);
-        genotype(res).nOutputUnits = size(config.trainOutputSequence,2);
-        config.task_num_inputs = size(config.trainInputSequence,2);
-        config.task_num_outputs =size(config.trainOutputSequence,2);
+        population(pop_indx).n_input_units = size(config.train_input_sequence,2);
+        population(pop_indx).n_output_units = size(config.train_output_sequence,2);
     end
     
-    genotype(res).size = config.maxMinorUnits;
-    genotype(res).Beta = 5e-7;                      % is the reaction rate constant; ? = 5 × 10-7 nM s-1
-    genotype(res).e = 8.8750e-11;                   %e is the efflux rate; e = 8.8750×10-2 nL s-1
-    genotype(res).H = 0.7849;                       % h the fraction of the reactor chamber that is well-mixed; h = 0.7849
-    genotype(res).V = 7.54e-9;                      % volume of the reactor; V = 7.54 nL
-    genotype(res).tau = config.tau;                         % time step
-    genotype(res).GateCon = repmat(2500,genotype(res).size,1);      % gate concentrations, nM Units
-    genotype(res).washout = 500;                                    %intial washout period for system
-    genotype(res).Sm0 = repmat(5.45e-6,genotype(res).size,1);       %initial base concentrations, nmol
-    
-    %initial concentrations
-    genotype(res).S0 = [1000 zeros(1,genotype(res).size-1)];
-    genotype(res).P0 = zeros(1,genotype(res).size);
-    
-    genotype(res).nTotalUnits = genotype(res).size;
-    genotype(res).leakRate = rand;
-    
-    % add input locations
-    %     genotype(res).input_loc = zeros((genotype(res).size.^2)*3,1);
-    %     genotype(res).input_loc(randperm(size(genotype(res).input_loc,1),round(randi([1 round(size(genotype(res).input_loc,1))])*genotype(res).dot_perc))) = 1;
-    %     genotype(res).totalInputs = sum(genotype(res).input_loc);
-    %
-    
-    %inputweights
-    if config.sparseInputWeights
-        inputWeights = sprand((genotype(res).size),config.task_num_inputs, 0.1); 
-        inputWeights(inputWeights ~= 0) = ...
-            2*inputWeights(inputWeights ~= 0)  - 1;
-        genotype(res).w_in = inputWeights;
-    else
-        if config.restricedWeight
-            for r = 1:config.task_num_inputs
-                genotype(res).w_in(:,r) = datasample(0.2:0.2:1,(genotype(res).size));
-            end
+    % iterate through subreservoirs
+    for i = 1:config.num_reservoirs
+        
+        %define num of units
+        population(pop_indx).nodes(i) = config.num_nodes(i);
+        
+        
+        % Scaling and leak rate
+        population(pop_indx).input_scaling(i) = 2*rand-1; %increases nonlinearity
+        population(pop_indx).leak_rate(i) = rand;
+        
+        
+        %inputweights
+        if config.sparse_input_weights
+            input_weights = sprand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1, 0.1);
+            input_weights(input_weights ~= 0) = ...
+                2*input_weights(input_weights ~= 0)  - 1;
+            population(pop_indx).input_weights{i} = input_weights;
         else
-            genotype(res).w_in = 2*rand((genotype(res).size),config.task_num_inputs)-1;
+            population(pop_indx).input_weights{i} = 2*rand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1)-1;
         end
+        
+        %add other necessary parameters
+        % e.g., population(pop_indx).param1(i) = rand
+        population(pop_indx).Beta(i) = 5e-7;                      % is the reaction rate constant; ? = 5 × 10-7 nM s-1
+        population(pop_indx).e(i) = 8.8750e-11;                   %e is the efflux rate; e = 8.8750×10-2 nL s-1
+        population(pop_indx).H(i) = 0.7849;                       % h the fraction of the reactor chamber that is well-mixed; h = 0.7849
+        population(pop_indx).V(i) = 7.54e-9;                      % volume of the reactor; V = 7.54 nL
+        population(pop_indx).tau(i) = config.tau;                         % time step
+        population(pop_indx).GateCon{i} = repmat(2500,population(pop_indx).nodes(i),1);      % gate concentrations, nM Units
+        %population(pop_indx).washout(i) = 500;                                    %intial washout period for system
+        population(pop_indx).Sm0{i} = repmat(5.45e-6,population(pop_indx).nodes(i),1);       %initial base concentrations, nmol
+        
+        %initial concentrations
+        population(res).S0{i} = [1000 zeros(1,population(pop_indx).nodes(i)-1)];
+        population(res).P0{i} = zeros(1,population(pop_indx).nodes(i));
+        
+        population(pop_indx).last_state{i} = zeros(1,population(pop_indx).nodes(i));
+        
     end
     
-    genotype(res).outputWeights = zeros(genotype(res).size*genotype(res).tau+config.task_num_inputs,config.task_num_outputs);
-    
-    if config.evolvedOutputStates
-        genotype(res).state_perc = 0.1;
-        genotype(res).state_loc = zeros(genotype(res).size*genotype(res).tau,1);
-        genotype(res).state_loc(randperm(size(genotype(res).state_loc,1),round(randi([1 round(size(genotype(res).state_loc,1))])*genotype(res).state_perc))) = 1;
-        genotype(res).totalStates = sum(genotype(res).state_loc);
+    %% weights and connectivity of all reservoirs
+    for i= 1:config.num_reservoirs
+        
+        for j= 1:config.num_reservoirs
+            
+            % If used, add internal connectivity weights 'W{i==j}' of networks here
+            
+            % Assign scaling for inner weights here, e.g. 'W_scaling(i) = rand'
+            
+            % If multiple reservoirs are connected, add connectivity weight matrix
+            % `W{i!=j}` here. This should be place in off-diagnal positions
+            
+            
+        end
+        % count total nodes including sub-reservoir nodes
+        population(pop_indx).total_units = population(pop_indx).total_units + population(pop_indx).nodes(i);
     end
+    
+    
+    % Add random output weights - these are typically trained for tasks but
+    % can be evolved as well
+    if config.add_input_states
+        population(pop_indx).output_weights = 2*rand(population(pop_indx).total_units + population(pop_indx).n_input_units, population(pop_indx).n_output_units)-1;
+    else
+        population(pop_indx).output_weights = 2*rand(population(pop_indx).total_units, population(pop_indx).n_output_units)-1;
+    end
+    
+    % Add placeholder for behaviours
+    population(pop_indx).behaviours = [];
     
 end

@@ -63,9 +63,9 @@ elseif(nargin == 3)
         error('pMax must be greater than qMax');    
     end
     
-    initialState = randint(1,n,[0,1]);
-    initialP     = randint(1,n,[1,pMax]);
-    initialQ     = randint(1,n,[1,qMax]);
+    initialState = randi([0,1],1,n);
+    initialP     = randi([1,pMax],1,n);
+    initialQ     = randi([1,qMax],1,n);
     for i=1:n
         node(i).state        = int8(initialState(i));
         node(i).nextState    = int8(0);

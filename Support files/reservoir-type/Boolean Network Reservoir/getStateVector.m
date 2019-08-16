@@ -12,7 +12,7 @@ function stateVector = getStateVector(node)
 %                            
 
 %   Author: Christian Schwarzer - SSC EPFL
-%   CreationDate: 15.11.2002 LastModified: 20.01.2003
+%   CreationDate: 15.11.2002 LastModified: 08.08.2019 (matt dale)
 
 stateVector = zeros(1,length(node));
 for i=1:length(node)

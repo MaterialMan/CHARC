@@ -167,6 +167,7 @@ switch(config.res_type)
         config.rules = initRules(rules);
         
     case 'DL'
+        
         config.preprocess = 0;
         
     otherwise

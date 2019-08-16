@@ -14,6 +14,14 @@ for i= 1:config.num_reservoirs
     x{i} = zeros(size(input_sequence,1),individual.nodes(i));
 end
 
+% preassign activation function calls
+if size(individual.activ_Fcn,2) > 1
+    for i= 1:config.num_reservoirs
+        for p = 1:length(config.activ_list)
+            index{i,p} = findActiv({individual.activ_Fcn{i,:}},config.activ_list{p});
+        end
+    end
+end
 
 %equation: x(n) = f(Win*u(n) + S)
 for n = 2:size(input_sequence,1)
@@ -28,15 +36,12 @@ for n = 2:size(input_sequence,1)
             input = ([individual.bias_node states{i-1}(n,:)]*individual.W{i,i}'*individual.W_scaling(i,i))';
         end
         
-        if iscell(individual.activ_Fcn)
-            for p = 1:individual.nodes(i)            
-                %states{i}(n,p) = feval(individual.activ_Fcn{p},((individual.input_weights{i}(p,:)*individual.input_scaling(i))*input )); 
-                states{i}(n,p) = feval(individual.activ_Fcn{p},input(p,:)); 
-                %states{i}(n,p) = feval(individual.activ_Fcn{p},((individual.input_weights{i}(p,:)*individual.input_scaling(i))*input )); 
-               
+        if size(individual.activ_Fcn,2) > 1
+            for p = 1:length(config.activ_list)           
+               states{i}(n,index{i,p}) = config.activ_list{p}(input(index{i,p},:));
             end
         else
-            states{i}(n,:) = feval(individual.activ_Fcn,input); 
+            states{i}(n,:) = individual.activ_Fcn{1}(input); 
         end
         
     end

@@ -1,39 +1,43 @@
-function [states,node]= assessRBNreservoir(genotype,inputSequence,config)   
+function [final_states,individual]= assessRBNreservoir(individual,input_sequence,config)   
 
-%if single input entry, add previous state  -- not integrated
-% if size(inputSequence,1) == 1
-%     inputSequence = [zeros(size(inputSequence)); inputSequence];
-% end
-% 
-% % add last state
-% if size(inputSequence,1) == 2
-%     states = genotype.last_state;
-% else
-%     states = zeros(size(inputSequence,1),genotype.nTotalUnits);
-% end
 
-%% RBN
-node = genotype.node;                       % nodes in RBN
-fHandle = genotype.RBNtype;                 % update routine
-datalength = size(inputSequence,1);         % data length
-
-% multiply by input weights
-inputSequence = round((1+sign(inputSequence*genotype.w_in'))/2);
-
-% evolve network in specified update mode
-[node, states] = feval(fHandle,node,datalength,inputSequence,genotype);
-states = states(:,2:end)';      
-
-if config.leakOn      
-    states = getLeakStates(states,genotype,config);
+%if single input entry, add previous state
+if size(input_sequence,1) == 1
+    input_sequence = [zeros(size(input_sequence)); input_sequence];
 end
 
-if config.evolvedOutputStates
-    states= states(config.nForgetPoints+1:end,logical(genotype.state_loc));
-else
-    states= states(config.nForgetPoints+1:end,:);
+for i= 1:config.num_reservoirs
+    if size(input_sequence,1) == 2
+        states{i} = individual.last_state{i};
+    else
+        states{i} = zeros(size(input_sequence,1),individual.nodes(i));
+    end
+    x{i} = zeros(size(input_sequence,1),individual.nodes(i));
 end
 
-if config.AddInputStates
-    states = [inputSequence(config.nForgetPoints+1:end,:) states];
+%run RBN
+[~, states] = individual.RBN_type{i}(individual,input_sequence);
+    
+% get leak states
+if config.leak_on
+    states = getLeakStates(states,individual,input_sequence,config);
 end
+
+% concat all states for output weights
+final_states = [];
+for i= 1:config.num_reservoirs
+    final_states = [final_states states{i}];
+    
+    %assign last state variable
+    individual.last_state{i} = states{i}(end,:);
+end
+
+% concat input states
+if config.add_input_states == 1
+    final_states = [final_states floor(heaviside(input_sequence))];
+end
+
+final_states = final_states(config.wash_out+1:end,:); % remove washout
+
+% imagesc(final_states)
+% drawnow

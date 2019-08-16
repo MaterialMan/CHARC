@@ -11,7 +11,6 @@ switch config.dataset
     %% Chaotic systems
     case 'NARMA10' %input error 4 - good task
         err_type = 'NMSE';
-        queue_type = 'simple';
         wash_out =200;
         sequence_length = 8000;
         train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
@@ -22,7 +21,6 @@ switch config.dataset
         
     case 'NARMA20' %input error 4 - good task
         err_type = 'NMSE';
-        queue_type = 'simple';
         wash_out =200;
         sequence_length = 8000;
         train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
@@ -33,7 +31,6 @@ switch config.dataset
         
     case 'NARMA30' %input error 4 - good task
         err_type = 'NMSE';
-        queue_type = 'simple';
         wash_out =200;
         sequence_length = 8000;
         train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
@@ -44,7 +41,6 @@ switch config.dataset
         
     case 'NARMA10_DLexample' %input error 4 - good task
         err_type = 'NRMSE';
-        queue_type = 'simple';
         config.preprocess = 0;
         
         wash_out = 100;
@@ -55,7 +51,6 @@ switch config.dataset
         
     case 'NARMA10_QRC' %input error 4 - good task
         err_type = 'NSE';
-        queue_type = 'simple';
         config.preprocess = 0;
         
         wash_out = 2000;
@@ -66,7 +61,7 @@ switch config.dataset
         input_sequence = (input_sequence*2)*0.2;
         
     case 'HenonMap' % input error > 1 - good task
-        queue_type = 'simple';
+        
         err_type = 'NMSE';
         wash_out =200;
         sequence_length= 8000;
@@ -77,7 +72,6 @@ switch config.dataset
         %% Time-series
     case 'IPIX_plus5' % good task
         err_type = 'IPIX';
-        queue_type = 'Weighted';
         wash_out =100;
         sequence_length = 2000;
         train_fraction=0.4;    val_fraction=0.25;    test_fraction=0.35;   %val and test are switched later so ratios need to be swapped
@@ -95,7 +89,6 @@ switch config.dataset
         
     case 'IPIX_plus1' % good task
         err_type = 'IPIX';
-        queue_type = 'Weighted';
         wash_out =100;
         sequence_length = 2000;
         train_fraction=0.4;    val_fraction=0.25;    test_fraction=0.35;   %val and test are switched later so ratios need to be swapped
@@ -113,7 +106,7 @@ switch config.dataset
         
         
     case 'Laser' % good task
-        queue_type = 'simple';
+        
         err_type = 'NMSE';
         % Sante Fe Laser generator task
         wash_out =200;
@@ -130,7 +123,7 @@ switch config.dataset
         
         
     case 'Sunspot' % good task but not sure about dataset- problem with dividing set
-        queue_type = 'simple';
+        
         err_type = 'NMSE';
         % Sunspot task - needs proper dataset separation
         wash_out =100;
@@ -149,7 +142,6 @@ switch config.dataset
         
     case 'Autoencoder'
         err_type = 'MSE';
-        queue_type = 'simple';
         wash_out = 0;
         train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
         
@@ -163,7 +155,6 @@ switch config.dataset
         
     case 'NIST-64' %Paper: Reservoir-based techniques for speech recognition
         err_type = 'OneVsAll_NIST';
-        queue_type = 'Weighted';
         wash_out =150;
         xvalDetails.kfold = 5;
         xvalDetails.kfoldSize = 150;
@@ -197,7 +188,7 @@ switch config.dataset
         
     case 'NonChanEqRodan' % (1:in, 1:out) error 0.999 Good task, requires memory
         err_type = 'NMSE';
-        queue_type = 'simple'; %input alone error = 0.091
+        %input alone error = 0.091
         wash_out =200;
         sequence_length = 8000;
         train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
@@ -209,7 +200,6 @@ switch config.dataset
     case 'handDigits'
         
         err_type = 'softmax';
-        queue_type = 'Weighted';
         wash_out =10;
         train_fraction=0.8;    val_fraction=0.1;    test_fraction=0.1;
         dataset_length = 5000; %manually change dataset length for xval
@@ -230,7 +220,7 @@ switch config.dataset
         
     case 'JapVowels' %(12: IN, 9:OUT - binary ) - input only 83% accuracy!  Train:0.2288  Test:0.1863
         err_type = 'softmax'; %Paper: Optimization and applications of echo state networks with leaky- integrator neurons
-        queue_type = 'Weighted';
+        
         % Nine male speakers uttered two Japanese vowels /ae/ successively.
         % For each utterance, with the analysis parameters described below, we applied
         % 12-degree linear prediction analysis to it to obtain a discrete-time series
@@ -250,7 +240,7 @@ switch config.dataset
         
     case 'SignalClassification'
         err_type = 'softmax';
-        queue_type = 'simple';
+        
         wash_out =100;
         train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
         
@@ -292,7 +282,7 @@ switch config.dataset
         
     case 'Iris' %iris_dataset; (4:in, 3:out) %input alone 76% - medium task
         err_type = 'IJCNNpaper';%'IJCNNpaper';%'confusion';
-        queue_type = 'Weighted';
+        
         wash_out = 0;
         % train_fraction=0.66666667;    val_fraction=0.333333/2;    test_fraction=0.333333/2;
         train_fraction=0.5;    val_fraction=0.25;    test_fraction=0.25;
@@ -306,7 +296,6 @@ switch config.dataset
         
     case 'MSO'
         err_type = 'NRMSE';
-        queue_type = 'simple'; %?
         wash_out =100;
         sequence_length= 2000;
         train_fraction=0.583333;    val_fraction=0.16667;    test_fraction=0.25;
@@ -325,7 +314,7 @@ switch config.dataset
         output_sequence = u';
         
     case 'secondOrderTask' %best 3.61e-3
-        queue_type = 'simple';
+        
         err_type = 'NMSE';
         
         wash_out =50;
@@ -341,7 +330,7 @@ switch config.dataset
         
     case 'MNIST'
         err_type = 'softmax';
-        queue_type = 'simple';
+        
         wash_out = 0;
         train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
         preprocess = 0;
@@ -362,7 +351,6 @@ switch config.dataset
         
     case 'poleBalance'
         err_type = 'empty';
-        queue_type = 'empty';
         train_fraction=0.1;    val_fraction=0.1;    test_fraction=0.1;
         wash_out = 1;
         input_sequence= zeros(100,6);
@@ -371,7 +359,6 @@ switch config.dataset
         
     case 'robot'
         err_type = 'empty';
-        queue_type = 'empty';
         train_fraction=0.1;    val_fraction=0.1;    test_fraction=0.1;
         wash_out = 1;
         config.num_sensors = 8;
@@ -380,16 +367,14 @@ switch config.dataset
         
     case 'CPPN'
         err_type = 'empty';
-        queue_type = 'empty';
         train_fraction=0.1;    val_fraction=0.1;    test_fraction=0.1;
         wash_out = 1;
         input_sequence= zeros(100,config.CPPN_inputs);
         output_sequence= zeros(100,config.CPPN_outputs);
-               
+        
     case 'BinaryNbitAdder'
         
         err_type = 'hamming';
-        queue_type = 'simple';
         type = 'nbit_adder';
         bit = 3;
         datalength = 5000;
@@ -440,7 +425,6 @@ switch config.dataset
         
     case 'ImageGaussian' % Gaussian noise task
         err_type = 'softmax';
-        queue_type = 'simple';
         
         wash_out = 0;
         train_fraction=0.5;    val_fraction=0.25;    test_fraction=0.25;
@@ -479,43 +463,67 @@ switch config.dataset
 end
 
 %% preprocessing
-if config.preprocess
-    for i = 1:size(input_sequence,2)
-        input_sequence(input_sequence(:,i) ~= 0,i) = (input_sequence(input_sequence(:,i) ~= 0,i)-mean(input_sequence(:,i)))/(max(input_sequence(:,i))-min(input_sequence(:,i)));
-    end
-    
-    for i = 1:size(output_sequence,2)
-        output_sequence(output_sequence(:,i) ~= 0,i) = (output_sequence(output_sequence(:,i) ~= 0,i)-mean(output_sequence(:,i)))/(max(output_sequence(:,i))-min(output_sequence(:,i)));
-    end
-end
+% if config.preprocess
+%     for i = 1:size(input_sequence,2)
+%         input_sequence(input_sequence(:,i) ~= 0,i) = (input_sequence(input_sequence(:,i) ~= 0,i)-mean(input_sequence(:,i)))/(max(input_sequence(:,i))-min(input_sequence(:,i)));
+%     end
+%
+%     for i = 1:size(output_sequence,2)
+%         output_sequence(output_sequence(:,i) ~= 0,i) = (output_sequence(output_sequence(:,i) ~= 0,i)-mean(output_sequence(:,i)))/(max(output_sequence(:,i))-min(output_sequence(:,i)));
+%     end
+% end
 
-if config.discrete %choose n-bit word length if needed by adding s,w,f to func() parameters
+%if config.discrete %choose n-bit word length if needed by adding s,w,f to func() parameters
     
-    if config.parallel
-        config.poolobj = gcp;
-        addAttachedFiles(config.poolobj,{'bin2num.m'})
-    end
+    %input_sequence = floor(heaviside(input_sequence));
+    % output_sequence = floor(heaviside(output_sequence));
     
-    [input_sequence, config.q] = double2binaryInputVector(input_sequence,config.nbits);
-    [output_sequence, config.q] = double2binaryInputVector(output_sequence,config.nbits);
-end
+    %     if config.parallel
+    %         config.poolobj = gcp;
+    %         addAttachedFiles(config.poolobj,{'bin2num.m'})
+    %     end
+    %
+    %     [input_sequence, config.q] = double2binaryInputVector(input_sequence,config.nbits);
+    %     [output_sequence, config.q] = double2binaryInputVector(output_sequence,config.nbits);
+%end
 
+% split datasets
 [train_input_sequence,val_input_sequence,test_input_sequence] = ...
     split_train_test3way(input_sequence,train_fraction,val_fraction,test_fraction);
 
 [train_output_sequence,val_output_sequence,test_output_sequence] = ...
     split_train_test3way(output_sequence,train_fraction,val_fraction,test_fraction);
 
-% Go back to old seed
-rng(temp_seed,'twister');
 
-% squash into structure
-config.train_input_sequence = train_input_sequence;
-config.train_output_sequence = train_output_sequence;
-config.val_input_sequence = val_input_sequence;
-config.val_output_sequence = val_output_sequence;
-config.test_input_sequence = test_input_sequence;
-config.test_output_sequence = test_output_sequence;
+if config.preprocess
+    % rescale training data
+    [train_input_sequence,config.input_scaler] = mapminmax(train_input_sequence');
+    [train_output_sequence,config.target_scaler] = mapminmax(train_output_sequence');
+    
+    % apply scalers to validation sets
+    val_input_sequence = mapminmax('apply',val_input_sequence',config.input_scaler);
+    val_output_sequence = mapminmax('apply',val_output_sequence',config.target_scaler);
+    
+    test_input_sequence = mapminmax('apply',test_input_sequence',config.input_scaler);
+    test_output_sequence = mapminmax('apply',test_output_sequence',config.target_scaler);
+    % squash into structure
+    config.train_input_sequence = train_input_sequence';
+    config.train_output_sequence = train_output_sequence';
+    config.val_input_sequence = val_input_sequence';
+    config.val_output_sequence = val_output_sequence';
+    config.test_input_sequence = test_input_sequence';
+    config.test_output_sequence = test_output_sequence';
+else
+    % squash into structure
+    config.train_input_sequence = train_input_sequence;
+    config.train_output_sequence = train_output_sequence;
+    config.val_input_sequence = val_input_sequence;
+    config.val_output_sequence = val_output_sequence;
+    config.test_input_sequence = test_input_sequence;
+    config.test_output_sequence = test_output_sequence;
+end
+
 config.wash_out = wash_out;
 config.err_type = err_type;
-config.queue_type = queue_type;
+% Go back to old seed
+rng(temp_seed,'twister');

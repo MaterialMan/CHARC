@@ -26,19 +26,18 @@ function [nodeUpdated, timeStateMatrix] = evolveDGARBN(node, varargin)
 %   CreationDate: 20.11.2002 LastModified: 30.11.2018 (Matt Dale)
 
 
-k = varargin{1};
-inputSequence = varargin{2};
-genotype = varargin{3};
+input_sequence = varargin{1};
+k = size(input_sequence,2);
 
 nodeUpdated = resetNodeStats(node);
 
-timeStateMatrix = zeros(length(nodeUpdated), k+1);
+timeStateMatrix = zeros(length(nodeUpdated), k);
 timeStateMatrix(1:length(nodeUpdated),1) = getStateVector(nodeUpdated)';
 
 n = length(nodeUpdated);
 
 % evolve network
-for i=2:k
+for i=1:k
     
     timeNow = i-1;
     nodeSelected = [];
@@ -49,7 +48,7 @@ for i=2:k
     end
     
     nodeUpdated = setLUTLines(nodeUpdated);
-    nodeUpdated = setNodeNextState(nodeUpdated,genotype,inputSequence(i-1,:));
+    nodeUpdated = setNodeNextState(nodeUpdated,genotype,input_sequence);
     
     for j=1:length(nodeSelected)
         nodeUpdated(nodeSelected(j)).state = nodeUpdated(nodeSelected(j)).nextState;

@@ -19,12 +19,12 @@ config.parallel = 1;                        % use parallel toolbox
 
 %start paralllel pool if empty
 if isempty(gcp) && config.parallel
-    parpool; % create parallel pool
+    parpool('local',4,'IdleTimeout', Inf); % create parallel pool
 end
 
 %% Evolutionary parameters
 config.num_tests = 1;                        % num of runs
-config.pop_size = 50;                       % large pop better
+config.pop_size = 100;                       % large pop better
 config.total_gens = 1000;                    % num of gens
 config.mut_rate = 0.1;                       % mutation rate
 config.deme_percent = 0.2;                  % speciation percentage
@@ -33,44 +33,40 @@ config.rec_rate = 0.5;                       % recombination rate
 
 %% substrate details
 config_sub.pop_size = config.pop_size;
-config_sub.num_nodes = 10; % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
-config_sub.res_type ='RoR';
+config_sub.num_nodes = [8];                 % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
+config_sub.res_type ='Graph';               % currently only works with lattice as CPPN configured substrate
 
 config_sub = selectReservoirType(config_sub);       % get correct functions for type of reservoir
 config_sub.parallel = config.parallel;                        % use parallel toolbox
 
 %% CPPN details
 config.res_type = 'ELM';                      % can use different hierarchical reservoirs. RoR_IA is default ESN.
-config.num_nodes = {5,5,3};                  % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
+config.num_nodes = [5,5,5];                  % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
 config = selectReservoirType(config);       % get correct functions for type of reservoir
-config.CPPN_inputs = 4;                     % coord of node A(x,y) and node B(x,y)
+config.CPPN_inputs = 6;                     % coord of node A(x,y) and node B(x,y)
 config.CPPN_outputs = length(config_sub.num_nodes)*2 +1; % Output 1: input layer, 2: hidden layer, 3: outputlayer
 
-config.discrete = 0;               % binary input for discrete systems
-config.nbits = 16;                       % if using binary/discrete systems
 config.preprocess = 1;                   % basic preprocessing, e.g. scaling and mean variance
 config.dataset = 'CPPN';                 % Task to evolve for
 
 [config] = selectDataset(config);
 
-% get any additional params stored in getDataSetInfo.m
-[config] = getDataSetInfo(config);
-
+% get any additional params
+[config] = getAdditionalParameters(config);
 
 %% Task parameters
-config_sub.discrete = 0;               % binary input for discrete systems
-config_sub.nbits = 16;                       % if using binary/discrete systems
 config_sub.preprocess = 1;                   % basic preprocessing, e.g. scaling and mean variance
-config_sub.dataset = 'NARMA10';                 % Task to evolve for
+config_sub.dataset = 'Laser';                 % Task to evolve for
 
 % get dataset
 [config_sub] = selectDataset(config_sub);
-[config_sub] = getDataSetInfo(config_sub);
+[config_sub] = getAdditionalParameters(config_sub);
 
 %% general params
-config.gen_print = 25;                       % gens to display achive and database
+config.gen_print = 15;                       % gens to display achive and database
 config.start_time = datestr(now, 'HH:MM:SS');
-figure1 =figure;
+config.figure_array = [figure figure];
+config_sub.figure_array = [figure figure];
 config.save_gen = 1e5;                      % save at gen = saveGen
 config.multi_offspring = 0;                  % multiple tournament selection and offspring in one cycle
 config.num_sync_offspring = config.deme;      % length of cycle/synchronisation step
@@ -81,7 +77,7 @@ config.record_metrics = 0;                  % save metrics
 %% RUn MicroGA
 for test = 1:config.num_tests
     
-    clearvars -except config config_sub test storeError figure1 figure3 figure4
+    clearvars -except config config_sub test storeError 
     
     fprintf('\n Test: %d  ',test);
     fprintf('Processing genotype......... %s \n',datestr(now, 'HH:MM:SS'))
@@ -171,16 +167,22 @@ for test = 1:config.num_tests
             fprintf('Gen %d, time taken: %.4f sec(s)\n  Winner: %.4f, Loser: %.4f, Best Error: %.4f \n',gen,toc/config.gen_print,substrate(winner).val_error,substrate(loser).val_error,best(gen));
             tic;
             % plot reservoir structure, task simulations etc.
-            plotReservoirDetails(figure1,substrate,store_error,test,best_indv,gen,loser,config_sub)
+            plotReservoirDetails(substrate,store_error,test,best_indv,gen,loser,config_sub)
+            plotReservoirDetails(substrate,store_error,test,best_indv,gen,loser,config)
         end
         
         %get metric details
         if config.record_metrics
             parfor pop_indx = 1:config.pop_size
-                metrics(pop_indx,:) = getVirtualMetrics(genotype(pop_indx),config);
+                metrics(pop_indx,:) = getMetrics(genotype(pop_indx),config);
             end
         end
         
     end
 end
 
+function saveData(population,store_error,tests,config)
+        config.figure_array =[];
+        save(strcat('CPPN_substrate_',config.res_type,'_run',num2str(tests),'_gens',num2str(config.total_gens),'_',num2str(sum(config.num_reservoirs)),'Nres.mat'),...
+            'population','store_error','config','-v7.3');
+end

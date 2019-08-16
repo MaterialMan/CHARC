@@ -1,4 +1,7 @@
 %% Types of reservoirs available
+% If creating a new reservoir, add a case statement here to point to
+% necessary functions
+
 function config = selectReservoirType(config)
 
 switch(config.res_type)
@@ -8,21 +11,18 @@ switch(config.res_type)
         config.assessFcn = @collectELMStates;
         config.mutFcn = @mutateRoR;
         config.recFcn = @recombRoR;
-        config.hierarchy = 1;
         
     case 'RoR' 
         config.createFcn = @createRoR;
         config.assessFcn = @collectRoRStates;
         config.mutFcn = @mutateRoR;
-        config.recFcn = @recombRoR;
-        config.hierarchy = 1;                
+        config.recFcn = @recombRoR;              
         
     case 'Pipeline'
         config.createFcn = @createPipeline;
         config.assessFcn = @collectPipelineStates;
         config.mutFcn = @mutateRoR;
-        config.recFcn = @recombRoR;
-        config.hierarchy = 1;       
+        config.recFcn = @recombRoR;     
          
     case 'Ensemble'
         config.createFcn = @createEnsemble;
@@ -36,7 +36,6 @@ switch(config.res_type)
         config.assessFcn = @assessGraphReservoir;
         config.mutFcn = @mutateRoR;
         config.recFcn = @recombRoR;
-         config.hierarchy = 1;
          
     case 'BZ'
         config.createFcn = @createBZReservoir;
@@ -50,13 +49,13 @@ switch(config.res_type)
         config.mutFcn = @mutateRBN;
         config.recFcn = @recombRBN;
         
-    case 'basicCA'
+    case 'elementary_CA'
         config.createFcn = @createRBNreservoir;
         config.assessFcn = @assessRBNreservoir;
         config.mutFcn = @mutateRBN;
         config.recFcn = @recombRBN;
         
-    case '2dCA'
+    case '2D_CA'
         config.createFcn = @createRBNreservoir;
         config.assessFcn = @assessRBNreservoir;
         config.mutFcn = @mutateRBN;
@@ -80,6 +79,21 @@ switch(config.res_type)
         config.mutFcn = @mutateInstru;
         config.recFcn = @recombInstru;
         
+    case 'CNT' 
+        config.createFcn = @createCNT;
+        config.assessFcn = @collectCNTStates;
+        config.mutFcn = @mutateCNT;
+        config.recFcn = @recombCNT; 
+        
+    case 'Wave'
+        config.createFcn = @createWave;
+        config.assessFcn = @collectWaveStates;
+        config.mutFcn = @mutateWave;
+        config.recFcn = @recombWave; 
 end
 
-config.testFcn = @testReservoir; % default for all
+if strcmp(config.res_type,'CNT')
+    config.testFcn = @testHardwareReservoir;
+else
+    config.testFcn = @testReservoir; % default for all
+end

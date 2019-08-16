@@ -12,12 +12,12 @@ config.parallel = 1;                        % use parallel toolbox
 
 %start paralllel pool if empty
 if isempty(gcp) && config.parallel
-    parpool; % create parallel pool
+    parpool('local',4,'IdleTimeout', Inf); % create parallel pool
 end
 
 %% type of network to evolve
-config.res_type = 'RoR';                 % can use different hierarchical reservoirs. RoR_IA is default ESN.
-config.num_nodes = 50;                      % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
+config.res_type = 'Graph';                 % can use different hierarchical reservoirs. RoR_IA is default ESN.
+config.num_nodes = [5];                      % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
 config = selectReservoirType(config);       % get correct functions for type of reservoir
 
 %% Network details
@@ -25,8 +25,8 @@ config.metrics = {'KR','MC'}; % metrics to use (and order of metrics)
 
 %% Evolutionary parameters
 config.num_tests = 1;                        % num of runs
-config.initial_population = 100;             % large pop better
-config.total_iter = 50;                    % num of gens
+config.initial_population = 25;             % large pop better
+config.total_iter = 500;                    % num of gens
 config.mut_rate = 0.1;                       % mutation rate
 config.rec_rate = 0.5;                       % recombination rate
 
@@ -39,29 +39,27 @@ config.dataset = 'NARMA10';                                                  % T
 % get dataset
 [config] = selectDataset(config);
 
-% get any additional params stored in getDataSetInfo.m
-[config] = getDataSetInfo(config);
+% get any additional params
+[config] = getAdditionalParameters(config);
 
 %% MAP of elites parameters
 config.batch_size = 10;                                                     % how many offspring to create in one iteration
 config.local_breeding = 1;                                                  % if interbreeding is local or global
 config.k_neighbours = 5;                                                    % select second parent from neighbouring behaviours
-config.total_MAP_size = round(config.num_nodes*config.num_reservoirs + (config.add_input_states*config.task_num_inputs) + 1);  %size depends system used
+config.total_MAP_size = round((config.num_nodes)*config.num_reservoirs + (config.add_input_states*config.task_num_inputs) + 1);  %size depends system used
 config.MAP_resolution = flip(recursiveDivision(config.total_MAP_size));     % list to define MAP of elites resolution, i.e., how many cells
 config.change_MAP_iter = round(config.total_iter/(length(config.MAP_resolution)-1)); % change the resolution after I iterations
 config.start_MAP_resolution = config.MAP_resolution(1);                        % record of first resolution point
 config.voxel_size = 10;                                                     % to measure behaviour space
 
-figure1 = figure;
-figure2 = figure;
-figure3 = figure;
+config.figure_array = [figure figure figure];
 
 config.gen_print = 5;
 
 %% Run MicroGA
 for tests = 1:config.num_tests
     
-    clearvars -except config tests figure1 figure2 figure3 store_global_best quality
+    clearvars -except config tests store_global_best quality
     
     fprintf('\n Test: %d  ',tests);
     fprintf('Processing genotype......... %s \n',datestr(now, 'HH:MM:SS'))
@@ -80,13 +78,20 @@ for tests = 1:config.num_tests
     config.pop_size = config.initial_population;
     population = config.createFcn(config);    
     
-    % Evaluate offspring    
-    ppm = ParforProgMon('Initial population: ', config.pop_size);
-    parfor pop_indx = 1:config.pop_size
-        warning('off','all')
-        population(pop_indx).behaviours = round(getVirtualMetrics(population(pop_indx),config))+1;
-        population(pop_indx) = config.testFcn(population(pop_indx),config);
-        ppm.increment();
+    % Evaluate offspring  
+    if config.parallel % use parallel toolbox - faster
+        ppm = ParforProgMon('Initial population: ', config.pop_size);
+        parfor pop_indx = 1:config.pop_size
+            warning('off','all')
+            population(pop_indx).behaviours = round(getMetrics(population(pop_indx),config))+1;
+            population(pop_indx) = config.testFcn(population(pop_indx),config);
+            ppm.increment();
+        end
+    else
+        for pop_indx = 1:config.pop_size
+            population(pop_indx).behaviours = round(getMetrics(population(pop_indx),config))+1;
+            population(pop_indx) = config.testFcn(population(pop_indx),config);
+        end
     end
     
     % find behaviour match
@@ -154,7 +159,7 @@ for tests = 1:config.num_tests
             offspring(b) = config.mutFcn(offspring(b),config);
             
             % Evaluate offspring
-            offspring(b).behaviours = round(getVirtualMetrics(offspring(b),config))+1;
+            offspring(b).behaviours = round(getMetrics(offspring(b),config))+1;
             offspring(b) = config.testFcn(offspring(b),config);
             
         end
@@ -190,17 +195,17 @@ for tests = 1:config.num_tests
         end
         
         store_global_best(tests,iter)  = global_best;
-        set(0,'currentFigure',figure2)
+        set(0,'currentFigure',config.figure_array(1))
         plot(store_global_best(tests,:));
         xlabel('Iterations (\times batch size)')
         ylabel('Test Error')
         drawnow;
         
         % plot MAP of elites
-        plotSearch(figure3,MAP,iter*config.batch_size,config)
+        plotSearch(MAP,iter*config.batch_size,config)
         
         if (mod(iter,config.gen_print) == 0)
-            %plotReservoirDetails(figure1,MAP,store_global_best,tests,best_indv,1,prev_best,config)       
+            %plotReservoirDetails(MAP,store_global_best,tests,best_indv,1,prev_best,config)       
         end
         fprintf('\n iteration: %d, best error: %.4f  ',iter,global_best);
     end
@@ -247,9 +252,9 @@ end
 
 end
 
-function plotSearch(figureHandle,database, gen,config)
+function plotSearch(database, gen,config)
 
-set(0,'currentFigure',figureHandle)
+set(0,'currentFigure',config.figure_array(2))
 
 v = 1:length(config.metrics);
 C = nchoosek(v,2);
