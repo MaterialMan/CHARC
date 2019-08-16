@@ -89,6 +89,7 @@ switch(config.res_type)
     case 'DL'
         %     config.DLtype = 'mackey_glass2';%'ELM';%'virtualNodes';
         %     %config.tau = 100;
+        
         config.preprocess = 0;
         
     case 'CNT'

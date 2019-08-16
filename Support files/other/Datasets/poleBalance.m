@@ -229,7 +229,7 @@ for  tests = 1:config.pole_tests
                 %pause(1/config.time_steps)
             else
                
-               set(0,'currentFigure',figHandle)
+                set(0,'currentFigure',figHandle)
                 subplot(2,2,1)
                 plot(x_pole(n),0,'k+','LineWidth',10);
                 hold on

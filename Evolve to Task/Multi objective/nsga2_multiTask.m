@@ -9,26 +9,17 @@
 
 %% Setup
 % type of network to evolve
-config.resType = 'ELM';                     % can use different hierarchical reservoirs or substrate. RoR_IA is default ESN.
-config.maxMinorUnits = 10;                   % num of nodes in subreservoirs
-config.maxMajorUnits = 1;                   % num of subreservoirs. Default ESN should be 1.
-config = selectReservoirType(config);       % get correct functions for type of reservoir
-
-%% Network details
-config.leakOn = 0;                          % add leak states
-config.AddInputStates = 1;                  % add input to states
-config.regParam = 10e-5;                    % training regulariser
-config.sparseInputWeights = 0;              % use sparse inputs
-config.restricedWeight =0;                  % restrict weights between [0.2 0.4. 0.6 0.8 1]
-config.evolvedOutputStates = 0;             % sub-sample the states to produce output (is evolved)
-config.evolveOutputWeights = 0;             % evolve rather than train
+config.res_type = 'ELM';                     % can use different hierarchical reservoirs or substrate. RoR_IA is default ESN.
+config.res_type = 'RoR';                % state type of reservoir to use. E.g. 'RoR' (Reservoir-of-reservoirs/ESNs), 'ELM' (Extreme learning machine), 'Graph' (graph network of neurons), 'DL' (delay line reservoir) etc. Check 'selectReservoirType.m' for more.
+config.num_nodes = 50;                  % num of nodes in each sub-reservoir, e.g. if config.num_nodes = {10,5,15}, there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. For one reservoir, sate as a non-cell, e.g. config.num_nodes = 25
+config = selectReservoirType(config);   % collect function pointers for the selected reservoir type 
 
 %% Evolutionary parameters
-config.numTests = 1;                        % num of runs
-config.popSize = 50;                         % large pop usually better
-config.max_generations = 20;                % num of gens
-config.mutRate = 0.1;                       % mutation rate
-config.recRate = 0.5;                       % corssover rate
+config.num_tests = 1;                        % num of tests/runs
+config.pop_size = 100;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
+config.max_generations = 1000;                    % number of generations to evolve 
+config.mut_rate = 0.1;                       % mutation rate
+config.rec_rate = 0.5;                       % recombination rate
 
 %% General params
 config.parallel = 1;                        % use parallel toolbox
@@ -46,18 +37,18 @@ config.ref_points = [];
 config.num_constraints = 0;
 
 %% Get datasets
-config.dataSet = {'poleBalance', 'Iris'};       %make they have the same number of inputs and outputs
-config.num_objectives = length(config.dataSet);
+config.dataset = {'Iris'};       %make they have the same number of inputs and outputs
+config.num_objectives = length(config.dataset);
 
 for n = 1:config.num_objectives
-    [data{n}.trainInputSequence,data{n}.trainOutputSequence,data{n}.valInputSequence,data{n}.valOutputSequence,...
-        data{n}.testInputSequence,data{n}.testOutputSequence,data{n}.nForgetPoints,data{n}.errType] = selectDataset(config.dataSet{n});
+    [data{n}] = selectDataset(config);
 end
+
 config.data = data;
 config = getDataSetInfo(config);
 config.trainInputSequence =[];
 
-for run = 1:config.numTests
+for run = 1:config.num_tests
     %% Define other structures
     state = struct(...
         'current_generation', 1,...

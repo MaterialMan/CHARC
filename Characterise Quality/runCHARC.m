@@ -167,6 +167,7 @@ for tests = 1:config.num_tests
         
         % Store behaviours
         pop_behaviours(loser,:) = population(loser).behaviours;
+
         
         % calculate offsprings neighbours in behaviour space - using
         % population and archive
