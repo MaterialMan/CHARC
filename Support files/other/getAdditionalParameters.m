@@ -2,11 +2,11 @@
 % overflow for params that can be changed. This is called by all main scripts
 function [config] = getAdditionalParameters(config)
             
-% if multi-objective, update input/output units
-if ~isfield(config,'nsga2')
-    config.task_num_inputs = size(config.train_input_sequence,2);
-    config.task_num_outputs = size(config.train_output_sequence,2);
-end
+% % if multi-objective, update input/output units
+% if ~isfield(config,'nsga2')
+%     config.task_num_inputs = size(config.train_input_sequence,2);
+%     config.task_num_outputs = size(config.train_output_sequence,2);
+% end
 
 %% Set Default parameters
 config.num_reservoirs = length(config.num_nodes);% num of subreservoirs. Default ESN should be 1.
@@ -14,6 +14,8 @@ config.leak_on = 1;                           % add leak states
 config.add_input_states = 1;                  %add input to states
 config.sparse_input_weights = 0;              % use sparse inputs
 config.evolve_output_weights = 0;             % evolve rather than train
+config.evolve_feedback_weights = 0;             % find suitable feedback weights
+config.figure_array = [figure figure];
 
 config.multi_activ = 0;                      % use different activation funcs
 config.activ_list = {@tanh};                % what activations are in use when multiActiv = 1
@@ -90,6 +92,8 @@ switch(config.res_type)
         %     config.DLtype = 'mackey_glass2';%'ELM';%'virtualNodes';
         %     %config.tau = 100;
         config.preprocess = 0;
+        config.tau = config.num_nodes.*0.2; % keep 0.2 separation at all sizes
+        config.binary_weights = 0;
         
     case 'CNT'
         
@@ -114,10 +118,11 @@ end
 % If a task requires additional parameters, or resetting from defaults, add
 % here.
 switch(config.dataset)  
+    
     case 'autoencoder'
         config.leak_on = 0;                          % add leak states
         config.add_input_states = 0;
-        config.figure_array = [config.figure_array figure figure];
+        config.figure_array = [config.figure_array figure];
         config.sparse_input_weights = 0;
         
     case 'poleBalance'
@@ -166,6 +171,18 @@ switch(config.dataset)
         config.multi_activ = 1;                      % use different activation funcs
         config.activ_list = {@linearNode,@sawtooth,@symFcn,@sin,@cos,@gaussDist};
 
+    case 'attractor'
+        config.leak_on = 0;                          % add leak states
+        config.add_input_states = 0;
+        config.figure_array = [config.figure_array figure];
+        config.sparse_input_weights = 0;
+        
+        config.attractor_type = 'lorenz';
+        config.evolve_output_weights = 1; 
+        config.evolve_feedback_weights = 1; 
+        config.assessFcn = @collectRoRStatesFeedback;
+        config.preprocess = 0;
+        
     otherwise
         
 end

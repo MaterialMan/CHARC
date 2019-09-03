@@ -24,7 +24,7 @@ close all
 rng(1,'twister');
 
 %% Setup
-config.parallel = 1;                        % use parallel toolbox
+config.parallel = 0;                        % use parallel toolbox
 
 %start paralllel pool if empty
 if isempty(gcp) && config.parallel
@@ -37,7 +37,7 @@ config.num_nodes = [50];                  % num of nodes in each sub-reservoir, 
 config = selectReservoirType(config);   % collect function pointers for the selected reservoir type
 
 % Network details
-config.metrics = {'KR','GR','MC'};       % behaviours that will be used; name metrics to use and order of metrics
+config.metrics = {'KR','GR','LE','linearMC'};       % behaviours that will be used; name metrics to use and order of metrics
 config.voxel_size = 10;                  % when measuring quality, this will determine the voxel size. Depends on systems being compared. Rule of thumb: around 10 is good
 
 % dummy variables for dataset; not used but still needed for functions to
@@ -53,7 +53,7 @@ config.dataset = 'blank';
 %% Evolutionary parameters
 config.num_tests = 1;                        % num of tests/runs
 config.pop_size = 100;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
-config.total_gens = 20000;                    % number of generations to evolve
+config.total_gens = 5000;                    % number of generations to evolve
 config.mut_rate = 0.1;                       % mutation rate
 config.deme_percent = 0.2;                   % speciation percentage; determines interbreeding distance on a ring.
 config.deme = round(config.pop_size*config.deme_percent);
@@ -65,7 +65,7 @@ config.p_min_start = 3;%sum(config.num_nodes)/10;                     % novelty 
 config.p_min_check = 200;                   % change novelty threshold dynamically after "p_min_check" generations.
 
 % general params
-config.gen_print = 200;                       % after 'gen_print' generations display archive and database
+config.gen_print = 25;                       % after 'gen_print' generations display archive and database
 config.start_time = datestr(now, 'HH:MM:SS');
 config.figure_array = [figure figure];
 config.save_gen = inf;                       % save data at generation = save_gen
@@ -113,7 +113,7 @@ for tests = 1:config.num_tests
         end
     end
     % establish archive from initial population
-    archive = reshape([population.behaviours],length(config.metrics),config.pop_size)';
+    archive = reshape([population.behaviours],length(population(1).behaviours),config.pop_size)';
     
     % add population to database
     database = population;
@@ -144,7 +144,7 @@ for tests = 1:config.num_tests
         end
         
         %calculate distances in behaviour space using KNN search
-        pop_behaviours = reshape([population.behaviours],length(config.metrics),config.pop_size)';
+        pop_behaviours = reshape([population.behaviours],length(population(1).behaviours),config.pop_size)';
         fit_indv1 = findKNN([archive; pop_behaviours],pop_behaviours(indv1,:),config.k_neighbours);
         fit_indv2 = findKNN([archive; pop_behaviours],pop_behaviours(indv2,:),config.k_neighbours);
         
@@ -205,7 +205,7 @@ for tests = 1:config.num_tests
             plotSearch(database,gen,config)        % plot details
             
             % measure voxel count and quality
-            plot_behaviours = reshape([database.behaviours],length(config.metrics),length(database))';
+            plot_behaviours = reshape([database.behaviours],length(population(1).behaviours),length(database))';
             [quality(tests,config.param_indx),~]= measureSearchSpace(plot_behaviours,config.voxel_size);
             % add database to history of databases
             database_history{tests,config.param_indx} = plot_behaviours;
@@ -222,7 +222,7 @@ for tests = 1:config.num_tests
     
     % run entire database on set tasks to get performance of behaviours
     if config.get_prediction_data
-        all_behaviours = reshape([database.behaviours],length(config.metrics),length(database))';
+        all_behaviours = reshape([database.behaviours],length(population(1).behaviours),length(database))';
         pred_dataset{tests} = assessDBonTasks(config,database,all_behaviours,tests);
     end
 end
@@ -237,7 +237,7 @@ end
 %% plot the behaviour space
 function plotSearch(database, gen,config)
 
-all_behaviours = reshape([database.behaviours],length(config.metrics),length(database))';
+all_behaviours = reshape([database.behaviours],length(database(1).behaviours),length(database))';
 
 set(0,'currentFigure',config.figure_array(1))
 title(strcat('Gen:',num2str(gen)))
@@ -245,7 +245,7 @@ v = 1:length(config.metrics);
 C = nchoosek(v,2);
 
 if size(C,1) > 3
-    num_plot_x = size(C,1)/2;
+    num_plot_x = ceil(size(C,1)/2);
     num_plot_y = 2;
 else
     num_plot_x = 3;

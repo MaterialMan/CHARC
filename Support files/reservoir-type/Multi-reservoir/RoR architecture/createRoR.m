@@ -10,7 +10,7 @@ for pop_indx = 1:config.pop_size
     population(pop_indx).test_error = 1;
     
     % add single bias node
-    population(pop_indx).bias_node = 1;
+    population(pop_indx).bias_node = 0;
     
     % assign input/output count
     if isempty(config.train_input_sequence) 
@@ -85,6 +85,12 @@ for pop_indx = 1:config.pop_size
         population(pop_indx).output_weights = 2*rand(population(pop_indx).total_units + population(pop_indx).n_input_units, population(pop_indx).n_output_units)-1;      
     else
         population(pop_indx).output_weights = 2*rand(population(pop_indx).total_units, population(pop_indx).n_output_units)-1;
+    end
+    
+    % add rand feedback weights
+    if config.evolve_feedback_weights
+        population(pop_indx).feedback_scaling = 2*rand;
+        population(pop_indx).feedback_weights = 2*rand(population(pop_indx).total_units, population(pop_indx).n_input_units)-1;      
     end
     
     population(pop_indx).behaviours = [];

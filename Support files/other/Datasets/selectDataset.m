@@ -50,7 +50,7 @@ switch config.dataset
         [input_sequence,output_sequence] = generate_new_NARMA_sequence(sequence_length,10);
         
     case 'NARMA10_QRC' %input error 4 - good task
-        err_type = 'NSE';
+        err_type = 'NMSE';
         config.preprocess = 0;
         
         wash_out = 2000;
@@ -140,18 +140,62 @@ switch config.dataset
         
         %% Pattern Recognition - using PCA to reduce dimensions maybe very useful
         
-    case 'Autoencoder'
-        err_type = 'MSE';
-        wash_out = 0;
-        train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
+    case 'autoencoder'
+        err_type = 'NMSE';
+        wash_out = 50;
+        train_fraction=0.5;    val_fraction=0.25;    test_fraction=0.25;
         
-        t = digitTrainCellArrayData; %28 x 28 image x 5000
-        for i=1:length(t)
-            u(:,i) = t{i}(:);
-        end
+        % image
+        %         t = digitTrainCellArrayData; %28 x 28 image x 5000
+        %         for i=1:length(t)
+        %             u(:,i) = t{i}(:);
+        %         end
+        
+        % data signal
+        t = rand(1000,10);
+        u = t';
         
         input_sequence= u';
         output_sequence= u';
+        
+        
+    case 'attractor' %reconstruct lorenz attractor
+        err_type = 'NMSE';
+        wash_out = 200;
+        train_fraction=0.5;    val_fraction=0.25;    test_fraction=0.25;
+               
+        switch(config.attractor_type)
+            case 'lorenz'
+                datalength = 1e4; T = 100; h = 0.001;
+                [x,y, z] = createLorenz(28, 10, 8/3, T, h, datalength);  % roughly 100k datapoints
+                attractor_sequence= [x, y, z];
+            case 'rossler'
+                datalength = 4e3; T = 100; h = 0.001;
+                [x,y,z] = createRosslerAttractor(0.2,0.2,5.7, T, h ,datalength); % roughly 100k datapoints
+                attractor_sequence= [x, y, z];
+            case 'limit_cycle'
+                datalength = 4e3; T = 100; h = 0.001;
+                [x, y] = createLimitCycleAttractor(4, T, h, datalength); % roughly 10k datapoints
+                attractor_sequence= [x, y];
+            case 'mackey_glass'
+                datalength = 4e3; T = 1e3; 
+                [x] = createMackeyGlass(17, 0.1, 0.2, 10, T ,datalength);
+                attractor_sequence= x;
+            otherwise
+        end
+        
+        data_length = size(attractor_sequence,1);
+        
+        % divide data -  add no signal
+        slice = 0.5;
+        input_sequence = attractor_sequence;
+        input_sequence(floor(data_length*train_fraction*slice)+1:floor(data_length*train_fraction),:) = zeros;
+        input_sequence(floor(data_length*train_fraction)+floor(data_length*val_fraction*slice)+1:floor(data_length*train_fraction)+floor(data_length*val_fraction),:) = zeros;
+        input_sequence(floor(data_length*train_fraction)+floor(data_length*val_fraction)+floor(data_length*test_fraction*slice)+1:end,:) = zeros;
+        
+        ahead = 1;%shift by 1. Becomes prediction problem
+        input_sequence = input_sequence(1:end-ahead,:);
+        output_sequence = attractor_sequence(1+ahead:end,:); 
         
     case 'NIST-64' %Paper: Reservoir-based techniques for speech recognition
         err_type = 'OneVsAll_NIST';
@@ -463,29 +507,10 @@ switch config.dataset
 end
 
 %% preprocessing
-% if config.preprocess
-%     for i = 1:size(input_sequence,2)
-%         input_sequence(input_sequence(:,i) ~= 0,i) = (input_sequence(input_sequence(:,i) ~= 0,i)-mean(input_sequence(:,i)))/(max(input_sequence(:,i))-min(input_sequence(:,i)));
-%     end
-%
-%     for i = 1:size(output_sequence,2)
-%         output_sequence(output_sequence(:,i) ~= 0,i) = (output_sequence(output_sequence(:,i) ~= 0,i)-mean(output_sequence(:,i)))/(max(output_sequence(:,i))-min(output_sequence(:,i)));
-%     end
-% end
-
-%if config.discrete %choose n-bit word length if needed by adding s,w,f to func() parameters
-    
-    %input_sequence = floor(heaviside(input_sequence));
-    % output_sequence = floor(heaviside(output_sequence));
-    
-    %     if config.parallel
-    %         config.poolobj = gcp;
-    %         addAttachedFiles(config.poolobj,{'bin2num.m'})
-    %     end
-    %
-    %     [input_sequence, config.q] = double2binaryInputVector(input_sequence,config.nbits);
-    %     [output_sequence, config.q] = double2binaryInputVector(output_sequence,config.nbits);
-%end
+if config.evolve_feedback_weights
+    input_sequence(input_sequence ~= 0) = (1--1)*(input_sequence(input_sequence ~= 0)-min(input_sequence(output_sequence ~= 0)))/(max(input_sequence(input_sequence ~= 0))- min(input_sequence(input_sequence ~= 0)))-1;
+    output_sequence(output_sequence ~= 0) = (1--1)*(output_sequence(output_sequence ~= 0)-min(output_sequence(output_sequence ~= 0)))/(max(output_sequence(output_sequence ~= 0))- min(output_sequence(output_sequence ~= 0)))-1;
+end
 
 % split datasets
 [train_input_sequence,val_input_sequence,test_input_sequence] = ...
@@ -506,6 +531,7 @@ if config.preprocess
     
     test_input_sequence = mapminmax('apply',test_input_sequence',config.input_scaler);
     test_output_sequence = mapminmax('apply',test_output_sequence',config.target_scaler);
+    
     % squash into structure
     config.train_input_sequence = train_input_sequence';
     config.train_output_sequence = train_output_sequence';

@@ -10,7 +10,7 @@ n_input_units = individual.n_input_units;
 %% Assign input data and collect target output
 data_length = n_internal_units*4 + config.wash_out*2;%400; 
 sequence_length = data_length/2;%200; 
-data_sequence = 2*rand(1,data_length+1+n_output_units)-1;
+data_sequence = 2*rand(n_input_units,data_length+1+n_output_units)-1;
 
 % rescale for each reservoir
 data_sequence = data_sequence.*config.scaler;

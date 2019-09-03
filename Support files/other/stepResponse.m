@@ -7,34 +7,41 @@ rng(1,'twister');
 config.figure_array = [figure figure('Position',[10 52 853 893]) ];
 
 % type of network to evolve
-config.res_type = 'elementary_CA';                % state type of reservoir to use. E.g. 'RoR' (Reservoir-of-reservoirs/ESNs), 'ELM' (Extreme learning machine), 'Graph' (graph network of neurons), 'DL' (delay line reservoir) etc. Check 'selectReservoirType.m' for more.
-config.num_nodes = [50];                  % num of nodes in each sub-reservoir, e.g. if config.num_nodes = {10,5,15}, there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. For one reservoir, sate as a non-cell, e.g. config.num_nodes = 25
+config.res_type = 'RoR';                % state type of reservoir to use. E.g. 'RoR' (Reservoir-of-reservoirs/ESNs), 'ELM' (Extreme learning machine), 'Graph' (graph network of neurons), 'DL' (delay line reservoir) etc. Check 'selectReservoirType.m' for more.
+config.num_nodes = [25];                  % num of nodes in each sub-reservoir, e.g. if config.num_nodes = {10,5,15}, there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. For one reservoir, sate as a non-cell, e.g. config.num_nodes = 25
 config = selectReservoirType(config);   % collect function pointers for the selected reservoir type
 
 % Network details
 config.metrics = {'KR','GR','MC'};       % behaviours that will be used; name metrics to use and order of metrics
 config.voxel_size = 10;                  % when measuring quality, this will determine the voxel size. Depends on systems being compared. Rule of thumb: around 10 is good
 
+
 % dummy variables for dataset; not used but still needed for functions to
 % work
-config.train_input_sequence= [];
-config.train_output_sequence =[];
-config.dataset = 'blank';
+%config.train_input_sequence= [];
+%config.train_output_sequence =[];
+config.discrete = 0;               % select '1' for binary input for discrete systems
+config.nbits = 16;                 % only applied if config.discrete = 1; if wanting to convert data for binary/discrete systems
+config.preprocess = 1;             % basic preprocessing, e.g. scaling and mean variance
+config.dataset = 'attractor';
 
 % get any additional params stored in getDataSetInfo.m. This might include:
 % details on reservoir structure, extra task variables, etc.
-[config] = getDataSetInfo(config);
+config = getAdditionalParameters(config);
+
+% get dataset information
+[config] = selectDataset(config);
 
 config.num_tests = 1;                        % num of tests/runs
-config.pop_size = 1000;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
-plot_on = 0;
+config.pop_size = 100;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
+plot_on = 1;
 
 %% define impulse
 config.wash_out = 10;
 %input_sequence = 2*rand(50,1)-1;
 
-input_sequence = zeros(100,1);%
-input_sequence([20]) = [1];
+input_sequence = zeros(100,size(config.train_input_sequence,2));%
+input_sequence(21:50,:) = ones(30,size(config.train_input_sequence,2));
 
 %% run tests
 for tests = 1:config.num_tests
@@ -45,7 +52,7 @@ for tests = 1:config.num_tests
     population = config.createFcn(config);
     
     %% visualise population
-    parfor pop = 1:config.pop_size
+    for pop = 1:config.pop_size
         
         individual = population(pop);
         individual.bias_node = 0;
@@ -79,8 +86,7 @@ for tests = 1:config.num_tests
             colorbar
             %plot3(1:length(states)-1,states(1:end-1,1:end-1),states(2:end,1:end-1))
             
-            %run through each node after each state
-            
+            %run through each node after each state            
             for i = 2:size(states,1)
                 p.NodeColor = ones(individual.nodes(1),3);
                 p.EdgeCData = zeros(1,size(G.Edges.Weight,1));
@@ -93,7 +99,7 @@ for tests = 1:config.num_tests
                     
                     p.NodeColor(k,:) = colour;
                     
-                    if abs(states(i,k)) > 0.01 && sum(states(i,1:end-1)) ~= sum(individual.nodes)
+                    if var(states(i-1:i,k)) > 0.01 && sum(states(i,1:end-1)) ~= sum(individual.nodes)
                         p.EdgeCData(G.Edges.EndNodes(:,1) == k) = G.Edges.Weight(G.Edges.EndNodes(:,1) == k).*(states(i-1,k));
                         p.EdgeCData(G.Edges.EndNodes(:,2) == k) = G.Edges.Weight(G.Edges.EndNodes(:,2) == k).*(states(i,k));
                     end
@@ -116,7 +122,7 @@ for tests = 1:config.num_tests
     %% get metrics
     fprintf('\n Step response complete. Sweeping metrics... \n');
     parfor pop_indx = 1:config.pop_size
-        population(pop_indx).behaviours = getVirtualMetrics(population(pop_indx),config);
+        population(pop_indx).behaviours = getMetrics(population(pop_indx),config);
     end
     fprintf('\n metrics complete. \n');
     

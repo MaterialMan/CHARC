@@ -75,4 +75,23 @@ if config.evolve_output_weights
     offspring.output_weights = reshape(output_weights,size(offspring.output_weights));
 end
 
+% mutate feedback weights
+if config.evolve_feedback_weights
+    % feedback scaling
+    feedback_scaling = offspring.feedback_scaling(:);
+    pos =  randperm(length(feedback_scaling),sum(rand(length(feedback_scaling),1) < config.mut_rate));
+    feedback_scaling(pos) = 2*rand(length(pos),1);
+    offspring.feedback_scaling = reshape(feedback_scaling,size(offspring.feedback_scaling));
 
+    feedback_weights = offspring.feedback_weights(:);
+    pos =  randperm(length(feedback_weights),ceil(config.mut_rate*length(feedback_weights)));
+ 
+    for n = 1:length(pos)
+        if rand > 0.75 % 75% chance to zero weight
+            feedback_weights(pos(n)) = 0;
+        else
+            feedback_weights(pos(n)) = 2*rand-1;
+        end
+    end
+    offspring.feedback_weights = reshape(feedback_weights,size(offspring.feedback_weights));
+end

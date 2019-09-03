@@ -9,8 +9,8 @@ v = 1:length(config.metrics);
 C = nchoosek(v,2);
 
 if size(C,1) > 3
-    num_plot_x = size(C,1)/2;
-    num_plot_y = 2;
+    num_plot_x = ceil(size(C,1)/3);
+    num_plot_y = 3;
 else
     num_plot_x = 3;
     num_plot_y = 1;

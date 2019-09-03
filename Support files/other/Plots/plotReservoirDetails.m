@@ -13,13 +13,51 @@ end
 switch(config.dataset)
     
     case 'autoencoder'
-        plotAEWeights(config.figure_array(3),config.figure_array(3),config.testInputSequence,best_individual,config)
+        plotAEWeights(best_individual,config)
                
     case 'poleBalance'
         set(0,'currentFigure',config.figure_array(1))
         config.run_sim = 1;
         config.testFcn(best_individual,config);
         config.run_sim = 0;
+        
+    case 'attractor'
+
+        test_states = config.assessFcn(best_individual,config.test_input_sequence,config);
+        test_sequence = test_states*best_individual.output_weights;
+        
+        set(0,'currentFigure',config.figure_array(3))
+        subplot(1,3,1)
+        plot(config.test_output_sequence(config.wash_out+1:end,:),'r')
+        hold on
+        plot(test_sequence,'b')
+        hold off
+        
+        subplot(1,3,2)
+        X = config.test_output_sequence(config.wash_out+1:end,:);
+        T = test_sequence;
+        if size(X,2) > 2
+            plot3(X(:,1),X(:,2),X(:,3),'r');
+            hold on
+            plot3(T(:,1),T(:,2),T(:,3),'b');
+            hold off
+            xlabel('X'); ylabel('Y'); zlabel('Z');
+        else
+            plot(X(:,1),X(:,2),'r');
+            hold on
+            plot(T(:,1),T(:,2),'b');
+            hold off
+            xlabel('X'); ylabel('Y');
+        end
+        
+        axis equal;
+        grid;
+        title('Attractor');
+        
+        subplot(1,3,3)
+        plot(test_states)
+        
+        drawnow
         
     case 'robot'
         set(0,'currentFigure',config.figure_array(1))
