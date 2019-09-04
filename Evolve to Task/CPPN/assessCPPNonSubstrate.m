@@ -94,7 +94,8 @@ if config_sub.evolve_output_weights
     
     output_sequence = [ones(1,6); from to];
     [test_states,CPPN] = config.assessFcn(CPPN,output_sequence,config);
-    substrate.output_weights = test_states*CPPN.output_weights(:,3);
+    CPPN_output_weights = test_states*CPPN.output_weights(:,3);
+    substrate.output_weights = reshape(CPPN_output_weights,size(output));
 end
 
 %assess substrate on task

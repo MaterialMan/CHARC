@@ -9,7 +9,7 @@ rng(1,'twister');
 switch config.dataset
     
     %% Chaotic systems
-    case 'NARMA10' %input error 4 - good task
+    case 'narma_10' %input error 4 - good task
         err_type = 'NMSE';
         wash_out =200;
         sequence_length = 8000;
@@ -19,7 +19,7 @@ switch config.dataset
         output_sequence = 2*output_sequence-0.5;
         %fprintf('NARMA 10 task: %s \n',datestr(now, 'HH:MM:SS'))
         
-    case 'NARMA20' %input error 4 - good task
+    case 'narma_20' %input error 4 - good task
         err_type = 'NMSE';
         wash_out =200;
         sequence_length = 8000;
@@ -29,7 +29,7 @@ switch config.dataset
         output_sequence = 2*output_sequence-0.5;
         %fprintf('NARMA 20 task: %s \n',datestr(now, 'HH:MM:SS'))
         
-    case 'NARMA30' %input error 4 - good task
+    case 'narma_30' %input error 4 - good task
         err_type = 'NMSE';
         wash_out =200;
         sequence_length = 8000;
@@ -39,7 +39,7 @@ switch config.dataset
         output_sequence = 2*output_sequence-0.5;
         %fprintf('NARMA 30 task: %s \n',datestr(now, 'HH:MM:SS'))
         
-    case 'NARMA10_DLexample' %input error 4 - good task
+    case 'narma_10_DLexample' %input error 4 - good task
         err_type = 'NRMSE';
         config.preprocess = 0;
         
@@ -49,7 +49,7 @@ switch config.dataset
         
         [input_sequence,output_sequence] = generate_new_NARMA_sequence(sequence_length,10);
         
-    case 'NARMA10_QRC' %input error 4 - good task
+    case 'narma_10_QRC' %input error 4 - good task
         err_type = 'NMSE';
         config.preprocess = 0;
         
@@ -60,7 +60,7 @@ switch config.dataset
         [input_sequence,output_sequence] = generate_new_NARMA_sequence(sequence_length,10);
         input_sequence = (input_sequence*2)*0.2;
         
-    case 'HenonMap' % input error > 1 - good task
+    case 'henon_map' % input error > 1 - good task
         
         err_type = 'NMSE';
         wash_out =200;
@@ -105,7 +105,7 @@ switch config.dataset
         %fprintf('Low IPIX task 1 ahead. \n Started at %s \n',datestr(now, 'HH:MM:SS'))
         
         
-    case 'Laser' % good task
+    case 'laser' % good task
         
         err_type = 'NMSE';
         % Sante Fe Laser generator task
@@ -122,7 +122,7 @@ switch config.dataset
         %fprintf('Laser task TSP - 64 electrode test: %s \n',datestr(now, 'HH:MM:SS'))
         
         
-    case 'Sunspot' % good task but not sure about dataset- problem with dividing set
+    case 'sunspot' % good task but not sure about dataset- problem with dividing set
         
         err_type = 'NMSE';
         % Sunspot task - needs proper dataset separation
@@ -230,7 +230,7 @@ switch config.dataset
         output_sequence = y_list';
         
         
-    case 'NonChanEqRodan' % (1:in, 1:out) error 0.999 Good task, requires memory
+    case 'non_chan_eq_rodan' % (1:in, 1:out) error 0.999 Good task, requires memory
         err_type = 'NMSE';
         %input alone error = 0.091
         wash_out =200;
@@ -241,7 +241,7 @@ switch config.dataset
         input_sequence =input_sequence';
         output_sequence =output_sequence';
         
-    case 'handDigits'
+    case 'hand_digits'
         
         err_type = 'softmax';
         wash_out =10;
@@ -262,7 +262,7 @@ switch config.dataset
         input_sequence = temp_inputSequence;
         output_sequence = temp_outputSequence;
         
-    case 'JapVowels' %(12: IN, 9:OUT - binary ) - input only 83% accuracy!  Train:0.2288  Test:0.1863
+    case 'japanese_vowels' %(12: IN, 9:OUT - binary ) - input only 83% accuracy!  Train:0.2288  Test:0.1863
         err_type = 'softmax'; %Paper: Optimization and applications of echo state networks with leaky- integrator neurons
         
         % Nine male speakers uttered two Japanese vowels /ae/ successively.
@@ -282,7 +282,7 @@ switch config.dataset
         
         t =  randperm(dataset_length,dataset_length);
         
-    case 'SignalClassification'
+    case 'signal_classification'
         err_type = 'softmax';
         
         wash_out =100;
@@ -324,8 +324,8 @@ switch config.dataset
         input_sequence = combInput;
         output_sequence = combOutput;
         
-    case 'Iris' %iris_dataset; (4:in, 3:out) %input alone 76% - medium task
-        err_type = 'IJCNNpaper';%'IJCNNpaper';%'confusion';
+    case 'iris' %iris_dataset; (4:in, 3:out) %input alone 76% - medium task
+        err_type = 'softmax';%'IJCNNpaper';%'confusion';
         
         wash_out = 0;
         % train_fraction=0.66666667;    val_fraction=0.333333/2;    test_fraction=0.333333/2;
@@ -357,7 +357,7 @@ switch config.dataset
         input_sequence = zeros(sequence_length,size(u,1));%u(:,1:end-ahead)';
         output_sequence = u';
         
-    case 'secondOrderTask' %best 3.61e-3
+    case 'secondorder_task' %best 3.61e-3
         
         err_type = 'NMSE';
         
@@ -393,7 +393,7 @@ switch config.dataset
         output_sequence = temp_outputSequence';
         
         
-    case 'poleBalance'
+    case 'pole_balance'
         err_type = 'empty';
         train_fraction=0.1;    val_fraction=0.1;    test_fraction=0.1;
         wash_out = 1;
@@ -416,7 +416,7 @@ switch config.dataset
         input_sequence= zeros(100,config.CPPN_inputs);
         output_sequence= zeros(100,config.CPPN_outputs);
         
-    case 'BinaryNbitAdder'
+    case 'binary_nbit_adder'
         
         err_type = 'hamming';
         type = 'nbit_adder';
@@ -467,43 +467,29 @@ switch config.dataset
         %hist(in(:,2))
         %hist(in(:,1))
         
-    case 'ImageGaussian' % Gaussian noise task
-        err_type = 'softmax';
-        
+    case 'image_gaussian' % Gaussian noise task
+        err_type = 'NMSE';
         wash_out = 0;
-        train_fraction=0.5;    val_fraction=0.25;    test_fraction=0.25;
-        config.preprocess = 0;
+        train_fraction= 0.5;    val_fraction=0.25;    test_fraction=0.25;
+        image_size = 25;
+        grey = 1;
         
-        startscript;
-        
-        imagesCombined = horzcat(imagesOriginal,imagesGaussian);
-        
-        inputs =[];trainingTarget=[];
-        for i=1:length(imagesCombined)
-            %inputs = imagesCombined{i}];
-            
-            if (i <= (length(imagesCombined)/2))
-                %trainingTarget(:,i,1) = 0;
-                %trainingTarget(:,i,2) = 1;
-                trainingTarget{i} = repmat([0 1],size(imagesCombined{i},1),1);
-                
-            else
-                %trainingTarget(:,i,1) = 1;
-                %trainingTarget(:,i,2) = 0;
-                trainingTarget{i} = repmat([1 0],size(imagesCombined{i},1),1);
-            end
-            
-        end
-        
-        target=randperm(length(imagesCombined));
-        temp_inputSequence = [];temp_outputSequence=[];
-        for i = 1:length(target)
-            temp_inputSequence = [temp_inputSequence; imagesCombined{target(i)}];
-            temp_outputSequence = [temp_outputSequence; trainingTarget{target(i)}];
-        end
-        
-        input_sequence = temp_inputSequence;
-        output_sequence = temp_outputSequence;
+        load('airplanes_800x25x25.mat');
+%         input_sequence = []; output_sequence =[];
+%         for i = 1:800
+%             if i > 9 && i < 100
+%                 file_dir = strcat('airplanes\image_00',num2str(i),'.jpg');
+%             elseif i > 99
+%                 file_dir = strcat('airplanes\image_0',num2str(i),'.jpg');
+%             else
+%                 file_dir = strcat('airplanes\image_000',num2str(i),'.jpg');
+%             end
+%             [img1_input,img1_output] = getImage(file_dir, image_size, 'gaussian',grey);
+%             
+%             input_sequence = [input_sequence; img1_input(:)'];
+%             output_sequence = [output_sequence; img1_output(:)'];
+%         end
+       
 end
 
 %% preprocessing

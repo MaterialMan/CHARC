@@ -10,7 +10,7 @@ for pop_indx = 1:config.pop_size
     population(pop_indx).test_error = 1;
     
     % add single bias node
-    population(pop_indx).bias_node = 1;
+    population(pop_indx).bias_node = 0;
     
     % assign input/output count
     if isempty(config.train_input_sequence) 
@@ -33,18 +33,19 @@ for pop_indx = 1:config.pop_size
         
         %addtional paramters
         population(pop_indx).time_period(i) = randi([1 10]);
-        population(pop_indx).wave_speed(i) = randi([1 20]);
+        population(pop_indx).wave_speed(i) = randi([1 12]);
         population(pop_indx).damping_constant(i) = rand;
         population(pop_indx).time_step(i) = 0.05;
         
         % fix = 1: All boundary points have a constant value of 1
         % cont = 1; Eliminate the wave and bring elements to their steady state.
         % connect = 1; Water flows across the edges and comes back from the opposite side
-        population(pop_indx).boundary_conditions(i,:) = round(rand(1,3));
+        bc = zeros(1,3); bc(randi([1 3])) = 1;
+        population(pop_indx).boundary_conditions(i,:) = bc;
         
         
        %inputweights
-       input_weights = sprand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1, 0.1);
+       input_weights = sprand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1, 0.01);
        input_weights(input_weights ~= 0) = ...
            2*input_weights(input_weights ~= 0)  - 1;
        population(pop_indx).input_weights{i} = input_weights;

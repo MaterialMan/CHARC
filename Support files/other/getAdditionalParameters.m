@@ -20,10 +20,12 @@ config.figure_array = [figure figure];
 config.multi_activ = 0;                      % use different activation funcs
 config.activ_list = {@tanh};                % what activations are in use when multiActiv = 1
 config.training_type = 'Ridge';              % blank is psuedoinverse. Other options: Ridge, Bias,RLS
+config.evolve_feedback_weights = 0;
 
 % default reservoir input scale
 config.scaler = 1;                          % this may need to change for different reservoir systems that don't fit to the typical neuron range, e.g. [-1 1]
 config.discrete = 0;
+
 %% Change/add parameters depending on reservoir type
 % This section is for additional parameters needed for different reservoir
 % types. If something is not here, it is most likely in the
@@ -41,7 +43,7 @@ switch(config.res_type)
         
     case 'Graph'
         
-        config.graph_type= {'Torus'};            % Define substrate. Add graph type to cell array for multi-reservoirs
+        config.graph_type= {'fullLattice'};            % Define substrate. Add graph type to cell array for multi-reservoirs
         % Examples: 'Hypercube','Cube'
         % 'Torus','L-shape','Bucky','Barbell','Ring'
         % 'basicLattice','partialLattice','fullLattice','basicCube','partialCube','fullCube',ensembleLattice,ensembleCube,ensembleShape
@@ -103,12 +105,14 @@ switch(config.res_type)
         config.discrete = 0;
         
     case 'Wave'
+        config.leak_on = 0;                           % add leak states
+        config.add_input_states = 0;                  %add input to states
+
         config.run_sim = 0;
-        config.sim_speed = 0.025;
+        config.sim_speed = 1; % xfactor
         for i = 1:length(config.num_nodes)
             config.num_nodes(i) =  config.num_nodes(i).^2;
         end
-        
         
     otherwise
         

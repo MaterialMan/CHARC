@@ -16,8 +16,8 @@ if isempty(gcp) && config.parallel
 end
 
 %% type of network to evolve
-config.res_type = 'Graph';                 % can use different hierarchical reservoirs. RoR_IA is default ESN.
-config.num_nodes = [5];                      % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
+config.res_type = 'RoR';                 % can use different hierarchical reservoirs. RoR_IA is default ESN.
+config.num_nodes = [50];                      % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
 config = selectReservoirType(config);       % get correct functions for type of reservoir
 
 %% Network details

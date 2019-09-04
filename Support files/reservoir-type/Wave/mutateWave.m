@@ -23,7 +23,7 @@ offspring.time_period = reshape(time_period,size(offspring.time_period));
 
 wave_speed = offspring.wave_speed(:);
 pos =  randperm(length(wave_speed),sum(rand(length(wave_speed),1) < config.mut_rate));
-wave_speed(pos) = randi([1 20],length(pos),1);
+wave_speed(pos) = randi([1 12],length(pos),1);
 offspring.wave_speed = reshape(wave_speed,size(offspring.wave_speed));
 
 damping_constant = offspring.damping_constant(:);
@@ -32,8 +32,8 @@ damping_constant(pos) = rand(length(pos),1);
 offspring.damping_constant = reshape(damping_constant,size(offspring.damping_constant));
 
 boundary_conditions = offspring.boundary_conditions(:);
-pos =  randperm(length(boundary_conditions),sum(rand(length(boundary_conditions),1) < config.mut_rate));
-boundary_conditions(pos) = round(rand(length(pos),1));
+%pos =  randperm(length(boundary_conditions),sum(rand(length(boundary_conditions),1) < config.mut_rate));
+boundary_conditions = boundary_conditions(randperm(length(boundary_conditions)));%round(rand(length(pos),1));
 offspring.boundary_conditions = reshape(boundary_conditions,size(offspring.boundary_conditions));
 
 

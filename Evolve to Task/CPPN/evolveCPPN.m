@@ -24,7 +24,7 @@ end
 
 %% Evolutionary parameters
 config.num_tests = 1;                        % num of runs
-config.pop_size = 100;                       % large pop better
+config.pop_size = 20;                       % large pop better
 config.total_gens = 1000;                    % num of gens
 config.mut_rate = 0.1;                       % mutation rate
 config.deme_percent = 0.2;                  % speciation percentage
@@ -33,15 +33,15 @@ config.rec_rate = 0.5;                       % recombination rate
 
 %% substrate details
 config_sub.pop_size = config.pop_size;
-config_sub.num_nodes = [8];                 % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
-config_sub.res_type ='Graph';               % currently only works with lattice as CPPN configured substrate
+config_sub.res_type ='RoR';               % currently only works with lattice as CPPN configured substrate
+config_sub.num_nodes = [25];                 % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
 
 config_sub = selectReservoirType(config_sub);       % get correct functions for type of reservoir
 config_sub.parallel = config.parallel;                        % use parallel toolbox
 
 %% CPPN details
-config.res_type = 'ELM';                      % can use different hierarchical reservoirs. RoR_IA is default ESN.
-config.num_nodes = [5,5,5];                  % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
+config.res_type = 'RoR';                      % can use different hierarchical reservoirs. RoR_IA is default ESN.
+config.num_nodes = [15];                  % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
 config = selectReservoirType(config);       % get correct functions for type of reservoir
 config.CPPN_inputs = 6;                     % coord of node A(x,y) and node B(x,y)
 config.CPPN_outputs = length(config_sub.num_nodes)*2 +1; % Output 1: input layer, 2: hidden layer, 3: outputlayer
@@ -49,24 +49,23 @@ config.CPPN_outputs = length(config_sub.num_nodes)*2 +1; % Output 1: input layer
 config.preprocess = 1;                   % basic preprocessing, e.g. scaling and mean variance
 config.dataset = 'CPPN';                 % Task to evolve for
 
-[config] = selectDataset(config);
-
 % get any additional params
 [config] = getAdditionalParameters(config);
+[config] = selectDataset(config);
 
 %% Task parameters
 config_sub.preprocess = 1;                   % basic preprocessing, e.g. scaling and mean variance
-config_sub.dataset = 'Laser';                 % Task to evolve for
+config_sub.dataset = 'image_gaussian';                 % Task to evolve for
 
+[config_sub] = getAdditionalParameters(config_sub);
 % get dataset
 [config_sub] = selectDataset(config_sub);
-[config_sub] = getAdditionalParameters(config_sub);
+config_sub.evolve_output_weights = 0;             % evolve rather than train
+config_sub.add_input_states = 0;                  %add input to states
 
 %% general params
 config.gen_print = 15;                       % gens to display achive and database
 config.start_time = datestr(now, 'HH:MM:SS');
-config.figure_array = [figure figure];
-config_sub.figure_array = [figure figure];
 config.save_gen = 1e5;                      % save at gen = saveGen
 config.multi_offspring = 0;                  % multiple tournament selection and offspring in one cycle
 config.num_sync_offspring = config.deme;      % length of cycle/synchronisation step

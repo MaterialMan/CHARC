@@ -18,11 +18,7 @@ for i= 1:config.num_reservoirs
     H{i} = zeros(node_grid_size(i));
     oldH{i}=H{i};
     newH{i}=H{i};
-    
-    if config.run_sim
-        h{i}=surf(newH{i});
-    end
-    
+
     % this is a square but it could be any shape
     x_size(i,:) = 2:node_grid_size(i)-1; 
     y_size(i,:) = x_size(i,:);
@@ -33,7 +29,7 @@ for i= 1:config.num_reservoirs
     % time multiplex -
     input_mul{i} = zeros(size(input_sequence,1)*individual.time_period(i),size(input{i},2));
     if individual.time_period > 1
-        input_mul{i}(mod(1:length(input_mul{i}),individual.time_period(i)) == 1,:) = input{i};
+        input_mul{i}(mod(1:size(input_mul{i},1),individual.time_period(i)) == 1,:) = input{i};
     else
         input_mul{i} = input{i};
     end    
@@ -54,20 +50,13 @@ for n = 2:size(input_sequence,1)
             ,individual.wave_speed(i),individual.damping_constant(i),... % apply liquid parameters
             H{i},oldH{i},... % set current and previous states
             individual.boundary_conditions(i,1),individual.boundary_conditions(i,2),individual.boundary_conditions(i,3)); %set boundary conditions
-     
-        if config.run_sim
-            set(h{i},'zdata',newH{i},'facealpha',0.65);
-            set(gca, 'xDir', 'reverse',...
-                'camerapositionmode','manual','cameraposition',[0.5 0.5 2]);
-            axis([1 node_grid_size(i) 1 node_grid_size(i) -2 2]);
-            drawnow
-            %pause(config.sim_speed);
-        end
-    
+         
         oldH{i}=H{i};
         
         %add input
-        newH{i} = newH{i} + reshape(input_mul{i}(n,:),node_grid_size(i),node_grid_size(i));
+        in = reshape(input_mul{i}(n,:),node_grid_size(i),node_grid_size(i));
+        %newH{i} = newH{i} + reshape(input_mul{i}(n,:),node_grid_size(i),node_grid_size(i));
+        newH{i}(logical(in)) = nonzeros(in);
         
         H{i}=newH{i};
                 
