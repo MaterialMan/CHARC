@@ -471,24 +471,24 @@ switch config.dataset
         err_type = 'NMSE';
         wash_out = 0;
         train_fraction= 0.5;    val_fraction=0.25;    test_fraction=0.25;
-        image_size = 25;
+        image_size = 32;
         grey = 1;
         
-        load('airplanes_800x25x25.mat');
-%         input_sequence = []; output_sequence =[];
-%         for i = 1:800
-%             if i > 9 && i < 100
-%                 file_dir = strcat('airplanes\image_00',num2str(i),'.jpg');
-%             elseif i > 99
-%                 file_dir = strcat('airplanes\image_0',num2str(i),'.jpg');
-%             else
-%                 file_dir = strcat('airplanes\image_000',num2str(i),'.jpg');
-%             end
-%             [img1_input,img1_output] = getImage(file_dir, image_size, 'gaussian',grey);
-%             
-%             input_sequence = [input_sequence; img1_input(:)'];
-%             output_sequence = [output_sequence; img1_output(:)'];
-%         end
+       % load('airplanes_800x25x25.mat');
+        input_sequence = []; output_sequence =[];
+        for i = 1:800
+            if i > 9 && i < 100
+                file_dir = strcat('airplanes\image_00',num2str(i),'.jpg');
+            elseif i > 99
+                file_dir = strcat('airplanes\image_0',num2str(i),'.jpg');
+            else
+                file_dir = strcat('airplanes\image_000',num2str(i),'.jpg');
+            end
+            [img1_input,img1_output] = getImage(file_dir, image_size, 'gaussian',grey);
+            
+            input_sequence = [input_sequence; img1_input(:)'];
+            output_sequence = [output_sequence; img1_output(:)'];
+        end
        
 end
 
@@ -537,5 +537,12 @@ end
 
 config.wash_out = wash_out;
 config.err_type = err_type;
+
+% % if multi-objective, update input/output units
+if ~isfield(config,'nsga2')
+    config.task_num_inputs = size(config.train_input_sequence,2);
+    config.task_num_outputs = size(config.train_output_sequence,2);
+end
+
 % Go back to old seed
 rng(temp_seed,'twister');

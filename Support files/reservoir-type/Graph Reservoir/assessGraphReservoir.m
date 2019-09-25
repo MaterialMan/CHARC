@@ -11,11 +11,8 @@ for i= 1:config.num_reservoirs
     else
         states{i} = zeros(size(input_sequence,1),individual.nodes(i));
     end
-    x{i} = zeros(size(input_sequence,1),individual.nodes(i));
-    
-    % reset weights to correct graph structure 
-    graph_indx{i} = logical(full(adjacency(individual.G{i})));
-    individual.W{i,i}(~graph_indx{i}) = 0;
+    x{i} = zeros(size(input_sequence,1),individual.nodes(i));    
+      
 end
 
 % preassign activation function calls
@@ -26,6 +23,8 @@ if size(individual.activ_Fcn,2) > 1
         end
     end
 end
+
+
 
 %% collect states
 for n = 2:size(input_sequence,1)

@@ -6,18 +6,18 @@ function offspring = mutateRoR(offspring,config)
      
 % params - input scaling and leak rate
 input_scaling = offspring.input_scaling(:);
-pos =  randperm(length(input_scaling),sum(rand(length(input_scaling),1) < config.mut_rate));
+pos = randperm(length(input_scaling),sum(rand(length(input_scaling),1) < config.mut_rate));
 input_scaling(pos) = 2*rand(length(pos),1)-1;
 offspring.input_scaling = reshape(input_scaling,size(offspring.input_scaling));
 
 leak_rate = offspring.leak_rate(:);
-pos =  randperm(length(leak_rate),sum(rand(length(leak_rate),1) < config.mut_rate));
+pos = randperm(length(leak_rate),sum(rand(length(leak_rate),1) < config.mut_rate));
 leak_rate(pos) = rand(length(pos),1);
 offspring.input_scaling = reshape(leak_rate,size(offspring.leak_rate));
 
 % W scaling
 W_scaling = offspring.W_scaling(:);
-pos =  randperm(length(W_scaling),sum(rand(length(W_scaling),1) < config.mut_rate));
+pos = randperm(length(W_scaling),sum(rand(length(W_scaling),1) < config.mut_rate));
 W_scaling(pos) = 2*rand(length(pos),1);
 offspring.W_scaling = reshape(W_scaling,size(offspring.W_scaling));
 
@@ -25,7 +25,7 @@ offspring.W_scaling = reshape(W_scaling,size(offspring.W_scaling));
 for i = 1:config.num_reservoirs
 
     % input weights
-    input_weights = offspring.input_weights{i};
+    input_weights = offspring.input_weights{i}(:);
     pos =  randperm(length(input_weights),ceil(config.mut_rate*length(input_weights)));
     for n = 1:length(pos)
         if rand < 0.5 % 50% chance to zero weight
@@ -38,25 +38,61 @@ for i = 1:config.num_reservoirs
         
     % hidden weights
     for j = 1:config.num_reservoirs
-        W = offspring.W{i,j}(:);
-        % select weights to change
-        pos =  randperm(length(W),ceil(config.mut_rate*length(W)));
-        for n = 1:length(pos)
-            if rand < 0.5 % 50% chance to zero weight
-                W(pos(n)) = 0;
-            else
-                W(pos(n)) = 2*rand-1;%0.5;
-            end   
-        end
-        offspring.W{i,j} = reshape(W,size(offspring.W{i,j}));
+         % only mutate one half of matrix if undirected weights in use
+         if (config.undirected_ensemble && i ~= j) || (config.undirected && i == j)
+            W= triu(offspring.W{i,j});
+            f = find(W);
+            pos = randperm(length(f),ceil(config.mut_rate*length(f)));            
+            for n = 1:length(pos)
+                 if rand < 0.5 % 50% chance to zero weight
+                     W(f(pos(n))) = 0;
+                 else
+                     W(f(pos(n))) = 2*rand-1;%0.5;
+                 end
+            end
+            W = triu(W)+triu(W,1)'; % copy top-half to lower-half
+            offspring.W{i,j} = W;
+         else
+             if strcmp(config.res_type,'Graph')
+                 W = offspring.W{i,j};
+                 f = find(adjacency(config.G{i,j}));
+                 pos = randperm(length(f),ceil(config.mut_rate*length(f)));
+                 % select weights to change
+                 for n = 1:length(pos)
+                     if rand < 0.5 % 50% chance to zero weight
+                         W(f(pos(n))) = 0;
+                     else
+                         W(f(pos(n))) = 2*rand-1;%0.5;
+                     end
+                 end
+                 offspring.W{i,j} = W;
+             else
+                 W = offspring.W{i,j}(:);
+                 % select weights to change
+                 pos =  randperm(length(W),ceil(config.mut_rate*length(W)));
+                 for n = 1:length(pos)
+                     if rand < 0.5 % 50% chance to zero weight
+                         W(pos(n)) = 0;
+                     else
+                         W(pos(n)) = 2*rand-1;%0.5;
+                     end
+                 end
+                 offspring.W{i,j} = reshape(W,size(offspring.W{i,j}));
+             end    
+         end                
     end
     
     % mutate activ fcns
-    if size(offspring.activ_Fcn,2) > 1
+    if config.multi_activ
         activFcn = offspring.activ_Fcn(i,:);
         pos =  randperm(length(activFcn),sum(rand(length(activFcn),1) < config.mut_rate));
         activFcn(pos) = {config.activ_list{randi([1 length(config.activ_list)],length(pos),1)}};
         offspring.activ_Fcn(i,:) = reshape(activFcn,size(offspring.activ_Fcn(i,:)));
+    else
+        activFcn = offspring.activ_Fcn;
+        pos =  randperm(length(activFcn),sum(rand(length(activFcn),1) < config.mut_rate));
+        activFcn(pos) = {config.activ_list{randi([1 length(config.activ_list)],length(pos),1)}};
+        offspring.activ_Fcn = reshape(activFcn,size(offspring.activ_Fcn));
     end
 end
 

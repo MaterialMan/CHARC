@@ -18,7 +18,7 @@
 clear
 close all
 % add all subfolders to the path --> make all functions in subdirectories available
-% addpath(genpath(pwd));
+addpath(genpath('/branches/working-branch/'));
 
 %set random seed for experiments
 rng(1,'twister');
@@ -33,11 +33,11 @@ end
 
 % type of network to evolve
 config.res_type = 'Wave';                % state type of reservoir to use. E.g. 'RoR' (Reservoir-of-reservoirs/ESNs), 'ELM' (Extreme learning machine), 'Graph' (graph network of neurons), 'DL' (delay line reservoir) etc. Check 'selectReservoirType.m' for more.
-config.num_nodes = [5];                  % num of nodes in each sub-reservoir, e.g. if config.num_nodes = {10,5,15}, there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. For one reservoir, sate as a non-cell, e.g. config.num_nodes = 25
+config.num_nodes = [10];                  % num of nodes in each sub-reservoir, e.g. if config.num_nodes = {10,5,15}, there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. For one reservoir, sate as a non-cell, e.g. config.num_nodes = 25
 config = selectReservoirType(config);   % collect function pointers for the selected reservoir type
 
 % Network details
-config.metrics = {'KR','GR','linearMC','crossMC','quadraticMC'};       % behaviours that will be used; name metrics to use and order of metrics
+config.metrics = {'KR','GR','linearMC'};       % behaviours that will be used; name metrics to use and order of metrics
 config.voxel_size = 10;                  % when measuring quality, this will determine the voxel size. Depends on systems being compared. Rule of thumb: around 10 is good
 
 % dummy variables for dataset; not used but still needed for functions to
@@ -53,7 +53,7 @@ config.dataset = 'blank';
 %% Evolutionary parameters
 config.num_tests = 1;                        % num of tests/runs
 config.pop_size = 100;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
-config.total_gens = 10000;                    % number of generations to evolve
+config.total_gens = 100;                    % number of generations to evolve
 config.mut_rate = 0.1;                       % mutation rate
 config.deme_percent = 0.2;                   % speciation percentage; determines interbreeding distance on a ring.
 config.deme = round(config.pop_size*config.deme_percent);
@@ -65,7 +65,7 @@ config.p_min_start = 3;%sum(config.num_nodes)/10;                     % novelty 
 config.p_min_check = 200;                   % change novelty threshold dynamically after "p_min_check" generations.
 
 % general params
-config.gen_print = 25;                       % after 'gen_print' generations display archive and database
+config.gen_print = 10;                       % after 'gen_print' generations display archive and database
 config.start_time = datestr(now, 'HH:MM:SS');
 config.figure_array = [figure figure];
 config.save_gen = inf;                       % save data at generation = save_gen
@@ -158,26 +158,32 @@ for tests = 1:config.num_tests
         
         %% Infection and mutation phase
         % winner infects loser
-        population(loser) = config.recFcn(population(winner),population(loser),config);
+        offspring = config.recFcn(population(winner),population(loser),config);
+        
         % mutate offspring/loser
-        population(loser) = config.mutFcn(population(loser),config);
+        offspring = config.mutFcn(offspring,config);
         
         %% Evaluate and update fitness of offspring/loser
-        population(loser).behaviours = getMetrics(population(loser),config);
+        offspring.behaviours = getMetrics(offspring,config);
         
         % Store behaviours
-        pop_behaviours(loser,:) = population(loser).behaviours;
+        population(loser) = offspring;
+        pop_behaviours(loser,:) = offspring.behaviours;
         
         % calculate offsprings neighbours in behaviour space - using
         % population and archive
-        fit_offspring = findKNN([archive; pop_behaviours],population(loser).behaviours,config.k_neighbours);
+        fit_offspring = findKNN([archive; pop_behaviours],offspring.behaviours,config.k_neighbours);
         
         % add offspring details to database
-        database = [database population(loser)];
+        database(config.pop_size + gen-1) = offspring;
         
         %add offspring to archive under conditions
         if  fit_offspring > config.p_min || rand < 0.001 % random chance of being added to archive
-            archive = [archive; pop_behaviours(loser,:)];
+            if length(archive) < 150
+                archive(end+1,:) = pop_behaviours(loser,:);
+            else
+                archive = [archive(2:end,:); pop_behaviours(loser,:)]; % pop & push
+            end
             cnt_change(gen) = 1;
             cnt_no_change(gen) = 0;
         else
@@ -228,6 +234,7 @@ for tests = 1:config.num_tests
 end
 config.finish_time = datestr(now, 'HH:MM:SS');
 
+
 %% fitness function for novelty search
 function [avg_dist] = findKNN(behaviours,Y,k_neighbours)
 [~,D] = knnsearch(behaviours,Y,'K',k_neighbours);
@@ -238,6 +245,10 @@ end
 function plotSearch(database, gen,config)
 
 all_behaviours = reshape([database.behaviours],length(database(1).behaviours),length(database))';
+
+% Add specific parameter to observe here
+% Example: plot a particular parameter:
+% lr = [database.leak_rate]';
 
 set(0,'currentFigure',config.figure_array(1))
 title(strcat('Gen:',num2str(gen)))
@@ -256,9 +267,12 @@ for i = 1:size(C,1)
     subplot(num_plot_x,num_plot_y,i)
     scatter(all_behaviours(:,C(i,1)),all_behaviours(:,C(i,2)),20,1:length(all_behaviours),'filled')
     
+    % Replace with desired parameter:
+    % scatter(all_behaviours(:,C(i,1)),all_behaviours(:,C(i,2)),20,lr,'filled')
+    
     xlabel(config.metrics(C(i,1)))
     ylabel(config.metrics(C(i,2)))
-    colormap('copper')
+    colormap(cubehelix)
 end
 
 drawnow

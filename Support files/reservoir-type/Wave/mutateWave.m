@@ -41,7 +41,7 @@ offspring.boundary_conditions = reshape(boundary_conditions,size(offspring.bound
 for i = 1:config.num_reservoirs
 
     % input weights
-    input_weights = offspring.input_weights{i};
+    input_weights = offspring.input_weights{i}(:);
     pos =  randperm(length(input_weights),ceil(config.mut_rate*length(input_weights)));
     for n = 1:length(pos)
         if rand < 0.5 % 50% chance to zero weight

@@ -7,9 +7,9 @@ temp_seed = scurr.Seed;
 % set parameters
 metrics = [];
 config.reg_param = 10e-6;
-config.wash_out = 100;
+config.wash_out = 25;
 metrics_type =  config.metrics;
-num_timesteps = individual.total_units*2 + config.wash_out; % input should be twice the size of network + wash out
+num_timesteps = round(individual.total_units*1.5) + config.wash_out; % input should be twice the size of network + wash out
 n_input_units = individual.n_input_units;
 
 for metric_item = 1:length(config.metrics)
@@ -18,10 +18,10 @@ for metric_item = 1:length(config.metrics)
     
     switch metrics_type{metric_item}
         
-        case 'KR'            
+        case 'KR'
             
             %define input signal
-            ui = 2*rand(num_timesteps,n_input_units)-1;            
+            ui = 2*rand(num_timesteps,n_input_units)-1;
             
             input_sequence = repmat(ui(:,1),1,n_input_units);
             
@@ -48,8 +48,9 @@ for metric_item = 1:length(config.metrics)
                     e_rank= e_rank+1;
                 end
             end
+            
             kernel_rank = e_rank-1;
-               
+                   
             metrics = [metrics kernel_rank];
             
             %% Genralization Rank
@@ -82,9 +83,9 @@ for metric_item = 1:length(config.metrics)
                 end
             end
             gen_rank = e_rank-1;
-                       
+            
             metrics = [metrics gen_rank];
-                
+            
             %% LE measure
         case 'LE'
             seed = 1;
@@ -94,7 +95,7 @@ for metric_item = 1:length(config.metrics)
             %% Entropy measure
         case 'entropy'
             
-            data_length = individual.total_units*2 + config.wash_out;%400; 
+            data_length = individual.total_units*2 + config.wash_out;%400;
             input_sequence = ones(data_length,n_input_units).*config.scaler;
             
             X = config.assessFcn(individual,input_sequence,config);
@@ -112,14 +113,14 @@ for metric_item = 1:length(config.metrics)
             metrics = [metrics entropy*100];
             
         case 'linearMC'
-
+            
             % measure MC multiple times
-            %for 
-            temp_MC = testMC(individual,config,1);
-            %end
-           
+            datalength = 500 + config.wash_out*2;
+            mc_seed = 1;
+            temp_MC = testMC(individual,config,mc_seed,datalength);
+            
             MC = mean(temp_MC);
-    
+            
             metrics = [metrics MC];
             
             
@@ -137,8 +138,8 @@ for metric_item = 1:length(config.metrics)
             
         case 'separation'
             
-            data_length = individual.total_units*4 + config.wash_out*2;%400;            
-
+            data_length = individual.total_units*4 + config.wash_out*2;%400;
+            
             u1 = (rand(data_length,n_input_units)-1).*config.scaler;
             u2 = (rand(data_length,n_input_units)).*config.scaler;
             
@@ -151,30 +152,30 @@ for metric_item = 1:length(config.metrics)
             sep = norm(X1 - X2)/D;
             
             metrics = [metrics sep];
-%abs(X1-X2)/D(i,config.wash_out+1:end);
-
+            %abs(X1-X2)/D(i,config.wash_out+1:end);
+            
             
             %             input_sequence = ones(data_length,1);
-%             
-%             X = config.assessFcn(individual,input_sequence,config);
-%             
-%             centre_of_mass = mean(X);
-%             
-%             inter_class_distance = 
-%             
-%             intra_class_var = 
-%             
-%             sep = inter_class_distance/(intra_class_var + 1);
-%             
-
+            %
+            %             X = config.assessFcn(individual,input_sequence,config);
+            %
+            %             centre_of_mass = mean(X);
+            %
+            %             inter_class_distance =
+            %
+            %             intra_class_var =
+            %
+            %             sep = inter_class_distance/(intra_class_var + 1);
+            %
+            
         case 'mutalInformation'
             
-            data_length = individual.total_units*4 + config.wash_out*2;%400;            
-
+            data_length = individual.total_units*4 + config.wash_out*2;%400;
+            
             u = (rand(data_length,n_input_units)-1).*config.scaler;
             
             X = config.assessFcn(individual,u,config);
-           
+            
             for i = 1:size(X,1)
                 for j = 1:size(X,1)
                     MI(j) = mutualInformation(X(i+1,:), X(i,j));

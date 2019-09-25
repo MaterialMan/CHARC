@@ -90,6 +90,12 @@ switch(config.res_type)
         config.assessFcn = @collectWaveStates;
         config.mutFcn = @mutateWave;
         config.recFcn = @recombWave; 
+        
+    case 'MM'
+        config.createFcn = @createMM;
+        config.assessFcn = @collectMMStates;
+        config.mutFcn = @mutateMM;
+        config.recFcn = @recombMM;
 end
 
 if strcmp(config.res_type,'CNT')

@@ -2,12 +2,6 @@
 % overflow for params that can be changed. This is called by all main scripts
 function [config] = getAdditionalParameters(config)
             
-% % if multi-objective, update input/output units
-% if ~isfield(config,'nsga2')
-%     config.task_num_inputs = size(config.train_input_sequence,2);
-%     config.task_num_outputs = size(config.train_output_sequence,2);
-% end
-
 %% Set Default parameters
 config.num_reservoirs = length(config.num_nodes);% num of subreservoirs. Default ESN should be 1.
 config.leak_on = 1;                           % add leak states
@@ -17,10 +11,12 @@ config.evolve_output_weights = 0;             % evolve rather than train
 config.evolve_feedback_weights = 0;             % find suitable feedback weights
 config.figure_array = [figure figure];
 
-config.multi_activ = 0;                      % use different activation funcs
-config.activ_list = {@tanh};                % what activations are in use when multiActiv = 1
+config.multi_activ = 1;                      % use different activation funcs
+config.activ_list = {@tanh,@cos,@sin};                % what activations are in use when multiActiv = 1
 config.training_type = 'Ridge';              % blank is psuedoinverse. Other options: Ridge, Bias,RLS
 config.evolve_feedback_weights = 0;
+config.undirected = 0;                       % by default all networks are directed
+config.undirected_ensemble = 0;              % by default all inter-network weights are directed
 
 % default reservoir input scale
 config.scaler = 1;                          % this may need to change for different reservoir systems that don't fit to the typical neuron range, e.g. [-1 1]
@@ -108,11 +104,21 @@ switch(config.res_type)
         config.leak_on = 0;                           % add leak states
         config.add_input_states = 0;                  %add input to states
 
-        config.run_sim = 0;
+        config.run_sim = 1;
         config.sim_speed = 1; % xfactor
         for i = 1:length(config.num_nodes)
             config.num_nodes(i) =  config.num_nodes(i).^2;
         end
+        
+    case 'MM'
+        config.temperature_parameter = 0; % positive integer OR 'dynamic'
+        config.damping_parameter = 0.1; % 0.01 to 1 OR 'dynamic' | typical value 0.1
+        config.anisotropy_parameter = 1e-25; % 1e-25 to 1e-22 OR 'dynamic' | typical value 1e-24
+        config.exchange_parameter = 5e-21; % 1e-21 to 10e-21 OR 'dynamic' | typical value 5e-21
+        config.magmoment_parameter = 1.4; % 0.5 to 7 OR 'dynamic' | typical value 1.4
+        config.unitcell_size = 3.47; % typical value 3.47 Armstrongs
+        config.crystal_structure = 'sc'; % typical crystal structures: 'sc', 'fcc', 'bcc' | 'sc' significantly faster
+        config.timestep = 2; % integer in femtoseconds | 1 to 10 sensible range
         
     otherwise
         

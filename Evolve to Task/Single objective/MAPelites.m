@@ -16,12 +16,12 @@ if isempty(gcp) && config.parallel
 end
 
 %% type of network to evolve
-config.res_type = 'RoR';                 % can use different hierarchical reservoirs. RoR_IA is default ESN.
-config.num_nodes = [50];                      % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
+config.res_type = 'Wave';                 % can use different hierarchical reservoirs. RoR_IA is default ESN.
+config.num_nodes = [5];                      % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
 config = selectReservoirType(config);       % get correct functions for type of reservoir
 
 %% Network details
-config.metrics = {'KR','MC'}; % metrics to use (and order of metrics)
+config.metrics = {'KR','linearMC'}; % metrics to use (and order of metrics)
 
 %% Evolutionary parameters
 config.num_tests = 1;                        % num of runs
@@ -34,13 +34,14 @@ config.rec_rate = 0.5;                       % recombination rate
 config.discrete = 0;                                                        % binary input for discrete systems
 config.nbits = 16;                                                          % if using binary/discrete systems
 config.preprocess = 1;                                                      % basic preprocessing, e.g. scaling and mean variance
-config.dataset = 'NARMA10';                                                  % Task to evolve for
+config.dataset = 'iris';                                                  % Task to evolve for
 
-% get dataset
-[config] = selectDataset(config);
+% get any additional params. This might include:
+% details on reservoir structure, extra task variables, etc. 
+config = getAdditionalParameters(config);
 
-% get any additional params
-[config] = getAdditionalParameters(config);
+% get dataset information
+config = selectDataset(config);
 
 %% MAP of elites parameters
 config.batch_size = 10;                                                     % how many offspring to create in one iteration
@@ -54,7 +55,7 @@ config.voxel_size = 10;                                                     % to
 
 config.figure_array = [figure figure figure];
 
-config.gen_print = 5;
+config.gen_print = 10;
 
 %% Run MicroGA
 for tests = 1:config.num_tests
@@ -205,7 +206,7 @@ for tests = 1:config.num_tests
         plotSearch(MAP,iter*config.batch_size,config)
         
         if (mod(iter,config.gen_print) == 0)
-            %plotReservoirDetails(MAP,store_global_best,tests,best_indv,1,prev_best,config)       
+            plotReservoirDetails(MAP,store_global_best,tests,best_indv,1,prev_best,config)       
         end
         fprintf('\n iteration: %d, best error: %.4f  ',iter,global_best);
     end

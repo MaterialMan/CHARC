@@ -40,6 +40,10 @@ for n = 2:size(input_sequence,1)
         % This line will depend on the reservoir, below is just an example: 
         % ... states{i}(n,:) = individual.activ_Fcn{1}(((individual.input_weights{i}*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,:)');
             
+        for j = 1:individual.nodes(i)
+            states(n+1,j) = individual.alpha*states(n,j+1)*(1-states(n,j+1)) + individual.beta*(states(n,j+1) - states(n,j+1));
+            
+        end
     end
 end
 

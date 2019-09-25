@@ -10,7 +10,7 @@ for pop_indx = 1:config.pop_size
     population(pop_indx).test_error = 1;
     
     % add single bias node
-    population(pop_indx).bias_node = 0;
+    population(pop_indx).bias_node = 1;
     
     % assign input/output count
     if isempty(config.train_input_sequence) 
@@ -44,7 +44,7 @@ for pop_indx = 1:config.pop_size
         
               
         %assign different activations, if necessary
-        if config.multi_activ 
+        if config.multi_activ
             activ_positions = randi(length(config.activ_list),1,population(pop_indx).nodes(i));
             for act = 1:length(activ_positions)
                 population(pop_indx).activ_Fcn{i,act} = config.activ_list{activ_positions(act)};
@@ -72,7 +72,13 @@ for pop_indx = 1:config.pop_size
                 internal_weights(internal_weights ~= 0)  - 0.5;
             
             % assign scaling for inner weights 
-            population(pop_indx).W_scaling(i,j) = 2*rand;            
+            population(pop_indx).W_scaling(i,j) = 2*rand;      
+            
+            % reassign undirected weights
+            if (config.undirected_ensemble && i ~= j) || (config.undirected && i == j)
+                internal_weights = triu(internal_weights)+triu(internal_weights,1)';
+            end
+    
             population(pop_indx).W{i,j} = internal_weights; 
 
         end
