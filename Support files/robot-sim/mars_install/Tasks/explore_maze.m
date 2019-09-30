@@ -1,4 +1,4 @@
-function [Command, Exp_status]= explore_maze(Exp_status,Initialization,individual,config)
+function [Command, Exp_status,individual,test_states]= explore_maze(Exp_status,Initialization,individual,config)
 % Demo of obstacle avoidance
 % The "Map" addon is used in this demo
 
@@ -49,6 +49,7 @@ if Initialization
     Exp_status.Agent(1).Sensor(1).Show_beam=1;
     Exp_status.Agent(1).Sensor(1).Show_range=1;
     
+    test_states = [];
     return
 end
 %------
@@ -58,14 +59,14 @@ Pose=Exp_status.Pose;
 %Obstacle Avoidance Potential Field Method
 for j=1:Exp_status.Robots
     
-    input = Exp_status.Agent.Sensor.Measured_distance.*config.scaler;
+    %input = Exp_status.Agent.Sensor.Measured_distance.*config.scaler;
     
     input_sequence = [0; Exp_status.Agent.Sensor.Measured_distance]'; %add constant input
     
     %-----------insert NN code
-    [testStates,individual] = config.assessFcn(individual,input_sequence,config); %[testStates,genotype]
+    [test_states(j,:),individual] = config.assessFcn(individual,input_sequence,config); %[testStates,genotype]
     
-    output = testStates*individual.output_weights;
+    output = test_states(j,:)*individual.output_weights;
     
     F_rep_obs = output(1:2);
     k_omega = output(3);

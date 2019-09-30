@@ -1,5 +1,5 @@
 
-function [OUTPUT_DATA,individual]= robotSim(filename,stop_time,speed,options,individual,config)
+function [OUTPUT_DATA,individual,states]= robotSim(filename,stop_time,speed,options,individual,config)
 %
 % MARS Multi-Agent Robot Simulator  -  Simulate and animate a team of robots.
 %
@@ -79,7 +79,7 @@ EXP.Filename=filename;
 %-- Read experiment data from user function (run user function with second argument = true)
 clear global
 
-eval(['[Command , EXP]=' EXP.Filename '(EXP,true,individual,config);']);
+eval(['[Command , EXP,individual,test_states]=' EXP.Filename '(EXP,true,individual,config);']);
 %[Command, EXP]= Demo_Obstacles_Sensor(EXP,1,genotype,config);
 
 %------
@@ -192,7 +192,7 @@ for T1=0:EXP.Sampling_time:EXP.Stop_time
         EXP=Manage_sensors(EXP);    % run sensors functions
     end
     
-    eval(['[Command, EXP]=' EXP.Filename '(EXP,false,individual,config);']); %-- Run user-defined function
+    eval(['[Command, EXP,individual,test_states]=' EXP.Filename '(EXP,false,individual,config);']); %-- Run user-defined function
     
     Command=check_saturation(EXP,Command);
     EXP.History.Command(EXP.Iteration,:,:)=Command;
@@ -236,6 +236,7 @@ for T1=0:EXP.Sampling_time:EXP.Stop_time
         EXP.Target_points(indx,:) = [];
     end
     
+    states(T1+1,:) = test_states;
 end
 
 %=== calculate fitness

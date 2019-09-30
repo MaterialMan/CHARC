@@ -11,8 +11,8 @@ config.evolve_output_weights = 0;             % evolve rather than train
 config.evolve_feedback_weights = 0;             % find suitable feedback weights
 config.figure_array = [figure figure];
 
-config.multi_activ = 1;                      % use different activation funcs
-config.activ_list = {@tanh,@cos,@sin};                % what activations are in use when multiActiv = 1
+config.multi_activ = 0;                      % use different activation funcs
+config.activ_list = {@tanh};                % what activations are in use when multiActiv = 1
 config.training_type = 'Ridge';              % blank is psuedoinverse. Other options: Ridge, Bias,RLS
 config.evolve_feedback_weights = 0;
 config.undirected = 0;                       % by default all networks are directed
@@ -104,7 +104,7 @@ switch(config.res_type)
         config.leak_on = 0;                           % add leak states
         config.add_input_states = 0;                  %add input to states
 
-        config.run_sim = 1;
+        config.run_sim = 0;
         config.sim_speed = 1; % xfactor
         for i = 1:length(config.num_nodes)
             config.num_nodes(i) =  config.num_nodes(i).^2;
@@ -135,7 +135,7 @@ switch(config.dataset)
         config.figure_array = [config.figure_array figure];
         config.sparse_input_weights = 0;
         
-    case 'poleBalance'
+    case 'pole_balance'
         config.time_steps = 1000;
         config.simple_task = 2;
         config.pole_tests = 2;
@@ -148,7 +148,7 @@ switch(config.dataset)
     case 'robot'
         % type of task
         config.robot_behaviour = 'explore_maze';    %select behaviour/file to simulate
-        config.time_steps = 1500;                    % sim time
+        config.time_steps = 500;                    % sim time
         %sensors
         config.sensor_range = 0.5;                 % range of lidar
         config.evolve_sensor_range = 0;             % use leakRate parameter as proxy for sensor range (evolvable)

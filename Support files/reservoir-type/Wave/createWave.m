@@ -32,7 +32,7 @@ for pop_indx = 1:config.pop_size
         population(pop_indx).leak_rate(i) = rand;
         
         %addtional paramters
-        population(pop_indx).time_period(i) = randi([1 10]);
+        population(pop_indx).time_period(i) = randi([1 1]);
         population(pop_indx).wave_speed(i) = randi([1 12]);
         population(pop_indx).damping_constant(i) = rand;
         population(pop_indx).time_step(i) = 0.05;
@@ -50,7 +50,7 @@ for pop_indx = 1:config.pop_size
            2*input_weights(input_weights ~= 0)  - 1;
        population(pop_indx).input_weights{i} = input_weights;
         
-        population(pop_indx).last_state{i} = zeros(1,population(pop_indx).nodes(i));
+        population(pop_indx).last_state{i} = zeros(2,population(pop_indx).nodes(i));
     end
     
     %track total nodes in use

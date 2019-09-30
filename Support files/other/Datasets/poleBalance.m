@@ -1,4 +1,4 @@
-function individual = poleBalance(individual,config)
+function [individual,test_states]= poleBalance(individual,config)
 
 scurr = rng;
 temp_seed = scurr.Seed;
@@ -66,6 +66,8 @@ for  tests = 1:config.pole_tests
     score = 0;
     force_record = [];
     
+    test_states = zeros(size(input_sequence,1),sum(config.num_nodes));
+    
     for n = 2:size(input_sequence,1)
         
         if config.velocity
@@ -92,10 +94,15 @@ for  tests = 1:config.pole_tests
         
         % rescale inputs
         input_sequence(n,:) = ((input_sequence(n,:)--10)./(10--10)-0.5)*2;
-           
-        [test_states,individual] = config.assessFcn(individual,input_sequence(n,:),config); %[testStates,genotype]
+%            
+        if sum(isnan(input_sequence(n,:))) > 1
+            fitness(tests) = 1;
+            return;
+        end
         
-        force = test_states*individual.output_weights;
+        [test_states(n,:),individual] = config.assessFcn(individual,input_sequence(n,:),config); %[testStates,genotype]
+                        
+        force = test_states(n,:)*individual.output_weights;
         
         %% STEP on system
         if mod(n,1) == 0 % output every 0.02 secs

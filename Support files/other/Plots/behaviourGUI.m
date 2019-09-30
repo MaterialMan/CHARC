@@ -51,9 +51,10 @@ function behaviourGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to behaviourGUI (see VARARGIN)
 
-handles.metrics = varargin{1};
-handles.genotype = varargin{2};
-handles.config =varargin{3};
+%handles.metrics = varargin{1};
+handles.database = varargin{1};
+handles.config = varargin{2};
+handles.behaviours = reshape([handles.database.behaviours],length(handles.database),length(handles.config.metrics));
 handles.c = 1:length(handles.metrics);
 
 % This sets up the initial plot - only do when we are invisible
@@ -64,49 +65,55 @@ if strcmp(get(hObject,'Visible'),'off')
     handles.dotSize =dotSize;
     handles.current_xy = [];
     
-    scatter(handles.axes1,handles.metrics(:,1),handles.metrics(:,2),dotSize,handles.c,'filled')
+    scatter(handles.axes1,handles.behaviours(:,1),handles.behaviours(:,2),dotSize,handles.c,'filled')
     xlabel('KR')
     ylabel('GR')
     
-    scatter(handles.axes2,handles.metrics(:,1),handles.metrics(:,3),dotSize,handles.c,'filled')
+    scatter(handles.axes2,handles.behaviours(:,1),handles.behaviours(:,3),dotSize,handles.c,'filled')
     xlabel('KR')
     ylabel('MC')
     
-    scatter(handles.axes3,handles.metrics(:,2),handles.metrics(:,3),dotSize,handles.c,'filled')
+    scatter(handles.axes3,handles.behaviours(:,2),handles.behaviours(:,3),dotSize,handles.c,'filled')
     xlabel('GR')
     ylabel('MC')
     
+    
+    
     %% parameters
+    
+    %fields = fieldnames(S)
+    
     handle.parameter = 'Wscaling';
+    
     switch(handle.parameter)
         case 'Wscaling'
-            parm = [handles.genotype.Wscaling];
+            parm = [handles.database.W_scaling];
             
         case 'inputScaling'
-            parm = [handles.genotype.inputScaling];
+            parm = [handles.database.input_scaling];
             
         case 'leakRate'
-            parm = [handles.genotype.leakRate];
+            parm = [handles.database.leak_rate];
             
         case 'numInputs'
-            parm = [handles.genotype.totalInputs];
+            parm = [handles.database.totalInputs];
             
         case 'Wconnectivity'
-            totalWeights = handles.genotype.nTotalUnits^2;
-            for i = 1:length(handles.genotype)
-                handles.genotype(i).Wconnectivity = length(nonzeros(handles.genotype(i).w))/totalWeights;
+            totalWeights = handles.database.nTotalUnits^2;
+            for i = 1:length(handles.database)
+                handles.database(i).Wconnectivity = length(nonzeros(handles.database(i).w))/totalWeights;
             end
-            parm = [handles.genotype.Wconnectivity];
+            parm = [handles.database.Wconnectivity];
             
         case 'Wdist'
-            for i = 1:length(handles.genotype)
-                wdist(i) = mean(nonzeros(handles.genotype(i).w));
+            for i = 1:length(handles.database)
+                wdist(i) = mean(nonzeros(handles.database(i).w));
             end
             parm = [wdist];
             
         case 'WinDist'
-            for i = 1:length(handles.genotype)
-                wdinist(i) = mean(nonzeros(handles.genotype(i).w_in));
+            for i = 1:length(handles.database)
+                wdinist(i) = mean(nonzeros(handles.database(i).w_in));
             end
             parm = [windist];
     end
@@ -213,33 +220,33 @@ handle.parameter = contents{get(hObject,'Value')};
 parm = [];
 switch(handle.parameter)
     case 'Wscaling'
-        parm = [handles.genotype.Wscaling];
+        parm = [handles.database.Wscaling];
         
     case 'inputScaling'
-        parm = [handles.genotype.inputScaling];
+        parm = [handles.database.inputScaling];
         
     case 'leakRate'
-        parm = [handles.genotype.leakRate];
+        parm = [handles.database.leakRate];
         
     case 'numInputs'
-        parm = [handles.genotype.totalInputs];
+        parm = [handles.database.totalInputs];
         
     case 'Wconnectivity'
-        totalWeights = handles.genotype(1).nTotalUnits^2;
-        for i = 1:length(handles.genotype)
-            handles.genotype(i).Wconnectivity = mean(nonzeros(handles.genotype(i).w(:)));%length(nonzeros(handles.genotype(i).w))/totalWeights;
+        totalWeights = handles.database(1).nTotalUnits^2;
+        for i = 1:length(handles.database)
+            handles.database(i).Wconnectivity = mean(nonzeros(handles.database(i).w(:)));%length(nonzeros(handles.database(i).w))/totalWeights;
         end
-        parm = [handles.genotype.Wconnectivity];
+        parm = [handles.database.Wconnectivity];
         
     case 'Wdist'
-        for i = 1:length(handles.genotype)
-            wdist(i) = mean(nonzeros(handles.genotype(i).w));
+        for i = 1:length(handles.database)
+            wdist(i) = mean(nonzeros(handles.database(i).w));
         end
         parm = [wdist];
         
     case 'WinDist'
-        for i = 1:length(handles.genotype)
-            wdinist(i) = mean(nonzeros(handles.genotype(i).w_in));
+        for i = 1:length(handles.database)
+            wdinist(i) = mean(nonzeros(handles.database(i).w_in));
         end
         parm = [windist];
         
@@ -309,19 +316,32 @@ set(hObject, 'String', {'KR-GR','KR-MC','GR-MC'});
 
 function updateParaPlot(parm,metrics,dotSize,handles)
 
-scatter(handles.axes4,metrics(:,1),metrics(:,2),dotSize,parm,'filled')
-xlabel(handles.axes4,'KR')
-ylabel(handles.axes4,'GR')
+v = 1:length(handles.config.metrics);
+C = nchoosek(v,2);
 
-scatter(handles.axes5,metrics(:,1),metrics(:,3),dotSize,parm,'filled')
-xlabel(handles.axes5,'KR')
-ylabel(handles.axes5,'MC')
+for i = 1:size(C,1)    
+    
+    scatter(handles.axes,metrics(:,C(i,1)),metrics(:,C(i,2)),dotSize,parm,'filled')
 
-scatter(handles.axes6,metrics(:,2),metrics(:,3),dotSize,parm,'filled')
-xlabel(handles.axes6,'GR')
-ylabel(handles.axes6,'MC')
+    xlabel(handles.config.metrics(C(i,1)))
+    ylabel(handles.config.metrics(C(i,2)))
+    colormap(jet)
+end
 colorbar(handles.axes6)
-colormap(cubehelix)
+% 
+% scatter(handles.axes4,metrics(:,1),metrics(:,2),dotSize,parm,'filled')
+% xlabel(handles.axes4,'KR')
+% ylabel(handles.axes4,'GR')
+% 
+% scatter(handles.axes5,metrics(:,1),metrics(:,3),dotSize,parm,'filled')
+% xlabel(handles.axes5,'KR')
+% ylabel(handles.axes5,'MC')
+% 
+% scatter(handles.axes6,metrics(:,2),metrics(:,3),dotSize,parm,'filled')
+% xlabel(handles.axes6,'GR')
+% ylabel(handles.axes6,'MC')
+% colorbar(handles.axes6)
+% colormap(cubehelix)
 
 
 
@@ -405,14 +425,14 @@ desired_metric = [x,0,y];
 inOrderM = handles.metrics(order_m,:);
 best_indv = order_m(1);
 
-p = plot(handles.axes7,handles.genotype(best_indv).G,'NodeLabel',{},'Layout','force');
+p = plot(handles.axes7,handles.database(best_indv).G,'NodeLabel',{},'Layout','force');
 
 p.NodeColor = 'black';
 p.MarkerSize = 1;
 if ~handles.config.directedGraph
-    p.EdgeCData = handles.genotype(best_indv).G.Edges.Weight;
+    p.EdgeCData = handles.database(best_indv).G.Edges.Weight;
 end
-highlight(p,logical(handles.genotype(best_indv).input_loc),'NodeColor','g','MarkerSize',3)
+highlight(p,logical(handles.database(best_indv).input_loc),'NodeColor','g','MarkerSize',3)
 %colormap(handles.axes7,bluewhitered)
 colorbar(handles.axes7)
 xlabel(handles.axes7,strcat('x = ',num2str(desired_metric(1)),', y = ',num2str(desired_metric(3))))
@@ -428,14 +448,14 @@ desired_metric = prev_xy;
 inOrderM = handles.metrics(order_m,:);
 best_indv = order_m(1);
 
-p = plot(handles.axes8,handles.genotype(best_indv).G,'NodeLabel',{},'Layout','force');
+p = plot(handles.axes8,handles.database(best_indv).G,'NodeLabel',{},'Layout','force');
 
 p.NodeColor = 'black';
 p.MarkerSize = 1;
 if ~handles.config.directedGraph
-    p.EdgeCData = handles.genotype(best_indv).G.Edges.Weight;
+    p.EdgeCData = handles.database(best_indv).G.Edges.Weight;
 end
-highlight(p,logical(handles.genotype(best_indv).input_loc),'NodeColor','g','MarkerSize',3)
+highlight(p,logical(handles.database(best_indv).input_loc),'NodeColor','g','MarkerSize',3)
 %colormap(handles.axes7,bluewhitered)
 colorbar(handles.axes8)
 

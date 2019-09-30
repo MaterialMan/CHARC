@@ -1,5 +1,5 @@
 %% plot all behaviours in behaviour space
-function plotSearchwithTask(database, gen, task_error ,config,order)
+function plotSearchwithTask(database, gen, task_error ,config)
 
 %task_error(task_error > 0.5) = 0.5;
 

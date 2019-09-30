@@ -40,7 +40,7 @@ config.rec_rate = 1;                       % recombination rate
 config.discrete = 0;               % select '1' for binary input for discrete systems
 config.nbits = 16;                 % only applied if config.discrete = 1; if wanting to convert data for binary/discrete systems
 config.preprocess = 1;             % basic preprocessing, e.g. scaling and mean variance
-config.dataset = 'iris';          % Task to evolve for
+config.dataset = 'pole_balance';          % Task to evolve for
 
 % get any additional params. This might include:
 % details on reservoir structure, extra task variables, etc. 
@@ -50,7 +50,7 @@ config = getAdditionalParameters(config);
 config = selectDataset(config);
 
 %% general params
-config.gen_print = 250;                       % after 'gen_print' generations print task performance and show any plots
+config.gen_print = 100;                       % after 'gen_print' generations print task performance and show any plots
 config.start_time = datestr(now, 'HH:MM:SS');
 config.save_gen = inf;                       % save data at generation = save_gen
 
