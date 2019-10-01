@@ -74,13 +74,24 @@ for pop_indx = 1:config.pop_size
                 internal_weights = zeros(size(population(pop_indx).G{i}.Nodes,1));
                 % find indices for graph weights
                 graph_indx = logical(full(adjacency(population(pop_indx).G{i})));
-                
-                % assign weights
+
+                % assign directed weights
                 internal_weights(graph_indx) = rand(1,length(nonzeros(graph_indx)))-0.5;
                 
+                % assign additional small world weights
+                if config.SW
+                   num_SW_weights = ceil(length(nonzeros(~graph_indx))*config.P_rc);
+                   SW_weights = rand(1,num_SW_weights)-0.5;
+                   loc = find(~graph_indx);
+                   SW_indx = randperm(length(loc),num_SW_weights);
+                   internal_weights(loc(SW_indx)) = SW_weights;
+                end
+                
+                % remove directed weights, make symmetrical
                 if config.undirected
                     internal_weights = triu(internal_weights)+triu(internal_weights,1)';
                 end
+
             else
                 if ~config.ensemble_graph
                     population(pop_indx).connectivity(i,j) =  10/population(pop_indx).nodes(i);

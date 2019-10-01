@@ -108,10 +108,17 @@ end
 % plot reservoir details
 switch(config.res_type)
     case 'Graph'
-        plotGridNeuron(config.figure_array(2),population,store_error,test,best_indv(gen),loser,config)
+        if config.SW
+            %set(0,'currentFigure',config.figure_array(2))
+            schemaball(population(loser).W{1,1},[],[0,0,1;1 1 1],[],config.figure_array(1))
+            plotGridNeuron(config.figure_array(2),population,best_indv(gen),loser,config)
+            drawnow
+        else
+            plotGridNeuron(config.figure_array(2),population,best_indv(gen),loser,config)
+        end
         
     case '2dCA'
-        plotGridNeuron(config.figure_array(2),population,store_error,test,best_indv(gen),loser,config)
+        plotGridNeuron(config.figure_array(2),population,best_indv(gen),loser,config)
         
     case 'basicCA'
         %         figure(figure1)
@@ -124,14 +131,14 @@ switch(config.res_type)
         plotRoR(config.figure_array(2),best_individual,loser_individual,config);
         
         % plot state space
-%         states = config.assessFcn(best_individual,config.test_input_sequence,config);
-%         set(0,'currentFigure',config.figure_array(1))
-%         C = nchoosek(1:size(states,2)-1,2);
-%         for i = 1:length(C)
-%             plot(states(:,C(i,1)),states(:,C(i,2)))
-%             hold on
-%         end
-%         hold off
+        %         states = config.assessFcn(best_individual,config.test_input_sequence,config);
+        %         set(0,'currentFigure',config.figure_array(1))
+        %         C = nchoosek(1:size(states,2)-1,2);
+        %         for i = 1:length(C)
+        %             plot(states(:,C(i,1)),states(:,C(i,2)))
+        %             hold on
+        %         end
+        %         hold off
         
     case {'RBN','elementary_CA'}
         plotRBN(best_individual,config)
@@ -139,51 +146,66 @@ switch(config.res_type)
     case 'Wave'
         
         config.wave_sim_speed = 1;
-        %if config.run_sim
-            desktop     = com.mathworks.mde.desk.MLDesktop.getInstance;
-            cw          = desktop.getClient('Command Window');
-            xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-            h_cw        = handle(xCmdWndView,'CallbackProperties');
-            set(h_cw, 'KeyPressedCallback', @CmdKeyCallback);
-            
-            CmdKeyCallback('reset');
-            fprintf('Press any key to skip simulation \n')
-            
-            set(0,'currentFigure',config.figure_array(2))
-            
-            node_grid_size = sqrt(best_individual.nodes);
-            
-            % run wave reservoir on task
-            switch(config.dataset)
-                case 'robot'
-                    [~,states] = robot(best_individual,config);
-                case 'pole_balance'
-                    [~,states]= poleBalance(best_individual,config);
-                otherwise
-                    states = config.assessFcn(best_individual,config.test_input_sequence,config);
-            end
-            
-            %plot
+        desktop     = com.mathworks.mde.desk.MLDesktop.getInstance;
+        cw          = desktop.getClient('Command Window');
+        xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
+        h_cw        = handle(xCmdWndView,'CallbackProperties');
+        set(h_cw, 'KeyPressedCallback', @CmdKeyCallback);
+        
+        CmdKeyCallback('reset');
+        fprintf('Press any key to skip simulation \n')
+        
+        set(0,'currentFigure',config.figure_array(2))
+        
+        node_grid_size = sqrt(best_individual.nodes);
+        
+        % run wave reservoir on task
+        switch(config.dataset)
+            case 'robot'
+                [~,states] = robot(best_individual,config);
+            case 'pole_balance'
+                [~,states]= poleBalance(best_individual,config);
+            otherwise
+                states = config.assessFcn(best_individual,config.test_input_sequence,config);
+        end
+        
+        %plot
+        if config.add_input_states
+            h=surf(reshape(states(1,1:end-best_individual.n_input_units),node_grid_size,node_grid_size));
+        else
             h=surf(reshape(states(1,1:end),node_grid_size,node_grid_size));
-            
-            i = 1;
-            while(i < size(states,1))
-               if mod(i,config.wave_sim_speed) == 0
+        end
+        
+        i = 1;
+        while(i < size(states,1))
+            if mod(i,config.wave_sim_speed) == 0
+                if config.add_input_states
+                    newH = reshape(states(i,1:end-best_individual.n_input_units),node_grid_size,node_grid_size);
+                    set(h,'zdata',newH,'facealpha',0.65);
+                    set(gca, 'xDir', 'reverse',...
+                        'camerapositionmode','manual','cameraposition',[1 1 max(max(states(:,1:end-best_individual.n_input_units)))]);
+                    axis([1 node_grid_size 1 node_grid_size min(min(states(:,1:end-best_individual.n_input_units))) max(max(states(:,1:end-best_individual.n_input_units)))]);
+                    
+%                      'camerapositionmode','manual','cameraposition',[1 1 max(states(i,1:end-best_individual.n_input_units))+1]);
+%                     axis([1 node_grid_size 1 node_grid_size min(states(i,1:end-best_individual.n_input_units))-1 max(states(i,1:end-best_individual.n_input_units))+1]);
+
+                else
                     newH = reshape(states(i,1:end),node_grid_size,node_grid_size);
                     set(h,'zdata',newH,'facealpha',0.65);
                     set(gca, 'xDir', 'reverse',...
-                        'camerapositionmode','manual','cameraposition',[0.5 0.5 2]);
-                    axis([1 node_grid_size 1 node_grid_size -2 2]);
-                    drawnow
-                    pause(0.05)
-               end
-                
-                if CmdKeyCallback()
-                    i = size(states,1);
+                        'camerapositionmode','manual','cameraposition',[1 1 max(states(i,1:end))]);
+                    axis([1 node_grid_size 1 node_grid_size min(states(i,1:end)) max(states(i,1:end))]);  
                 end
-                i = i +1;
+                drawnow
+                pause(0.05)
             end
-        %end
+            
+            if CmdKeyCallback()
+                i = size(states,1);
+            end
+            i = i +1;
+        end
+        
 end
 
 end

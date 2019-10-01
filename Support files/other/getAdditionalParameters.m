@@ -39,20 +39,22 @@ switch(config.res_type)
         
     case 'Graph'
         
-        config.graph_type= {'fullLattice'};            % Define substrate. Add graph type to cell array for multi-reservoirs
+        config.graph_type= {'Torus'};            % Define substrate. Add graph type to cell array for multi-reservoirs
         % Examples: 'Hypercube','Cube'
-        % 'Torus','L-shape','Bucky','Barbell','Ring'
+        % 'Torus','L-shape','Bucky','Barbell','Ring', 'Ring_SW'
+        % (SW=small-world), 'fullLattice_SW', 'Torus_SW'
         % 'basicLattice','partialLattice','fullLattice','basicCube','partialCube','fullCube',ensembleLattice,ensembleCube,ensembleShape
         config.self_loop = [1];               % give node a loop to self. Must be defined as array.
-        config.torus_rings = config.num_nodes;
-        
+       
         if length(config.graph_type) ~= length(config.num_nodes) && length(config.self_loop) ~= length(config.num_nodes)
             error('Number of graph types does not match number of reservoirs. Add more in getDataSetInfo.m')
         end
         
         % node details and connectivity
-        config.ensemble_graph = 0;              % no connections between mutli-graph reservoirs
-        [config,config.num_nodes] = getShape(config);              % call function to make graph.
+        config.SW = 0;                                              % graph is SW network. Change ratio of random connections with config.P_rc 
+        config.P_rc = 0;                                         % percentage of random connections. Used for Small World Networks
+        config.ensemble_graph = 0;                                  % no connections between mutli-graph reservoirs
+        [config,config.num_nodes] = getShape(config);               % call function to make graph.
         
     case 'DNA'
         config.tau = 20;                         % settling time

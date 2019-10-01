@@ -43,12 +43,21 @@ for i = 1:config.num_reservoirs
             loser.W{i,j} = L;
         else
             if strcmp(config.res_type,'Graph')
-                W= winner.W{i,j};
-                L = loser.W{i,j};
-                f = find(adjacency(config.G{i,j}));
-                pos = randperm(length(f),ceil(config.rec_rate*length(f)));
-                L(f(pos)) = W(f(pos));
-                loser.W{i,j} = L;
+                if config.SW
+                    W= winner.W{i,j};
+                    L = loser.W{i,j};
+                    f = find(adjacency(config.G{i,j}));
+                    pos = randperm(length(f),ceil(config.rec_rate*length(f)));
+                    L(f(pos)) = W(f(pos));
+                    loser.W{i,j} = L;
+                else
+                    W= winner.W{i,j};
+                    L = loser.W{i,j};
+                    f = find(adjacency(config.G{i,j}));
+                    pos = randperm(length(f),ceil(config.rec_rate*length(f)));
+                    L(f(pos)) = W(f(pos));
+                    loser.W{i,j} = L;
+                end
             else
                 W= winner.W{i,j}(:);
                 L = loser.W{i,j}(:);

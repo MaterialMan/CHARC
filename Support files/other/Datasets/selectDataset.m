@@ -507,6 +507,7 @@ end
 
 
 if config.preprocess
+    
     % rescale training data
     [train_input_sequence,config.input_scaler] = mapminmax(train_input_sequence');
     [train_output_sequence,config.target_scaler] = mapminmax(train_output_sequence');
