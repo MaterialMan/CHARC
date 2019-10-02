@@ -1,5 +1,5 @@
 
-function [lines,board,hist,result] = maze(rowDim,colDim,start,stop,doPlot,printResult)
+function [lines,board,hist,result] = createMaze(rowDim,colDim,start,stop,doPlot,printResult)
 % MAZE  generates a random maze
 % input:
 %   optional:

@@ -1,0 +1,69 @@
+## Guide for using Vampire to simulate a reservoir for CHARC ##
+Fernando Torre - 3/9/2019
+
+Vampire creates a ferromagnetic film, a signal is applied in the form of an external magnetic film, and the magnetisation of each cell is read as the output.
+
+Make sure to compile Vampire before running CHARC! (use the command 'make serial' in Vampire location)
+
+All parameters required to create the magnetic film are in 2 files in the vampire folder:
+'Input' has all the specifications for the simulation: timestep, system size.. etc.
+'Co.mat' has the parameters for the material used: anisotropy, magnetic moment, exchange constant.. etc.
+
+The film is 50x50x5 nm, made up of 100 cubic macro-cells of side length 5 nm.
+To change the number of cells, in the 'Input' file change the system dimensions.
+Set size to be slightly smaller than desired, because number of cells is always rounded up.
+i.e. to make it 100 cells (10x10x1), system dimensions are set to 49x49x0.1 nm.
+If the dimensions were set to 50x50x5, it would have 11x11x2 cells, making it 242 total.
+
+All interesting physical parameters can be changed through CHARC, in the getDataSetInfo.m file.
+Sensible ranges are described there.
+Crystal structure and unit cell size are normally set to 'sc' (simple cubic) and 3.47 A respectively, it is recommended not to change these as they increase computation time marginally and have little effect on the behaviour.
+They are included in order to perform accurate simulations of specific materials, i.e. Ni has 'fcc' (face centred cubic) and 3.524 A unit-cell size.
+
+Changing the timestep length changes the time-scale of the simulation.
+The signal field changes every 1000 timesteps, and the magnetisation output is read in those moments.
+i.e. with 1 femtosecond timestep, and 300 signal length, the entire simulation lasts 1*1000*300 = 300 picoseconds
+with 10 fs timestep, and 300 signal length, the entire simulation lasts 10*1000*300 = 3000 ps = 3 nanoseconds
+
+In "source file maker" there is a simple python code to make source field files (with external field signals and positions) in a format that Vampire can read, without having to run CHARC.
+Useful for checking that Vampire is working as intended and for making simple "images" to test filtering.
+
+## PLOTTING INSTRUCTIONS ##
+
+To make vampire output .txt files with data for plotting, write in 'Input' the following lines:
+
+config:macro-cells
+config:macro-cells-output-rate = 1
+
+The macro-cells-output-rate can be set to any positive integer. The higher the number, the less the number of plots.
+When set to 1, each frame corresponds to a change in the signal field. Data with the field applied to each cell will be outputed as well for plotting.
+
+With these lines in Input, run vampire: './vampire-serial' in terminal
+
+After it finishes, execute adjustplots.sh: 'bash adjustplots.sh'
+This formats all the plotting data in a way gnuplot can read it. Only run adjustplots.sh once for each set of data!
+
+Execute plot.sh: 'bash plot.sh'
+This makes all the plots and saves them in /Plots. All the axis ranges, colours... etc. can be modified in plot.sh, which can be ran as many times as needed.
+
+To put all the frames together and make a gif, go to /Plots and write in the terminal: 'convert -delay 20 -loop 0 *.png animation.gif'
+This takes a while for 300 frames, and it is much faster for smaller numbers of frames, although it will look less fluid!
+
+## FILTER PLOTS ##
+
+To make plots that display the magnetisation as a color map, useful for testing the film as a filter, use "filterplot.sh" after "adjustplots.sh"
+
+Some examples of this are found in the "Filter examples" folder. These show an input image as an external field for 100 ps (100 frames). Then the field is turned off and the time evolution is observed.
+The strength of the field is different in each example. There is strong planar anistropy (-1e-23) and very strong damping (1), the rest of parameters are average ones.
+
+## TO USE ON VIKING ##
+
+Make a copy of CHARC and Vampire for each simultaneous run. Make sure the paths in CollectMMStates.m are to the right Vampire location.
+
+Submit the job with "charc_vikingjob.sh". Make sure the path of runCHARC.m in the script is right.
+
+Use "squeue -u *username*" to check job progress.
+
+As the job progresses, it will save all the variables in a .mat file in the path of runCHARC.m
+
+A lot of other Viking commands can be found on the Viking wiki, but these are the most important ones.
