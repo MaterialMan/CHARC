@@ -11,7 +11,7 @@ for pop_indx = 1:config.pop_size
     
     
     % assign input/output count
-    if isempty(config.train_input_sequence) 
+    if isempty(config.train_input_sequence)
         population(pop_indx).n_input_units = 1;
         population(pop_indx).n_output_units = 1;
     else
@@ -19,62 +19,86 @@ for pop_indx = 1:config.pop_size
         population(pop_indx).n_output_units = size(config.train_output_sequence,2);
     end
     
-    if config.damping_parameter == 'dynamic' % random damping s.t. chance of small range 0.01-0.1 = chance of large range 0.1-1
-        if rand < 0.5 
-            population(pop_indx).damping = 0.01 + (0.1-0.01)*rand;
-        else
-            population(pop_indx).damping = 0.1 + (1-0.1)*rand;
-        end
-    else
-        population(pop_indx).damping = config.damping_parameter;
-    end
+    %track total nodes in use
+    population(pop_indx).total_units = 0;
     
-    if config.anisotropy_parameter == 'dynamic' % random anisotropy s.t. chance of small range 1e-25-1e-24 = chance of large range 1e-24-1e-23
-        if rand < 0.5 
-            population(pop_indx).anisotropy = 1e-25 + (1e-24-1e-25)*rand;
-        else
-            population(pop_indx).anisotropy = 1e-24 + (1e-23-1e-24)*rand;
+    % iterate through subreservoirs
+    for i = 1:config.num_reservoirs
+        
+        %define num of units
+        population(pop_indx).nodes(i) = config.num_nodes(i);
+        
+        population(pop_indx).system_size(i) = population(pop_indx).nodes(i);
+        
+        %% global params
+        population(pop_indx).input_scaling{i}= rand; % not sure about range?
+        population(pop_indx).leak_rate{i} = rand;
+        
+        %% Input params
+        % set positions of magnetic sources. Need maxpos > minpos
+        num_input_loc = 2;
+        population(pop_indx).minpos{i} = rand(2, num_input_loc); %[x y]
+        %population(pop_indx).minposy = rand(1, num_input_loc);
+        
+        for pos_i = 1:num_input_loc
+            population(pop_indx).maxpos{i}(:,pos_i) = population(pop_indx).minpos{i}(:,pos_i)+0.1+(0.9-population(pop_indx).minpos{i}(:,pos_i))*rand; % +0.1 to ensure at least 1 cell is covered
+            %    population(pop_indx).maxposy(pos_i) = population(pop_indx).minposy(pos_i)+0.1+(0.9-population(pop_indx).minposy(pos_i))*rand;
         end
-    else
-        population(pop_indx).anisotropy = config.anisotropy_parameter;
-    end
-    
-    if config.temperature_parameter == 'dynamic'
-        population(pop_indx).temperature = normrnd(300,50); % Gaussian distribution with mean at room T
-        if population(pop_indx).temperature < 0
-            population(pop_indx).temperature = 0;
-        end
-    else
-        population(pop_indx).temperature = config.temperature_parameter;
-    end
-    
-    if config.exchange_parameter == 'dynamic' % flat distribution in sensible physical range
-        population(pop_indx).exchange = 1e-21 + (10e-21-1e-21)*rand;
-    else
-        population(pop_indx).exchange = config.exchange_parameter;
-    end
+        
+        population(pop_indx).input_weights{i}= rand(num_input_loc,population(pop_indx).n_input_units); % set random field strength
+        
+        population(pop_indx).last_state{i} = zeros(1,population(pop_indx).nodes(i));
 
-    if config.magmoment_parameter == 'dynamic' % flat distribution in sensible physical range
-        population(pop_indx).magmoment = 0.5 + (7-0.5)*rand;
-    else
-        population(pop_indx).magmoment = config.magmoment_parameter;
+        %% magnet params
+        if config.damping_parameter == 'dynamic' % random damping s.t. chance of small range 0.01-0.1 = chance of large range 0.1-1
+            if rand < 0.5
+                population(pop_indx).damping(i) = 0.01 + (0.1-0.01)*rand;
+            else
+                population(pop_indx).damping(i) = 0.1 + (1-0.1)*rand;
+            end
+        else
+            population(pop_indx).damping(i) = config.damping_parameter;
+        end
+        
+        if config.anisotropy_parameter == 'dynamic' % random anisotropy s.t. chance of small range 1e-25-1e-24 = chance of large range 1e-24-1e-23
+            if rand < 0.5
+                population(pop_indx).anisotropy(i) = 1e-25 + (1e-24-1e-25)*rand;
+            else
+                population(pop_indx).anisotropy(i) = 1e-24 + (1e-23-1e-24)*rand;
+            end
+        else
+            population(pop_indx).anisotropy(i) = config.anisotropy_parameter;
+        end
+        
+        if config.temperature_parameter == 'dynamic'
+            population(pop_indx).temperature(i) = normrnd(300,50); % Gaussian distribution with mean at room T
+            if population(pop_indx).temperature(i) < 0
+                population(pop_indx).temperature(i) = 0;
+            end
+        else
+            population(pop_indx).temperature(i) = config.temperature_parameter;
+        end
+        
+        if config.exchange_parameter == 'dynamic' % flat distribution in sensible physical range
+            population(pop_indx).exchange(i) = 1e-21 + (10e-21-1e-21)*rand;
+        else
+            population(pop_indx).exchange(i) = config.exchange_parameter;
+        end
+        
+        if config.magmoment_parameter == 'dynamic' % flat distribution in sensible physical range
+            population(pop_indx).magmoment(i) = 0.5 + (7-0.5)*rand;
+        else
+            population(pop_indx).magmoment(i) = config.magmoment_parameter;
+        end
+        
+        population(pop_indx).total_units = population(pop_indx).total_units + population(pop_indx).nodes(i);
+        
     end
     
-    population(pop_indx).total_units = config.num_nodes;
-    
-    % set positions of magnetic sources. Need maxpos > minpos
-    population(pop_indx).minposx = rand(1, 2);
-    population(pop_indx).maxposx(1) = population(pop_indx).minposx(1)+0.1+(0.9-population(pop_indx).minposx(1))*rand; % +0.1 to ensure at least 1 cell is covered
-    population(pop_indx).maxposx(2) = population(pop_indx).minposx(2)+0.1+(0.9-population(pop_indx).minposx(2))*rand;
-    population(pop_indx).minposy = rand(1, 2);
-    population(pop_indx).maxposy(1) = population(pop_indx).minposy(1)+0.1+(0.9-population(pop_indx).minposy(1))*rand;
-    population(pop_indx).maxposy(2) = population(pop_indx).minposy(2)+0.1+(0.9-population(pop_indx).minposy(2))*rand;
-    
-    population(pop_indx).signalmagnitude = rand(1,2); % set random field strength
     
     % add rand output weights
     if config.add_input_states
-        population(pop_indx).output_weights = 2*rand(population(pop_indx).total_units + population(pop_indx).n_input_units, population(pop_indx).n_output_units)-1;      
+        population(pop_indx).output_weights = 2*rand(population(pop_indx).total_units + population(pop_indx).n_input_units, population(pop_indx).n_output_units)-1;
     else
         population(pop_indx).output_weights = 2*rand(population(pop_indx).total_units, population(pop_indx).n_output_units)-1;
     end
