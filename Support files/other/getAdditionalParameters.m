@@ -113,6 +113,9 @@ switch(config.res_type)
         end
         
     case 'MM'
+	config.parallel = 0;
+        config.leak_on = 0;                           % add leak states
+        config.add_input_states = 0;                  %add input to states
         config.temperature_parameter = 0; % positive integer OR 'dynamic'
         config.damping_parameter = 0.1; % 0.01 to 1 OR 'dynamic' | typical value 0.1
         config.anisotropy_parameter = 1e-25; % 1e-25 to 1e-22 OR 'dynamic' | typical value 1e-24
