@@ -15,7 +15,7 @@ config.multi_activ = 0;                      % use different activation funcs
 config.activ_list = {@tanh};                % what activations are in use when multiActiv = 1
 config.training_type = 'Ridge';              % blank is psuedoinverse. Other options: Ridge, Bias,RLS
 config.evolve_feedback_weights = 0;
-config.undirected = 0;                       % by default all networks are directed
+config.undirected = 1;                       % by default all networks are directed
 config.undirected_ensemble = 0;              % by default all inter-network weights are directed
 
 % default reservoir input scale
@@ -104,7 +104,7 @@ switch(config.res_type)
         
     case 'Wave'
         config.leak_on = 0;                           % add leak states
-        config.add_input_states = 0;                  %add input to states
+        config.add_input_states = 1;                  %add input to states
 
         config.run_sim = 0;
         config.sim_speed = 1; % xfactor

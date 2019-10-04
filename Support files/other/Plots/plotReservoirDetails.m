@@ -176,25 +176,36 @@ switch(config.res_type)
             h=surf(reshape(states(1,1:end),node_grid_size,node_grid_size));
         end
         
-        i = 1;
+        change_scale = 0;
+        
+        i = 2;
         while(i < size(states,1))
             if mod(i,config.wave_sim_speed) == 0
                 if config.add_input_states
                     newH = reshape(states(i,1:end-best_individual.n_input_units),node_grid_size,node_grid_size);
                     set(h,'zdata',newH,'facealpha',0.65);
-                    set(gca, 'xDir', 'reverse',...
-                        'camerapositionmode','manual','cameraposition',[1 1 max(max(states(:,1:end-best_individual.n_input_units)))]);
-                    axis([1 node_grid_size 1 node_grid_size min(min(states(:,1:end-best_individual.n_input_units))) max(max(states(:,1:end-best_individual.n_input_units)))]);
                     
-%                      'camerapositionmode','manual','cameraposition',[1 1 max(states(i,1:end-best_individual.n_input_units))+1]);
-%                     axis([1 node_grid_size 1 node_grid_size min(states(i,1:end-best_individual.n_input_units))-1 max(states(i,1:end-best_individual.n_input_units))+1]);
-
+                    if change_scale
+                        set(gca, 'xDir', 'reverse',...
+                            'camerapositionmode','manual','cameraposition',[1 1 max((states(i,1:end-best_individual.n_input_units)))]);
+                        axis([1 node_grid_size 1 node_grid_size min((states(i,1:end-best_individual.n_input_units))) max((states(i,1:end-best_individual.n_input_units)))]);
+                    else
+                        set(gca, 'xDir', 'reverse',...
+                            'camerapositionmode','manual','cameraposition',[1 1 max(max(states(:,1:end-best_individual.n_input_units)))]);
+                        axis([1 node_grid_size 1 node_grid_size min(min(states(:,1:end-best_individual.n_input_units))) max(max(states(:,1:end-best_individual.n_input_units)))]);  
+                    end
                 else
                     newH = reshape(states(i,1:end),node_grid_size,node_grid_size);
                     set(h,'zdata',newH,'facealpha',0.65);
-                    set(gca, 'xDir', 'reverse',...
-                        'camerapositionmode','manual','cameraposition',[1 1 max(states(i,1:end))]);
-                    axis([1 node_grid_size 1 node_grid_size min(states(i,1:end)) max(states(i,1:end))]);  
+                    if change_scale
+                        set(gca, 'xDir', 'reverse',...
+                            'camerapositionmode','manual','cameraposition',[1 1 max(states(i,1:end))]);
+                        axis([1 node_grid_size 1 node_grid_size min(states(i,1:end)) max(states(i,1:end))]);
+                    else
+                        set(gca, 'xDir', 'reverse',...
+                            'camerapositionmode','manual','cameraposition',[1 1 max(max(states(:,1:end)))]);
+                        axis([1 node_grid_size 1 node_grid_size min(min(states(:,1:end))) max(max(states(:,1:end)))]);
+                    end
                 end
                 drawnow
                 pause(0.05)

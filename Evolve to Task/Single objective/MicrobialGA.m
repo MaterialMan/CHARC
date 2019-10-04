@@ -23,24 +23,25 @@ if isempty(gcp) && config.parallel
 end
 
 % type of network to evolve
-config.res_type = 'RoR';                    % state type of reservoir to use. E.g. 'RoR' (Reservoir-of-reservoirs/ESNs), 'ELM' (Extreme learning machine), 'Graph' (graph network of neurons), 'DL' (delay line reservoir) etc. Check 'selectReservoirType.m' for more.
+config.res_type = 'Wave';                    % state type of reservoir to use. E.g. 'RoR' (Reservoir-of-reservoirs/ESNs), 'ELM' (Extreme learning machine), 'Graph' (graph network of neurons), 'DL' (delay line reservoir) etc. Check 'selectReservoirType.m' for more.
 config.num_nodes = [10];                   % num of nodes in each sub-reservoir, e.g. if config.num_nodes = [10,5,15], there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. 
 config = selectReservoirType(config);       % collect function pointers for the selected reservoir type 
 
 %% Evolutionary parameters
 config.num_tests = 1;                        % num of tests/runs
 config.pop_size = 100;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
-config.total_gens = 10000;                    % number of generations to evolve 
+config.total_gens = 2000;                    % number of generations to evolve 
 config.mut_rate = 0.1;                       % mutation rate
 config.deme_percent = 0.2;                   % speciation percentage; determines interbreeding distance on a ring.
 config.deme = round(config.pop_size*config.deme_percent);
 config.rec_rate = 0.5;                       % recombination rate
+config.error_to_check = 'train&val&test';
 
 %% Task parameters
 config.discrete = 0;               % select '1' for binary input for discrete systems
 config.nbits = 16;                 % only applied if config.discrete = 1; if wanting to convert data for binary/discrete systems
 config.preprocess = 1;             % basic preprocessing, e.g. scaling and mean variance
-config.dataset = 'pole_balance';          % Task to evolve for
+config.dataset = 'narma_10';          % Task to evolve for
 
 % get any additional params. This might include:
 % details on reservoir structure, extra task variables, etc. 
@@ -90,16 +91,16 @@ for test = 1:config.num_tests
         for pop_indx = 1:config.pop_size
             tic
             population(pop_indx) = config.testFcn(population(pop_indx),config);
-            fprintf('\n i = %d, error = %.4f, took: %.4f\n',pop_indx,population(pop_indx).val_error,toc);
+            fprintf('\n i = %d, error = %.4f, took: %.4f\n',pop_indx,getError(config.error_to_check,population(pop_indx)),toc);
         end
     end
     
     % find and print best individual
-    [best(test,1),best_indv(test,1)] = min([population.val_error]);
+    [best(test,1),best_indv(test,1)] = min(getError(config.error_to_check,population));
     fprintf('\n Starting loop... Best error = %.4f\n',best(test,1));
     
     % store error that will be used as fitness in the GA
-    store_error(test,1,:) = [population.val_error];
+    store_error(test,1,:) = getError(config.error_to_check,population);
     
     %% start GA
     for gen = 2:config.total_gens
@@ -146,7 +147,7 @@ for test = 1:config.num_tests
             
             %update errors
             store_error(test,gen,:) =  store_error(test,gen-1,:);
-            store_error(test,gen,l(ia)) = [population(l(ia)).val_error];
+            store_error(test,gen,l(ia)) = getError(config.error_to_check,population(l(ia)));%[population(l(ia)).val_error];
             % update best individual and error 
             [best(test,gen),best_indv(test,gen)] = min(store_error(test,gen,:));
                             
@@ -188,12 +189,12 @@ for test = 1:config.num_tests
             
             %update errors
             store_error(test,gen,:) =  store_error(test,gen-1,:);
-            store_error(test,gen,loser) = population(loser).val_error;
+            store_error(test,gen,loser) = getError(config.error_to_check,population(loser));%population(loser).val_error;
             [best(test,gen),best_indv(test,gen)] = min(store_error(test,gen,:));
 
             % print info
             if (mod(gen,config.gen_print) == 0)
-                fprintf('Gen %d, time taken: %.4f sec(s)\n  Winner: %.4f, Loser: %.4f, Best Error: %.4f \n',gen,toc/config.gen_print,population(winner).val_error,population(loser).val_error,best(test,gen));
+                fprintf('Gen %d, time taken: %.4f sec(s)\n  Winner: %.4f, Loser: %.4f, Best Error: %.4f \n',gen,toc/config.gen_print,getError(config.error_to_check,population(winner)),getError(config.error_to_check,population(loser)),best(test,gen));
                 tic;
                 % plot reservoir structure, task simulations etc.
                 %plotReservoirDetails(population,store_error,test,best_indv,gen,loser,config)
