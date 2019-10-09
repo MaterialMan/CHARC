@@ -1,177 +1,201 @@
-function states = assessBZReservoir(genotype,inputSequence,config)
+%% assess_ReservoirName_.m
+% Template function to collect reservoir states. Use this as a guide when
+% creating a new reservoir.
+%
+% How this function looks at the end depends on the reservoir. However,
+% everything below is typically needed to work with all master scripts.
+%
+% This is called by the @config.assessFcn pointer.
 
-%BZreaction animation 
-%Belousov-Zhabotinsky Reaction animation 
-%This MATLAB code is converted from Processing code available in this link 
-%http://www.aac.bartlett.ucl.ac.uk/processing/samples/bzr.pdf
+function[final_states,individual] = assessBZReservoir(individual,input_sequence,config)
 
-%version 2. Corrected the drift of pixels as suggested 
-% by Jonh.
+%if single input entry, add previous state
+if size(input_sequence,1) == 1
+    input_sequence = [zeros(size(input_sequence)); input_sequence];
+end
 
-xres=genotype.size; %x resolution 
-yres=xres; %y resolution, this must be a sqaure for below code to function
-%below somewhere like ~40*40 pixels this system does not work, it fizzles out.
-%Perhaps Angelika was right that you need minimum sizes
-a = genotype.a; %rand(xres,yres,2); 
-b = genotype.b; %rand(xres,yres,2); 
-c = genotype.c; %rand(xres,yres,2); 
+% pre-allocate state matrices
+for i= 1:config.num_reservoirs
+    if size(input_sequence,1) == 2
+        states{i} = individual.last_state{i};
+    else
+        states{i} = zeros(size(input_sequence,1),individual.nodes(i));
+    end
+    
+    xres(i,:) = config.num_nodes(i);
+    yres(i,:) = xres(i,:);
+    
+    
+    %% preassign allocate input sequence and time multiplexing
+    for r = 1:3
+        input{i,r} = [input_sequence repmat(individual.bias_node(i),size(input_sequence,1),1)]*(individual.input_weights{i,r}*individual.input_scaling(i,r))';
+        
+        % time multiplex -
+        input_mul{i,r} = zeros(size(input_sequence,1)*individual.time_period(i),size(input{i,r},2),size(input{i,r},3));
+        if individual.time_period > 1
+            input_mul{i,r}(mod(1:size(input_mul{i,r},1),individual.time_period(i)) == 1,:,:) = input{i,r};
+        else
+            input_mul{i,r} = input{i,r};
+        end
+        
+        
+    end
+    
+    % change input widths
+    for n = 1:size(input_mul{i,r},1)
+        for r = 1:3
+            m = reshape(input_mul{i,r}(n,:),node_grid_size(i),node_grid_size(i));
+            f_pos = find(m);
+            input_matrix_2d = m;
+            for p = 1:length(f_pos)
+                t = zeros(size(m));
+                t(f_pos(p)) = m(f_pos(p));
+                [t] = adjustInputShape(t,individual.input_widths{i,r}(f_pos(p)));
+                input_matrix_2d = input_matrix_2d + t;
+            end
+            input_mul{i,r}(n,:) = input_matrix_2d(:);
+        end
+    end
+        
+    states{i} = zeros(size(input_mul{i},1),individual.nodes(i)*3);
+end
 
-p = 1; 
-q = 2; 
+% pre-assign anything that can be calculated before running the reservoir
 img=zeros(xres,yres,3);
-
-mm = mod((1:xres+2)+xres,xres)+1; 
-nn = mod((1:yres+2)+yres,yres)+1; 
-[mm,nn]=meshgrid(mm,nn); 
+mm = mod((1:xres+2)+xres,xres)+1;
+nn = mod((1:yres+2)+yres,yres)+1;
+[mm,nn]=meshgrid(mm,nn);
 idx=sub2ind([yres xres],nn(:),mm(:)); %find equivalent single index
 idx=reshape(idx,[yres xres]+2); % returns an yres by xres matrix whose
-                                %elements are taken columnwise from idx
+%elements are taken columnwise from idx
 
-time_span = size(inputSequence,1);
+p = 1;
+q = 2;
 
-loc = reshape(logical(genotype.input_loc),genotype.size,genotype.size,3);
-%w_in = reshape(genotype.w_in,genotype.size,genotype.size,3);
-% loc_wina = genotype.w_in(logical(genotype.input_loc(1:genotype.size.^2)));
-% loc_winb = genotype.w_in(logical(genotype.input_loc((genotype.size.^2)+1:(genotype.size.^2)*2)));
-% loc_winc = genotype.w_in(logical(genotype.input_loc(((genotype.size.^2)*2)+1:(genotype.size.^2)*3)));
+a = individual.a;
+b = individual.b;
+c = individual.c;
 
-for k=1:time_span
+%%
+% H = a(:,:,1);
+% width = 1;
+% s=size(H);
+% N=length(s);
+% [c1{1:N}]=ndgrid(1:2*width+1);
+% c2(1:N)={ceil((2*width+1)/2)};
+% offsets=sub2ind(s,c1{:}) - sub2ind(s,c2{:});
+% 
+% pad_a = padarray(a(:,:,1),[2*width+1 2*width+1],0);
+% pad_b = padarray(b(:,:,1),[2*width+1 2*width+1],0);
+% pad_c = padarray(c(:,:,1),[2*width+1 2*width+1],0);
+% 
+% indc = find(pad_a);
 
-    c_a = zeros(xres,yres); %initialise empty matrix
-    c_b = zeros(xres,yres); 
-    c_c = zeros(xres,yres); 
-
-    %vectorise
-    for m=1:xres 
-        for n=1:yres
+%% Calculate reservoir states - general state equation for multi-reservoir system: x(n) = f(Win*u(n) + S)
+for n = 2:size(input_sequence,1)
+    
+    for i= 1:config.num_reservoirs % cycle through sub-reservoirs
         
-            idx_temp = idx(m:m+2,:); 
-            idx_temp=idx_temp(:,n:n+2);
+        %         for k= 1:config.num_reservoirs % collect previous states of all sub-reservoirs and multiply them by the connecting matrices `W`
+        %             x{i}(n,:) = x{i}(n,:) + ((individual.W{i,k}*individual.W_scaling(i,k))*states{k}(n-1,:)')';
+        %         end
+        
+       
+        %initialise empty matrix
+        c_a = zeros(xres,yres);
+        c_b = zeros(xres,yres);
+        c_c = zeros(xres,yres);
+        
+%         for m = 1:length(indc)
+%             c_a(m) = sum(sum(pad_a(indc(m)+offsets)));
+%             c_b(m) = sum(sum(pad_b(indc(m)+offsets)));
+%             c_c(m) = sum(sum(pad_c(indc(m)+offsets)));
+%         end
+        
+        for m=1:xres
+            
+            for nn=1:yres
+
+            idx_temp = idx(m:m+2,:);
+            idx_temp= idx_temp(:,nn:nn+2);
             idx_temp=idx_temp(:);
-        
+            
             % shift?
-            if p==2 
-                idx_temp=idx_temp+(xres+0)*(yres+0); 
-            end 
-
-%             if loc(m,n,1)
-%                 c_a(m,n) = abs(w_in(m,n,1)*inputSequence(k,:))*9;
-%             else
-%                 c_a(m,n) =c_a(m,n) + sum(a(idx_temp)); 
-%             end
-%             
-%             if loc(m,n,2)
-%                 c_b(m,n) = abs(w_in(m,n,2)*inputSequence(k,:))*9;
-%             else
-%                 c_b(m,n) =c_b(m,n) + sum(b(idx_temp));
-%             end
-%             
-%             if loc(m,n,3)
-%                 c_c(m,n) = abs(w_in(m,n,3)*inputSequence(k,:))*9;
-%             else
-%                 c_c(m,n) =c_c(m,n) + sum(c(idx_temp)); 
-%             end
+            if p==2
+                idx_temp=idx_temp+(xres+0)*(yres+0);
+            end
             
-            c_a(m,n) =c_a(m,n) + sum(a(idx_temp)); 
-            c_b(m,n) =c_b(m,n) + sum(b(idx_temp)); 
-            c_c(m,n) =c_c(m,n) + sum(c(idx_temp)); 
-
-        end 
-    end 
-
-    %correction of pixel drift 
-    c_a = circshift(c_a,[2 2]); 
-    c_b = circshift(c_b,[2 2]); 
-    c_c = circshift(c_c,[2 2]); 
-
-    c_a =c_a/ 9.0; 
-    c_b =c_b/ 9.0; 
-    c_c =c_c/ 9.0; 
-
-    %not sure in right place
-    c_a(loc(:,:,1)) = genotype.w_in(logical(genotype.input_loc(1:genotype.size.^2)),:)*inputSequence(k,:)';
-    c_b(loc(:,:,2)) = genotype.w_in(logical(genotype.input_loc((genotype.size.^2)+1:(genotype.size.^2)*2)),:)*inputSequence(k,:)';
-    c_c(loc(:,:,3)) = genotype.w_in(logical(genotype.input_loc(((genotype.size.^2)*2)+1:(genotype.size.^2)*3)),:)*inputSequence(k,:)';
-    
-    a(:,:,q) = double(uint8(255*(c_a + c_a .* (c_b - c_c))))/255; 
-    b(:,:,q) = double(uint8(255*(c_b + c_b .* (c_c - c_a))))/255; 
-    c(:,:,q) = double(uint8(255*(c_c + c_c .* (c_a - c_b))))/255; 
-
-    img(:,:,1)=c(:,:,q); 
-    img(:,:,2)=b(:,:,q); 
-    img(:,:,3)=a(:,:,q); 
-
-    if p == 1 
-        p = 2; q = 1; 
-    else 
-        p = 1; q = 2; 
-    end 
-  
-    if config.fft
-        S = fft2(img);
-        S_shift = abs(fftshift(S));
-        
-        dim1 = S_shift(:,:,1);
-        dim2 = S_shift(:,:,2);
-        dim3 = S_shift(:,:,3);
-        x = [dim1(:); dim2(:); dim3(:)]';
-        states(k,:) = x;
-        
-        if config.plotBZ
-            x_pix = randi([1 xres],10,1);
-            y_pix = randi([1 xres],10,1);
-            tem = img(x_pix,y_pix,1);
-            plot_time(k,:) = tem(:);
-            
-            plotBZ(config.BZfigure1,config.BZfigure2,img,k,plot_time,S_shift)
+            c_a(m,nn) =c_a(m,nn) + sum(a(idx_temp));
+            c_b(m,nn) =c_b(m,nn) + sum(b(idx_temp));
+            c_c(m,nn) =c_c(m,nn) + sum(c(idx_temp));
+            end
         end
-    else
-        dim1 = img(:,:,1);
-        dim2 = img(:,:,2);
-        dim3 = img(:,:,3);
-        x = [dim1(:); dim2(:); dim3(:)]';
-        states(k,:) = x;
+        
+        %correction of pixel drift
+        c_a = circshift(c_a,[2 2]);
+        c_b = circshift(c_b,[2 2]);
+        c_c = circshift(c_c,[2 2]);
+        
+        c_a =c_a/9.0;
+        c_b =c_b/9.0;
+        c_c =c_c/9.0;
+        
+        % apply inputs
+        c_a = c_a + reshape(input_mul{i,1}(n,:),size(c_a,1),size(c_a,2));
+        c_b = c_b + reshape(input_mul{i,2}(n,:),size(c_b,1),size(c_b,2));
+        c_c = c_c + reshape(input_mul{i,3}(n,:),size(c_c,1),size(c_c,2));
+        
+        a(:,:,q) = double(uint8(255*(c_a + c_a .* (c_b - c_c))))/255;
+        b(:,:,q) = double(uint8(255*(c_b + c_b .* (c_c - c_a))))/255;
+        c(:,:,q) = double(uint8(255*(c_c + c_c .* (c_a - c_b))))/255;
+        
+        img(:,:,1)=c(:,:,q);
+        img(:,:,2)=b(:,:,q);
+        img(:,:,3)=a(:,:,q);
+        
+        if p == 1
+            p = 2; q = 1;
+        else
+            p = 1; q = 2;
+        end
+        
+        if config.fft
+            S = fft2(img);
+            S_shift = abs(fftshift(S));
+            
+            dim1 = S_shift(:,:,1);
+            dim2 = S_shift(:,:,2);
+            dim3 = S_shift(:,:,3);
+            states{i}(n,:) = [dim1(:); dim2(:); dim3(:)]';
+            
+        else
+            dim1 = img(:,:,1);
+            dim2 = img(:,:,2);
+            dim3 = img(:,:,3);
+            states{i}(n,:) = [dim1(:); dim2(:); dim3(:)]';
+        end
+        
     end
-    
 end
 
- if config.evolvedOutputStates 
-     states= states(config.nForgetPoints+1:end,logical(genotype.state_loc));
- else
-    states= states(config.nForgetPoints+1:end,:);
- end
-
+% Add leak states, if used
+if config.leak_on
+    states = getLeakStates(states,individual,input_sequence,config);
 end
 
-function plotBZ(figure1,figure2,img,k,plot_time,S_shift)
-
-    set(0,'currentFigure',figure1)
-    subplot(3,2,[1 3 5])
-    image(uint8(255*hsv2rgb(img))) 
-    axis equal off 
-    title(strcat('Time: ',num2str(k)))
+% Concat all states for output weights
+final_states = [];
+for i= 1:config.num_reservoirs
+    final_states = [final_states states{i}];
     
-  
-    subplot(3,2,2)
-    plot(plot_time)
-    if k > 20
-        xlim([k-20 k])
-    end
-    title('Example states')
-    
-    subplot(3,2,4)
-    plot(plot_time)
-    if k > 20
-        xlim([k-20 k])
-    end
-    
-    subplot(3,2,6)
-    plot(plot_time)
-    if k > 20
-        xlim([k-20 k])
-    end
-
-    set(0,'currentFigure',figure2)
-    imagesc(S_shift);
-    drawnow 
+    %assign last state variable
+    individual.last_state{i} = states{i}(end,:);
 end
+
+% Concat input states
+if config.add_input_states == 1
+    final_states = [final_states input_sequence];
+end
+
+% Remove washout and output final states
+final_states = final_states(config.wash_out+1:end,:);

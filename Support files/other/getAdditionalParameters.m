@@ -33,9 +33,11 @@ switch(config.res_type)
         config.leak_on = 0;                           % add leak states
 
     case 'BZ'
-        config.plot_BZ =0;
+        %config.plot_BZ =0;
         config.fft = 0;
-        config.figure_array = [config.figure_array figure figure];
+        config.sparse_input_weights = 1;
+        %config.figure_array = [config.figure_array figure];
+        config.run_sim = 0;
         
     case 'Graph'
         

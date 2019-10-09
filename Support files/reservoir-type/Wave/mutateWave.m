@@ -52,6 +52,11 @@ for i = 1:config.num_reservoirs
     end
     offspring.input_weights{i} = reshape(input_weights,size(offspring.input_weights{i}));
         
+    input_widths = offspring.input_widths{i}(:);
+    pos =  randperm(length(input_widths),sum(rand(length(input_widths),1) < config.mut_rate));
+    input_widths(pos) = randi([1 4],length(pos),1);
+    offspring.input_widths{i} = reshape(input_widths,size(offspring.input_widths{i}));
+
 end
 
 % mutate output weights

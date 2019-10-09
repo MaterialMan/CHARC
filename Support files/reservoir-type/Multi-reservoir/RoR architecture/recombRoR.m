@@ -44,6 +44,24 @@ for i = 1:config.num_reservoirs
         else
             if strcmp(config.res_type,'Graph')
                 if config.SW
+                    % change SW weights - problem: will add more connections
+                    W_weights = winner.W{i,j};  % current graph
+                    L_weights = loser.W{i,j};  % current graph
+                    base_W_0 = adjacency(config.G{i,j});
+                    pos_chng = find(~base_W_0); % non-base weights
+                    
+                    w = find(W_weights(pos_chng));
+                    l = find(L_weights(pos_chng));
+    
+                    pos = randperm(length(l),ceil(config.rec_rate*length(l)));
+                    L_weights(pos_chng(l(pos))) = W_weights(pos_chng(w(pos)));
+                                                            
+                    if length(find(W_weights(pos_chng))) ~= length(find(L_weights(pos_chng)))
+                        error('SW not working');
+                    end
+                    loser.W{i,j} = L_weights;
+                    
+                    % change base graph
                     W= winner.W{i,j};
                     L = loser.W{i,j};
                     f = find(adjacency(config.G{i,j}));

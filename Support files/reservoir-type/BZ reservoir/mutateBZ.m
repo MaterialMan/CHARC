@@ -1,55 +1,102 @@
-function genotype = mutateBZ(genotype,config)
+%% mutate_ReservoirName_.m
+% Template function to mutate the offspring reservoir. Use this as a guide when
+% creating a new reservoir.
+%
+% How this function looks at the end depends on the reservoir. However,
+% everything below is typically needed to work with all master scripts.
+%
+% This is called by the @config.mutateFcn pointer.
+%
+% Additional details:
+% - Number of weights mutated is based on mut_rate; 50% chance to change existing weight or remove it
 
+function offspring = mutateBZ(offspring,config)
 
-a = genotype.a(:);
-pos =  randi([1 length(a)],ceil(config.mutRate*length(a)),1);
+% params - input scaling and leak rate
+input_scaling = offspring.input_scaling(:);
+pos =  randperm(length(input_scaling),sum(rand(length(input_scaling),1) < config.mut_rate));
+input_scaling(pos) = 2*rand(length(pos),1)-1;
+offspring.input_scaling = reshape(input_scaling,size(offspring.input_scaling));
+
+leak_rate = offspring.leak_rate(:);
+pos =  randperm(length(leak_rate),sum(rand(length(leak_rate),1) < config.mut_rate));
+leak_rate(pos) = rand(length(pos),1);
+offspring.leak_rate = reshape(leak_rate,size(offspring.leak_rate));
+
+% mutate other parameters - template below
+% temp_variable_name = offspring.parameter(:);
+% pos =  randperm(length(temp_variable_name),sum(rand(length(temp_variable_name),1) < config.mut_rate));
+% temp_variable_name (pos) = 2*rand(length(pos),1);
+% offspring.parameter = reshape(temp_variable_name,size(offspring.parameter));
+a = offspring.a(:);
+pos =  randperm(length(a),sum(rand(length(a),1) < config.mut_rate));
 a(pos) = rand(length(pos),1);
-genotype.a = reshape(a,size(genotype.a));
+offspring.a = reshape(a,size(offspring.a));
 
-b = genotype.b(:);
-pos =  randi([1 length(b)],ceil(config.mutRate*length(b)),1);
+b = offspring.b(:);
+pos =  randperm(length(b),sum(rand(length(b),1) < config.mut_rate));
 b(pos) = rand(length(pos),1);
-genotype.b = reshape(a,size(genotype.b));
+offspring.b = reshape(b,size(offspring.b));
 
-c = genotype.c(:);
-pos =  randi([1 length(c)],ceil(config.mutRate*length(c)),1);
+c = offspring.c(:);
+pos =  randperm(length(c),sum(rand(length(c),1) < config.mut_rate));
 c(pos) = rand(length(pos),1);
-genotype.c = reshape(c,size(genotype.c));
+offspring.c = reshape(c,size(offspring.c));
 
-% w_in
-w_in = genotype.w_in(:);
-pos =  randi([1 length(w_in)],ceil(config.mutRate*length(w_in)),1);
-if config.restricedWeight
-    w_in(pos) = datasample(0.2:0.2:1,length(pos));%2*rand(length(pos),1)-1;
-else
-    w_in(pos) = 2*rand(length(pos),1)-1;
-end
-genotype.w_in = reshape(w_in,size(genotype.w_in));
 
-% input_loc
-for i = 1:length(genotype.input_loc)
-    if rand < config.mutRate
-        genotype.input_loc(i) = round(rand);
-    end
-end
-
-if rand < config.mutRate %not really used, yet
-    genotype.dot_perc = rand;
-end
-
-if config.evolvedOutputStates
+% cycle through all sub-reservoirs
+for i = 1:config.num_reservoirs
     
-    if rand < config.mutRate %not really used, yet
-        genotype.state_perc = rand;
+    for r = 1:3
+        % mutate input weights
+        input_weights = offspring.input_weights{i,r};
+        pos =  randperm(length(input_weights),ceil(config.mut_rate*length(input_weights)));
+        for n = 1:length(pos)
+            if rand < 0.5 % 50% chance to zero weight
+                input_weights(pos(n)) = 0;
+            else
+                input_weights(pos(n)) = 2*rand-1;
+            end
+        end
+        offspring.input_weights{i,r} = reshape(input_weights,size(offspring.input_weights{i,r}));
+        
+        
+        input_widths = offspring.input_widths{i,r}(:);
+        pos =  randperm(length(input_widths),sum(rand(length(input_widths),1) < config.mut_rate));
+        input_widths(pos) = randi([1 4],length(pos),1);
+        offspring.input_widths{i,r} = reshape(input_widths,size(offspring.input_widths{i,r}));
     end
+    % Add additional sub-reservoir specific changes
+    % e.g., connection matrix 'W'
+    %     for j = 1:config.num_reservoirs
+    %         W = offspring.W{i,j}(:);
+    %         % select weights to change
+    %         pos =  randperm(length(W),ceil(config.mut_rate*length(W)));
+    %         for n = 1:length(pos)
+    %             if rand < 0.5 % 50% chance to zero weight
+    %                 W(pos(n)) = 0;
+    %             else
+    %                 W(pos(n)) = 2*rand-1;
+    %             end
+    %         end
+    %         offspring.W{i,j} = reshape(W,size(offspring.W{i,j}));
+    %     end
     
-    % state_loc
-    for i = 1:length(genotype.state_loc)
-        if rand < config.mutRate
-            genotype.state_loc(i) = round(rand);
+end
+
+% mutate output weights
+if config.evolve_output_weights
+    output_weights = offspring.output_weights(:);
+    pos =  randperm(length(output_weights),ceil(config.mut_rate*length(output_weights)));
+    
+    for n = 1:length(pos)
+        if rand > 0.75 % 75% chance to zero weight
+            output_weights(pos(n)) = 0;
+        else
+            output_weights(pos(n)) = 2*rand-1;
         end
     end
-
+    offspring.output_weights = reshape(output_weights,size(offspring.output_weights));
 end
 
-genotype.totalInputs = sum(genotype.input_loc);
+

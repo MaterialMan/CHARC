@@ -125,7 +125,30 @@ switch(config.res_type)
         %         imagesc(loserStates');
         
     case 'BZ'
+        
         plotBZ(config.figure_array(2),population,best_indv(gen),loser,config)
+        
+        if config.run_sim
+            desktop     = com.mathworks.mde.desk.MLDesktop.getInstance;
+            cw          = desktop.getClient('Command Window');
+            xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
+            h_cw        = handle(xCmdWndView,'CallbackProperties');
+            set(h_cw, 'KeyPressedCallback', @CmdKeyCallback);
+            
+            CmdKeyCallback('reset');
+            fprintf('Press any key to skip simulation \n')
+        
+            set(0,'currentFigure',config.figure_array(3))
+            states = config.assessFcn(population(best_indv(gen)),config.test_input_sequence,config);
+            for i = 1:size(states,1)
+                p = reshape(states(i,1:end-population(best_indv(gen)).n_input_units),sqrt(population(best_indv(gen)).nodes),sqrt(population(best_indv(gen)).nodes),3);
+                image(uint8(255*hsv2rgb(p)));  
+                drawnow;
+                if CmdKeyCallback()
+                    i = size(states,1);
+                end
+            end
+        end
         
     case {'RoR','Pipeline','Ensemble'}
         plotRoR(config.figure_array(2),best_individual,loser_individual,config);
@@ -179,6 +202,13 @@ switch(config.res_type)
         change_scale = 0;
         
         i = 2;
+        colormap(gca,'bone'); %
+        %set(gca,'visible','off')
+        set(gca,'XColor', 'none','YColor','none')       
+        shading interp
+        %lighting phong;
+        %material shiny;
+        %lightangle(-45,30)
         while(i < size(states,1))
             if mod(i,config.wave_sim_speed) == 0
                 if config.add_input_states
@@ -214,6 +244,7 @@ switch(config.res_type)
             if CmdKeyCallback()
                 i = size(states,1);
             end
+            
             i = i +1;
         end
         

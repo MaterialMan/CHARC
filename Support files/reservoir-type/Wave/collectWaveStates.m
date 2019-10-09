@@ -38,6 +38,20 @@ for i= 1:config.num_reservoirs
         input_mul{i} = input{i};
     end    
     
+    % change input widths
+    for n = 1:size(input_mul{i},1)
+        m = reshape(input_mul{i}(n,:),node_grid_size(i),node_grid_size(i));
+        f_pos = find(m);
+        input_matrix_2d = m;
+        for p = 1:length(f_pos)
+            t = zeros(size(m));
+            t(f_pos(p)) = m(f_pos(p));
+            [t] = adjustInputShape(t,individual.input_widths{i}(f_pos(p)));
+            input_matrix_2d = input_matrix_2d + t;
+        end
+        input_mul{i}(n,:) = input_matrix_2d(:);
+    end
+
     states{i} = zeros(size(input_mul{i},1),individual.nodes(i));
 end
 
@@ -66,9 +80,7 @@ for n = 2:size(input_mul{i})%size(input_sequence,1)
         newH{i}(logical(in)) = newH{i}(logical(in)) + nonzeros(in);
         oldH{i}(logical(in)) = newH{i}(logical(in)) + nonzeros(in);
         
-        H{i}=newH{i};
-             
-        %states{i}(n,:) = reshape(newH{i},1,individual.nodes(i));
+        H{i}=newH{i};             
         
         states{i}(n,:) = newH{i}(:);
         states{i}(n-1,:) = oldH{i}(:);

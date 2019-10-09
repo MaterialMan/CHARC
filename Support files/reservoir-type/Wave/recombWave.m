@@ -49,6 +49,12 @@ for i = 1:config.num_reservoirs
     L(pos) = W(pos);
     loser.input_weights{i} = reshape(L,size(loser.input_weights{i}));
        
+    % input widths
+    W= winner.input_widths{i}(:);
+    L = loser.input_widths{i}(:);
+    pos = randperm(length(L),ceil(config.rec_rate*length(L)));         
+    L(pos) = W(pos);
+    loser.input_widths{i} = reshape(L,size(loser.input_widths{i}));
 end
 
 % for output weights

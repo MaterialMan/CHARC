@@ -58,26 +58,64 @@ for i = 1:config.num_reservoirs
                 if config.SW % must maintain proportion of connections
                     W = offspring.W{i,j};  % current graph
                     base_W_0 = adjacency(config.G{i,j});
-                    
                     pos_chng = find(~base_W_0); % non-base weights
                     
-                    for p = 1:length(pos_chng)
-                        if  rand < config.mut_rate
-                            val_chng = W(pos_chng); % values of non-base weights
-
-                            list = find(val_chng); % find non-zero, non-base weights
-                            if ~isempty(list)
-                                pos1 = randi([1 length(list)]);
-                                pos2 = randi([1 length(pos_chng)]);
-                                
-                                W(pos_chng(list(pos1))) = 0;
-                                W(pos_chng(pos2)) = 2*rand-1;
-                            else
-                                p = length(pos_chng);
-                            end
+                    w1 = find(W(pos_chng)); %all non-zero non-base weights
+                    
+                    %w1 = W(pos_chng)~= 0;
+                    w = w1; %set default non-zero non-base weights       
+                    
+                    %pos = randperm(length(w),ceil(config.mut_rate*length(w1))); % randomly pick from all non-zero non-base weights
+                    
+                    %t_pos_chng = pos_chng;
+                    %t_pos_chng(w) = []; %remove non-zeros from non-base weights
+                    
+                    for p = 1:ceil(config.mut_rate*length(w1)) % num to mutate
+                        
+                        pos(p) = randperm(length(w),1);
+                        while(sum(pos(p) == pos(1:p-1)) > 0)
+                            pos(p) = randperm(length(w),1);
                         end
+                        %pos = randperm(length(w),1); % randomly pick from all non-zero non-base weights
+                        
+                        if round(rand) && config.P_rc < 1
+                            % remove random non-zero non-base weight
+                            W(pos_chng(w(pos(p)))) = 0;
+                            
+                            % add new to zero non-base weight
+                            %t_pos_chng = pos_chng;
+                            %t_pos_chng(w) = []; %remove non-zeros from non-base weights
+                            %pos2 = randi([1 length(t_pos_chng)]);
+                            %W(t_pos_chng(pos2)) = 2*rand-1;
+                            %pos_chng(pos_chng == t_pos_chng(pos2)) =[];
+                            pos2(p) = w(pos(p));
+                            while(sum(pos2(p) == w) > 0 || sum(pos2(p) == pos2(1:p-1)) > 0)
+                                pos2(p) = randi([1 length(pos_chng)]);
+                            end 
+                            
+                            W(pos_chng(pos2(p))) = 2*rand-1;
+                            
+                            %check still okay
+                            if nnz(offspring.W{i,j}) ~= nnz(W)
+                                error('SW not working');
+                            end
+%                             if W(t_pos_chng(pos2)) == 0
+%                                 error('SW not working');
+%                             end
+                        else
+                            % change non-zero non-base weight to another value
+                            W(pos_chng(w(pos(p)))) = 2*rand-1; 
+                        end
+                        
+                        %w = find(W(pos_chng)); %update non-zero non-base weights after mutation
                     end
                     
+                    %check still okay
+                    if nnz(offspring.W{i,j}) ~= nnz(W)
+                        error('SW not working');
+                    end
+                    
+                    offspring.W{i,j} = W;                                       
                     
                     %change base graph
                     f = find(base_W_0);
