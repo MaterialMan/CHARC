@@ -10,7 +10,7 @@ for pop_indx = 1:config.pop_size
     population(pop_indx).test_error = 1;
     
     % add single bias node
-    %population(pop_indx).bias_node = 1;
+    population(pop_indx).bias_node = 1;
     
     % assign input/output count
     if isempty(config.train_input_sequence)
@@ -37,15 +37,18 @@ for pop_indx = 1:config.pop_size
         
         %inputweights
         if config.sparse_input_weights
-            input_weights = sprand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units, 0.1);
+            input_weights = sprand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1, 0.01);
             input_weights(input_weights ~= 0) = ...
                 2*input_weights(input_weights ~= 0)  - 1;
             population(pop_indx).input_weights{i} = input_weights;
+            if strcmp(config.res_type,'2D_CA')
+                population(pop_indx).input_widths{i} = randi([1 4],length(input_weights),1); %size of the inputs; pin-point or broad
+            end
         else
             population(pop_indx).input_weights{i} = 2*rand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units)-1;
         end
         
-        
+
         %assign different activations, if necessary
         population(pop_indx).RBN_type{i} = config.rule_list{randi([1 length(config.rule_list)])};% more than one rule & evolve config.RBN_type{i};
         
@@ -53,7 +56,7 @@ for pop_indx = 1:config.pop_size
       
         % set time period for CA/RBN to evolve - boundaries are currently
         % arbitary
-        population(pop_indx).time_period(i) = randi([1 10]);
+        population(pop_indx).time_period(i) = randi([1 4]);
     end
     
     %track total nodes in use
@@ -72,6 +75,7 @@ for pop_indx = 1:config.pop_size
                 config.graph_type= repmat({'Ring'},1,config.num_reservoirs);     % Define substrate
                 config.self_loop = ones(1,config.num_reservoirs);                   % give node a loop to self.
                 config = getShape(config);              % call function to make graph.
+                population(pop_indx).G{i} = config.G{i};
                 
                % population(pop_indx).initial_states{i} = round(rand(population(pop_indx).nodes(i),1));
                 % pick random rule
@@ -85,6 +89,7 @@ for pop_indx = 1:config.pop_size
                 config.self_loop = ones(1,config.num_reservoirs);                   % give node a loop to self.
                 %config.directed_graph = 0;               % directed graph (i.e. weight for all directions).
                 config = getShape(config);              % call function to make graph.
+                population(pop_indx).G{i} = config.G{i};
                 
                % population(pop_indx).initial_states{i} = round(rand(population(pop_indx).nodes(i),1));
                 % pick random rule

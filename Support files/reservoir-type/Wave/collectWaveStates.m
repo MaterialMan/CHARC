@@ -88,8 +88,10 @@ for n = 2:size(input_mul{i})%size(input_sequence,1)
 end
 
 %need to check! deplex to get states
-if individual.time_period(i) > 1
-    states{i} = states{i}(mod(1:size(states{i},1),individual.time_period(i)) == 1,:);
+for i= 1:config.num_reservoirs
+    if individual.time_period(i) > 1
+        states{i} = states{i}(mod(1:size(states{i},1),individual.time_period(i)) == 1,:);
+    end
 end
 
 % get leak states

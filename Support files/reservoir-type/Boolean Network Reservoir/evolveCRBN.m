@@ -37,15 +37,15 @@ for i= 1:length(individual.RBN_node)
     timeStateMatrix{i} = zeros(k,length(nodeUpdated));
     timeStateMatrix{i}(1,:) = getStateVector(nodeUpdated);
     
-    input = input_sequence*(individual.input_weights{i}*individual.input_scaling(i))';
+    %input = input_sequence;%*(individual.input_weights{i}*individual.input_scaling(i))';
     
     % time multiplex -
-    input_mul = zeros(size(input_sequence,1)*individual.time_period(i),size(input,2));
-    if individual.time_period > 1
-        input_mul(mod(1:length(input_mul),individual.time_period(i)) == 1,:) = input;
-    else
-        input_mul = input;
-    end
+%     input_mul = zeros(size(input_sequence,1)*individual.time_period(i),size(input,2));
+%     if individual.time_period > 1
+%         input_mul(mod(1:length(input_mul),individual.time_period(i)) == 1,:) = input;
+%     else
+        input_mul = input_sequence;
+    %end
     
     % evolve network
     cnt = 1;

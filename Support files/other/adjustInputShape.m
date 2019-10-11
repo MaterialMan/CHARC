@@ -10,7 +10,8 @@ D(ceil(size(D,1).^2/2)) = 0;
 
 % pad location
 w_adj = 2*width+1;
-pad_input_matrix_2d = padarray(input_matrix_2d,[w_adj w_adj],0);
+pad_input_matrix_2d = zeros(size(input_matrix_2d)+w_adj+w_adj);
+pad_input_matrix_2d(w_adj+1:w_adj+length(input_matrix_2d),w_adj+1:w_adj+length(input_matrix_2d)) = input_matrix_2d;
 
 s=size(pad_input_matrix_2d);
 N=length(s);

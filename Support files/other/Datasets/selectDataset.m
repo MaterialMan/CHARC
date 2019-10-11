@@ -490,6 +490,15 @@ switch config.dataset
             output_sequence = [output_sequence; img1_output(:)'];
         end
        
+    case 'test_plot' % NARMA-5
+        err_type = 'NMSE';
+        wash_out =10;
+        sequence_length = 300;
+        train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
+        [input_sequence,output_sequence] = generate_new_NARMA_sequence(sequence_length,5);
+        input_sequence = 2*input_sequence-0.5;
+        output_sequence = 2*output_sequence-0.5;
+        
 end
 
 %% preprocessing

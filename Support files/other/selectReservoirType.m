@@ -96,6 +96,12 @@ switch(config.res_type)
         config.assessFcn = @collectMMStates;
         config.mutFcn = @mutateMM;
         config.recFcn = @recombMM;
+        
+    case 'GOL'
+        config.createFcn = @createGOL;
+        config.assessFcn = @assessGOL;
+        config.mutFcn = @mutateGOL;
+        config.recFcn = @recombGOL;
 end
 
 if strcmp(config.res_type,'CNT')

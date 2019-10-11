@@ -1,4 +1,6 @@
-function plotReservoirDetails(population,store_error,test,best_indv,gen,loser,config)
+function F = plotReservoirDetails(population,best_indv,gen,loser,config)
+
+
 
 % individual to print - maybe cell if using MAPelites
 if iscell(population(best_indv(gen)))
@@ -8,6 +10,15 @@ else
     best_individual = population(best_indv(gen));
     loser_individual = population(loser);
 end
+
+desktop     = com.mathworks.mde.desk.MLDesktop.getInstance;
+cw          = desktop.getClient('Command Window');
+xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
+h_cw        = handle(xCmdWndView,'CallbackProperties');
+set(h_cw, 'KeyPressedCallback', @CmdKeyCallback);
+
+CmdKeyCallback('reset');
+fprintf('Press any key to skip simulation \n')
 
 % plot task specific details
 switch(config.dataset)
@@ -109,7 +120,7 @@ end
 switch(config.res_type)
     case 'Graph'
         if config.SW
-            %set(0,'currentFigure',config.figure_array(2))
+            set(0,'currentFigure',config.figure_array(2))
             schemaball(population(loser).W{1,1},[],[0,0,1;1 1 1],[],config.figure_array(1))
             plotGridNeuron(config.figure_array(2),population,best_indv(gen),loser,config)
             drawnow
@@ -117,35 +128,50 @@ switch(config.res_type)
             plotGridNeuron(config.figure_array(2),population,best_indv(gen),loser,config)
         end
         
-    case '2dCA'
-        plotGridNeuron(config.figure_array(2),population,best_indv(gen),loser,config)
+    case {'2D_CA','GOL'}
+        %config.G = population(1).G{1};
+        %config.plot_3d = 0;
+        %plotGridNeuron(config.figure_array(2),population,best_indv(gen),loser,config)
+        colormap('bone')
         
-    case 'basicCA'
-        %         figure(figure1)
-        %         imagesc(loserStates');
+        if config.run_sim
+            set(0,'currentFigure',config.figure_array(2))
+            states = config.assessFcn(population(best_indv(gen)),config.test_input_sequence,config);
+            for i = 1:size(states,1)
+                imagesc(reshape(states(i,1:end-population(best_indv(gen)).n_input_units),config.num_nodes,config.num_nodes));
+                %title(strcat('n = ',num2str(i)))
+                drawnow
+                if config.film
+                    F(i) = getframe;
+                else
+                    F =[];
+                end
+                if CmdKeyCallback()
+                    i = size(states,1);
+                end
+                pause(0.05);
+            end
+        end
         
     case 'BZ'
         
         plotBZ(config.figure_array(2),population,best_indv(gen),loser,config)
         
         if config.run_sim
-            desktop     = com.mathworks.mde.desk.MLDesktop.getInstance;
-            cw          = desktop.getClient('Command Window');
-            xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-            h_cw        = handle(xCmdWndView,'CallbackProperties');
-            set(h_cw, 'KeyPressedCallback', @CmdKeyCallback);
-            
-            CmdKeyCallback('reset');
-            fprintf('Press any key to skip simulation \n')
-        
-            set(0,'currentFigure',config.figure_array(3))
+            set(0,'currentFigure',config.figure_array(1))
             states = config.assessFcn(population(best_indv(gen)),config.test_input_sequence,config);
+            
             for i = 1:size(states,1)
                 p = reshape(states(i,1:end-population(best_indv(gen)).n_input_units),sqrt(population(best_indv(gen)).nodes),sqrt(population(best_indv(gen)).nodes),3);
-                image(uint8(255*hsv2rgb(p)));  
+                image(uint8(255*hsv2rgb(p)));
                 drawnow;
                 if CmdKeyCallback()
                     i = size(states,1);
+                end
+                if config.film
+                    F(i) = getframe;
+                else
+                    F =[];
                 end
             end
         end
@@ -169,14 +195,6 @@ switch(config.res_type)
     case 'Wave'
         
         config.wave_sim_speed = 1;
-        desktop     = com.mathworks.mde.desk.MLDesktop.getInstance;
-        cw          = desktop.getClient('Command Window');
-        xCmdWndView = cw.getComponent(0).getViewport.getComponent(0);
-        h_cw        = handle(xCmdWndView,'CallbackProperties');
-        set(h_cw, 'KeyPressedCallback', @CmdKeyCallback);
-        
-        CmdKeyCallback('reset');
-        fprintf('Press any key to skip simulation \n')
         
         set(0,'currentFigure',config.figure_array(2))
         
@@ -204,7 +222,7 @@ switch(config.res_type)
         i = 2;
         colormap(gca,'bone'); %
         %set(gca,'visible','off')
-        set(gca,'XColor', 'none','YColor','none')       
+        set(gca,'XColor', 'none','YColor','none')
         shading interp
         %lighting phong;
         %material shiny;
@@ -222,7 +240,7 @@ switch(config.res_type)
                     else
                         set(gca, 'xDir', 'reverse',...
                             'camerapositionmode','manual','cameraposition',[1 1 max(max(states(:,1:end-best_individual.n_input_units)))]);
-                        axis([1 node_grid_size 1 node_grid_size min(min(states(:,1:end-best_individual.n_input_units))) max(max(states(:,1:end-best_individual.n_input_units)))]);  
+                        axis([1 node_grid_size 1 node_grid_size min(min(states(:,1:end-best_individual.n_input_units))) max(max(states(:,1:end-best_individual.n_input_units)))]);
                     end
                 else
                     newH = reshape(states(i,1:end),node_grid_size,node_grid_size);
@@ -237,6 +255,11 @@ switch(config.res_type)
                         axis([1 node_grid_size 1 node_grid_size min(min(states(:,1:end))) max(max(states(:,1:end)))]);
                     end
                 end
+                if config.film
+                    F(i) = getframe;
+                else
+                    F =[];
+                end
                 drawnow
                 pause(0.05)
             end
@@ -248,7 +271,17 @@ switch(config.res_type)
             i = i +1;
         end
         
+        
+        
 end
+
+
+% if config.film
+%     v = VideoWriter('ReservoirPlot_video','MPEG-4');
+%     open(v);
+%     writeVideo(v,F);
+%     close(v);
+% end
 
 end
 

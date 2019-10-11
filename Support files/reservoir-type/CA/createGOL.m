@@ -1,14 +1,9 @@
-%% create_ReservoirName_.m
-% Template function to define reservoir parameters. Use this as a guide when
-% creating a new reservoir.
-%
-% How this function looks at the end depends on the reservoir. However,
-% everything below is typically needed to work with all master scripts.
-% Tip: Try maintain ordering as structs keep this ordering.
+%% createGOL.m
+% function to define Game of Life reservoir parameters. 
 
 % This is called by the @config.createFcn pointer.
 
-function population = createBZReservoir(config)
+function population = createGOL(config)
 
 %% Reservoir Parameters
 for pop_indx = 1:config.pop_size
@@ -37,31 +32,34 @@ for pop_indx = 1:config.pop_size
         population(pop_indx).nodes(i) = config.num_nodes(i).^2;
         
         % Scaling and leak rate
-        population(pop_indx).input_scaling(i,:) = 2*rand(1,3)-1; %increases nonlinearity
+        population(pop_indx).input_scaling(i) = 2*rand-1; %increases nonlinearity
         population(pop_indx).leak_rate(i) = rand;
         
         % input weights
-        for r = 1:3
-            if config.sparse_input_weights
-                input_weights = sprand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1, 0.01);
-                input_weights(input_weights ~= 0) = ...
-                    2*input_weights(input_weights ~= 0)  - 1;
-                population(pop_indx).input_weights{i,r} = input_weights;
-            else
-                population(pop_indx).input_weights{i} = 2*rand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1)-1;
-            end
+        if config.sparse_input_weights
+            input_weights = sprand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1, 0.005);
+            input_weights(input_weights ~= 0) = ...
+                2*input_weights(input_weights ~= 0)  - 1;
+            population(pop_indx).input_weights{i} = input_weights;
+            
             widths = ceil(abs(randn(length(input_weights),1))*2); %less likely to get big inputs
             widths(widths > round(sqrt(population(pop_indx).nodes(i))/8)) = round(sqrt(population(pop_indx).nodes(i))/8);% cap at 1/6 size of space 
             population(pop_indx).input_widths{i} = widths; %size of the inputs; pin-point or broad
-       end
+        else
+            population(pop_indx).input_weights{i} = 2*rand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1)-1;
+        end
+         
         
         % add other necessary parameters
         % e.g., population(pop_indx).param1(i) = rand
-        population(pop_indx).a = rand(config.num_nodes(i),config.num_nodes(i),2);
-        population(pop_indx).b = rand(config.num_nodes(i),config.num_nodes(i),2);
-        population(pop_indx).c = rand(config.num_nodes(i),config.num_nodes(i),2);
+        population(pop_indx).time_period(i) = randi([1 1]);
+       
+        population(pop_indx).boundary_condition(i) = randi([1 3])-1; 
         
-        population(pop_indx).time_period(i) = randi([1 3]);
+        %population(pop_indx).survival_threshold(i) = randi([0 5]); %an alive cell live if it has n alive neighbors
+        population(pop_indx).birth_threshold(i) = randi([1 5]); % a dead cell will be alive if it has n alive neighbors, Conways: 3
+        population(pop_indx).loneliness_threshold(i) =randi([1 5]); %alive cell dies if it has n alive neighbors, Conways: 1
+        population(pop_indx).overcrowding_threshold(i) =randi([1 5]); %alive cell dies if it has n or more alive neighbors, Conways: 4
         
         % individual should keep track of final state for certain tasks
         population(pop_indx).last_state{i} = zeros(1,population(pop_indx).nodes(i));
@@ -93,9 +91,9 @@ for pop_indx = 1:config.pop_size
     % Add random output weights - these are typically trained for tasks but
     % can be evolved as well
     if config.add_input_states
-        population(pop_indx).output_weights = 2*rand(population(pop_indx).total_units*3 + population(pop_indx).n_input_units, population(pop_indx).n_output_units)-1;
+        population(pop_indx).output_weights = 2*rand(population(pop_indx).total_units + population(pop_indx).n_input_units, population(pop_indx).n_output_units)-1;
     else
-        population(pop_indx).output_weights = 2*rand(population(pop_indx).total_units*3, population(pop_indx).n_output_units)-1;
+        population(pop_indx).output_weights = 2*rand(population(pop_indx).total_units, population(pop_indx).n_output_units)-1;
     end
     
     % Add placeholder for behaviours

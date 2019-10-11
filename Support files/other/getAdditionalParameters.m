@@ -22,6 +22,10 @@ config.undirected_ensemble = 0;              % by default all inter-network weig
 config.scaler = 1;                          % this may need to change for different reservoir systems that don't fit to the typical neuron range, e.g. [-1 1]
 config.discrete = 0;
 
+% simulation details
+config.run_sim = 1;
+config.film = 0;                            %record simulation
+
 %% Change/add parameters depending on reservoir type
 % This section is for additional parameters needed for different reservoir
 % types. If something is not here, it is most likely in the
@@ -37,7 +41,8 @@ switch(config.res_type)
         config.fft = 0;
         config.sparse_input_weights = 1;
         %config.figure_array = [config.figure_array figure];
-        config.run_sim = 0;
+
+        config.evolve_output_weights = 0;             % evolve rather than train
         
     case 'Graph'
         
@@ -83,6 +88,7 @@ switch(config.res_type)
         
     case '2D_CA'
         % update type
+        config.sparse_input_weights = 1;
         config.mono_rule = 1;               %stick to rule rule set, individual cells cannot have different rules
         config.rule_list = {@evolveCRBN}; %list of evaluation types: {'CRBN','ARBN','DARBN','GARBN','DGARBN'};
         config.leak_on = 0;
@@ -107,15 +113,13 @@ switch(config.res_type)
     case 'Wave'
         config.leak_on = 0;                           % add leak states
         config.add_input_states = 1;                  %add input to states
-
-        config.run_sim = 0;
         config.sim_speed = 1; % xfactor
         for i = 1:length(config.num_nodes)
             config.num_nodes(i) =  config.num_nodes(i).^2;
         end
         
     case 'MM'
-	config.parallel = 0;
+        config.parallel = 0;
         config.leak_on = 0;                           % add leak states
         config.add_input_states = 0;                  %add input to states
         config.temperature_parameter = 0; % positive integer OR 'dynamic'
@@ -126,6 +130,11 @@ switch(config.res_type)
         config.unitcell_size = 3.47; % typical value 3.47 Armstrongs
         config.crystal_structure = 'sc'; % typical crystal structures: 'sc', 'fcc', 'bcc' | 'sc' significantly faster
         config.timestep = 2; % integer in femtoseconds | 1 to 10 sensible range
+        
+    case 'GOL'
+        config.leak_on = 0;                           % add leak states
+        config.add_input_states = 1;                  %add input to states
+        config.sparse_input_weights = 1;
         
     otherwise
         

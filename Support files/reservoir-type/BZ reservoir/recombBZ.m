@@ -1,11 +1,5 @@
-%% recomb_ReservoirName_.m
-% Template function to recombine/infect an individual to create the new offspring reservoir. Use this as a guide when
-% creating a new reservoir.
-%
-% How this function looks at the end depends on the reservoir. However,
-% everything below is typically needed to work with all master scripts.
-%
-% This is called by the @config.recombFcn pointer.
+%% recombBZ.m
+% Used to recombine BZ-specific parameters
 
 function loser = recombBZ(winner,loser,config)
 
@@ -22,12 +16,6 @@ pos = randperm(length(L),ceil(config.rec_rate*length(L)));
 L(pos) = W(pos);
 loser.leak_rate = reshape(L,size(loser.leak_rate));
 
-% Template: recombine other parameters
-% W= winner.parameter(:);
-% L = loser.parameter(:);
-% pos = randperm(length(L),ceil(config.rec_rate*length(L)));
-% L(pos) = W(pos);
-% loser.parameter = reshape(L,size(loser.parameter));
 W= winner.a(:);
 L = loser.a(:);
 pos = randperm(length(L),ceil(config.rec_rate*length(L)));
@@ -64,15 +52,6 @@ for i = 1:config.num_reservoirs
         L(pos) = W(pos);
         loser.input_widths{i,r} = reshape(L,size(loser.input_widths{i,r}));
         
-        % add additional sub-reservoir specific changes
-        % e.g., inner weights
-        %     for j = 1:config.num_reservoirs
-        %         W= winner.W{i,j}(:);
-        %         L = loser.W{i,j}(:);
-        %         pos = randperm(length(L),ceil(config.rec_rate*length(L)));
-        %         L(pos) = W(pos);
-        %         loser.W{i,j} = reshape(L,size(loser.W{i,j}));
-        %     end
     end
 end
 

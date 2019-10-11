@@ -49,7 +49,10 @@ for pop_indx = 1:config.pop_size
        input_weights(input_weights ~= 0) = ...
            2*input_weights(input_weights ~= 0)  - 1;
        population(pop_indx).input_weights{i} = input_weights;
-       population(pop_indx).input_widths{i} = randi([1 4],length(input_weights),1); %size of the inputs; pin-point or broad
+       
+       widths = ceil(abs(randn(length(input_weights),1))*2); %less likely to get big inputs
+            widths(widths > round(sqrt(population(pop_indx).nodes(i))/8)) = round(sqrt(population(pop_indx).nodes(i))/8);% cap at 1/6 size of space 
+            population(pop_indx).input_widths{i} = widths; %size of the inputs; pin-point or broad
        
         population(pop_indx).last_state{i} = zeros(2,population(pop_indx).nodes(i));
     end

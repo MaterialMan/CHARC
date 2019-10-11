@@ -1,9 +1,5 @@
-%% assess_ReservoirName_.m
-% Template function to collect reservoir states. Use this as a guide when
-% creating a new reservoir.
-%
-% How this function looks at the end depends on the reservoir. However,
-% everything below is typically needed to work with all master scripts.
+%% assessBZReservoir.m
+% BZ function to collect reservoir states. 
 %
 % This is called by the @config.assessFcn pointer.
 
@@ -44,7 +40,7 @@ for i= 1:config.num_reservoirs
     % change input widths
     for n = 1:size(input_mul{i,r},1)
         for r = 1:3
-            m = reshape(input_mul{i,r}(n,:),node_grid_size(i),node_grid_size(i));
+            m = reshape(input_mul{i,r}(n,:),config.num_nodes(i),config.num_nodes(i));
             f_pos = find(m);
             input_matrix_2d = m;
             for p = 1:length(f_pos)
@@ -76,23 +72,8 @@ a = individual.a;
 b = individual.b;
 c = individual.c;
 
-%%
-% H = a(:,:,1);
-% width = 1;
-% s=size(H);
-% N=length(s);
-% [c1{1:N}]=ndgrid(1:2*width+1);
-% c2(1:N)={ceil((2*width+1)/2)};
-% offsets=sub2ind(s,c1{:}) - sub2ind(s,c2{:});
-% 
-% pad_a = padarray(a(:,:,1),[2*width+1 2*width+1],0);
-% pad_b = padarray(b(:,:,1),[2*width+1 2*width+1],0);
-% pad_c = padarray(c(:,:,1),[2*width+1 2*width+1],0);
-% 
-% indc = find(pad_a);
-
 %% Calculate reservoir states - general state equation for multi-reservoir system: x(n) = f(Win*u(n) + S)
-for n = 2:size(input_sequence,1)
+for n = 2:size(input_mul{1},1)
     
     for i= 1:config.num_reservoirs % cycle through sub-reservoirs
         
@@ -100,17 +81,10 @@ for n = 2:size(input_sequence,1)
         %             x{i}(n,:) = x{i}(n,:) + ((individual.W{i,k}*individual.W_scaling(i,k))*states{k}(n-1,:)')';
         %         end
         
-       
         %initialise empty matrix
         c_a = zeros(xres,yres);
         c_b = zeros(xres,yres);
         c_c = zeros(xres,yres);
-        
-%         for m = 1:length(indc)
-%             c_a(m) = sum(sum(pad_a(indc(m)+offsets)));
-%             c_b(m) = sum(sum(pad_b(indc(m)+offsets)));
-%             c_c(m) = sum(sum(pad_c(indc(m)+offsets)));
-%         end
         
         for m=1:xres
             
@@ -175,6 +149,13 @@ for n = 2:size(input_sequence,1)
             states{i}(n,:) = [dim1(:); dim2(:); dim3(:)]';
         end
         
+    end
+end
+
+%need to check! deplex to get states
+for i= 1:config.num_reservoirs
+    if individual.time_period(i) > 1
+        states{i} = states{i}(mod(1:size(states{i},1),individual.time_period(i)) == 1,:);
     end
 end
 

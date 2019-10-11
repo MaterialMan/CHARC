@@ -1,4 +1,4 @@
-function plotGraphNeuron(figure1,individual,storeError,test,best_indv)
+function plotGraphNeuron(figure1,individual,best_indv)
 
 set(0,'currentFigure',figure1)
 
