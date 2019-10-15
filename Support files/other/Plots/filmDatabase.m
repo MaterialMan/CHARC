@@ -10,12 +10,16 @@ config = getAdditionalParameters(config);
 % get dataset information
 config = selectDataset(config);
 config.figure_array(2) = figure;
-v = VideoWriter('GOL_100x100_2.avi');
+v = VideoWriter('BZ_200x200','MPEG-4');
 open(v);
+
+if exist('database') ~= 1
+    database = population;
+end
 
 config.run_sim = 1;
 config.film = 1;
-step  = 10;
+step  = 1;
 F = [];
 for i = 1:step:length(database)-step
     t_F = plotReservoirDetails(database,i,1,1,config);

@@ -136,13 +136,20 @@ switch(config.res_type)
         
         if config.run_sim
             set(0,'currentFigure',config.figure_array(2))
-            states = config.assessFcn(population(best_indv(gen)),config.test_input_sequence,config);
+            set(gcf,'position',[-1005 458 981 335])
+            [states,~,extra_states] = config.assessFcn(population(best_indv(gen)),config.test_input_sequence,config);
             for i = 1:size(states,1)
-                imagesc(reshape(states(i,1:end-population(best_indv(gen)).n_input_units),config.num_nodes,config.num_nodes));
+                subplot(1,2,1)
+                t_state = states(i,1:end-population(best_indv(gen)).n_input_units);
+                imagesc(reshape(t_state,sqrt(size(t_state,2)),sqrt(size(t_state,2))));
                 %title(strcat('n = ',num2str(i)))
+                subplot(1,2,2)
+                t_state = extra_states(i,1:end);
+                imagesc(reshape(t_state,sqrt(size(t_state,2)),sqrt(size(t_state,2))));
+                
                 drawnow
                 if config.film
-                    F(i) = getframe;
+                    F(i) = getframe(gcf);
                 else
                     F =[];
                 end

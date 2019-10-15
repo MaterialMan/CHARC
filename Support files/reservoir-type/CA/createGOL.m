@@ -52,15 +52,21 @@ for pop_indx = 1:config.pop_size
         
         % add other necessary parameters
         % e.g., population(pop_indx).param1(i) = rand
-        population(pop_indx).time_period(i) = randi([1 1]);
+        population(pop_indx).time_period(i) = randi([1 5]);
        
         population(pop_indx).boundary_condition(i) = randi([1 3])-1; 
         
         %population(pop_indx).survival_threshold(i) = randi([0 5]); %an alive cell live if it has n alive neighbors
         population(pop_indx).birth_threshold(i) = randi([1 5]); % a dead cell will be alive if it has n alive neighbors, Conways: 3
-        population(pop_indx).loneliness_threshold(i) =randi([1 5]); %alive cell dies if it has n alive neighbors, Conways: 1
-        population(pop_indx).overcrowding_threshold(i) =randi([1 5]); %alive cell dies if it has n or more alive neighbors, Conways: 4
+        population(pop_indx).loneliness_threshold(i) = randi([1 5]); %alive cell dies if it has n alive neighbors, Conways: 1
+        population(pop_indx).overcrowding_threshold(i) = randi([1 5]); %alive cell dies if it has n or more alive neighbors, Conways: 4
         
+        % for convolve state filters
+        population(pop_indx).pad_size(i) = randi([1 10]);
+        population(pop_indx).stride(i) = randi([1 10]);
+        population(pop_indx).kernel_size(i) = randi([1 10]);
+        population(pop_indx).kernel{i} = ones(population(pop_indx).kernel_size(i))/population(pop_indx).kernel_size(i)^2; % summation filter
+              
         % individual should keep track of final state for certain tasks
         population(pop_indx).last_state{i} = zeros(1,population(pop_indx).nodes(i));
     end

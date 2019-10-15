@@ -3,7 +3,7 @@
 
 % This is called by the @config.assessFcn pointer.
 
-function[final_states,individual] = assessGOL(individual,input_sequence,config)
+function[final_states,individual,extra_states] = assessGOL(individual,input_sequence,config)
 
 %if single input entry, add previous state
 if size(input_sequence,1) == 1
@@ -43,7 +43,12 @@ for i= 1:config.num_reservoirs
     if size(input_sequence,1) == 2
         states{i} = individual.last_state{i};
     else
-        states{i} = zeros(size(input_mul{i},1),individual.nodes(i));
+        %width =2;
+        %states{i} = zeros(size(input_mul{i},1),(sqrt(individual.nodes(i))/width).^2);
+    
+        extra_states = zeros(size(input_mul{i},1),individual.nodes(i));    
+        % without averaging
+        %states{i} = zeros(size(input_mul{i},1),individual.nodes(i));    
     end
     
     % pre-assign anything that can be calculated before running the reservoir
@@ -78,7 +83,8 @@ for n = 2:size(input_mul{i},1)
 %         end
         %input_mul{i}(n,:) = input_matrix_2d(:);
 
-        I = reshape(input_mul{i}(n,:),node_grid_size(i),node_grid_size(i));
+        % binarised input
+        I = (reshape(input_mul{i}(n,:),node_grid_size(i),node_grid_size(i)) > 0 );
         %I = input_matrix_2d;
         
         % for each cell in the CA
@@ -89,9 +95,22 @@ for n = 2:size(input_mul{i},1)
             end
         end
         % next state becomes current state
-        nxt_mat{i}=prev_mat{i};
-        
+        nxt_mat{i}=prev_mat{i};        
+
         t_state = prev_mat{i}(2:end-1,2:end-1);
+        extra_states(n,:) = t_state(:);
+        
+        % insert reduction strategy
+        % convolve filter
+        if individual.stride(i) ~= 1
+            t_state = conv2(padarray(t_state, [individual.pad_size(i) individual.pad_size(i)]), individual.kernel{i}, 'valid');
+        end
+        t_state = t_state(1:individual.stride(i):end, 1:individual.stride(i):end);
+        t_state(t_state ~= 0) = 2*t_state(t_state ~= 0)-1;
+        
+        % sum blocks
+        %t_state = sepblockfun(t_state,[width  width],@sum)/width.^2;
+    
         states{i}(n,:) = double(t_state(:));  
     end
     
@@ -103,6 +122,7 @@ for i= 1:config.num_reservoirs
         states{i} = states{i}(mod(1:size(states{i},1),individual.time_period(i)) == 1,:);
     end
 end
+
 
 % Add leak states, if used
 if config.leak_on

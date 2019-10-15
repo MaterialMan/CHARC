@@ -38,7 +38,13 @@ output_weights = train_output_sequence(config.wash_out+1:end,:)'*states*inv(stat
 
 test_states =  config.assessFcn(individual,test_input_sequence,config);
 
-Y = test_states * output_weights';
+%Y = test_states * output_weights';
+
+if config.discrete
+    Y = double((test_states * output_weights') > 0);
+else
+    Y = test_states * output_weights';
+end
 
 MC_k= 0; Cm = 0; 
 test_in_var = test_input_sequence(config.wash_out+1:end,1);

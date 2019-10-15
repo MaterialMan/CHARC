@@ -132,9 +132,10 @@ switch(config.res_type)
         config.timestep = 2; % integer in femtoseconds | 1 to 10 sensible range
         
     case 'GOL'
-        config.leak_on = 0;                           % add leak states
+        config.leak_on = 1;                           % add leak states
         config.add_input_states = 1;                  %add input to states
         config.sparse_input_weights = 1;
+        config.discrete = 0;
         
     otherwise
         

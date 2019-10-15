@@ -49,6 +49,20 @@ pos = randperm(length(L),ceil(config.rec_rate*length(L)));
 L(pos) = W(pos);
 loser.overcrowding_threshold = reshape(L,size(loser.leak_rate));
 
+% conv filters
+W= winner.pad_size(:);
+L = loser.pad_size(:);
+pos = randperm(length(L),ceil(config.rec_rate*length(L)));         
+L(pos) = W(pos);
+loser.pad_size = reshape(L,size(loser.pad_size));
+
+W= winner.stride(:);
+L = loser.stride(:);
+pos = randperm(length(L),ceil(config.rec_rate*length(L)));         
+L(pos) = W(pos);
+loser.stride = reshape(L,size(loser.stride));
+
+
 % cycle through sub-reservoirs
 for i = 1:config.num_reservoirs
     
@@ -66,6 +80,16 @@ for i = 1:config.num_reservoirs
     L(pos) = W(pos);
     loser.input_widths{i} = reshape(L,size(loser.input_widths{i})); 
     
+    W_ks= winner.kernel_size(i);
+    L_ks = loser.kernel_size(i);
+
+    pos = randperm(length(L_ks),ceil(config.rec_rate*length(L_ks)));
+    L_ks(pos) = W_ks(pos);
+    
+    kernel{pos} = ones(L_ks(pos))./L_ks(pos).^2; % summation filter
+    loser.kernel{pos} = kernel{pos};
+    
+    loser.kernel_size = reshape(L_ks,size(loser.kernel_size));
 end
 
 % for output weights
