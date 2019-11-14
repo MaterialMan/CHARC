@@ -15,7 +15,7 @@ warning('off','all')
 rng(1,'twister');
 
 %% Setup
-config.parallel = 1;                        % use parallel toolbox
+config.parallel = 0;                        % use parallel toolbox
 
 %start paralllel pool if empty
 if isempty(gcp) && config.parallel
@@ -24,8 +24,8 @@ end
 
 %% Evolutionary parameters
 config.num_tests = 1;                        % num of runs
-config.pop_size = 20;                       % large pop better
-config.total_gens = 1000;                    % num of gens
+config.pop_size = 10;                       % large pop better
+config.total_gens = 2000;                    % num of gens
 config.mut_rate = 0.1;                       % mutation rate
 config.deme_percent = 0.2;                  % speciation percentage
 config.deme = round(config.pop_size*config.deme_percent);
@@ -34,14 +34,14 @@ config.rec_rate = 0.5;                       % recombination rate
 %% substrate details
 config_sub.pop_size = config.pop_size;
 config_sub.res_type ='RoR';               % currently only works with lattice as CPPN configured substrate
-config_sub.num_nodes = [25];                 % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
+config_sub.num_nodes = [49];                 % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
 
 config_sub = selectReservoirType(config_sub);       % get correct functions for type of reservoir
 config_sub.parallel = config.parallel;                        % use parallel toolbox
 
 %% CPPN details
-config.res_type = 'RoR';                      % can use different hierarchical reservoirs. RoR_IA is default ESN.
-config.num_nodes = [15];                  % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
+config.res_type = 'ELM';                      % can use different hierarchical reservoirs. RoR_IA is default ESN.
+config.num_nodes = [10];                  % num of nodes in subreservoirs, e.g. config.num_nodes = {10,5,15}, would be 3 subreservoirs with n-nodes each
 config = selectReservoirType(config);       % get correct functions for type of reservoir
 config.CPPN_inputs = 6;                     % coord of node A(x,y) and node B(x,y)
 config.CPPN_outputs = length(config_sub.num_nodes)*2 +1; % Output 1: input layer, 2: hidden layer, 3: outputlayer
@@ -55,7 +55,8 @@ config.dataset = 'CPPN';                 % Task to evolve for
 
 %% Task parameters
 config_sub.preprocess = 1;                   % basic preprocessing, e.g. scaling and mean variance
-config_sub.dataset = 'image_gaussian';                 % Task to evolve for
+config_sub.dataset = 'laser';                 % Task to evolve for
+config_sub.error_to_check = 'train&val&test';
 
 [config_sub] = getAdditionalParameters(config_sub);
 % get dataset
@@ -64,9 +65,9 @@ config_sub.evolve_output_weights = 0;             % evolve rather than train
 config_sub.add_input_states = 0;                  %add input to states
 
 %% general params
-config.gen_print = 15;                       % gens to display achive and database
+config.gen_print = 5;                       % gens to display achive and database
 config.start_time = datestr(now, 'HH:MM:SS');
-config.save_gen = 1e5;                      % save at gen = saveGen
+config.save_gen = inf;                      % save at gen = saveGen
 config.multi_offspring = 0;                  % multiple tournament selection and offspring in one cycle
 config.num_sync_offspring = config.deme;      % length of cycle/synchronisation step
 config.metrics = {'KR','GR','MC'};          % metrics to use
@@ -108,13 +109,13 @@ for test = 1:config.num_tests
         end
     end
         
-    % find an d print best individual
-    [best(1),best_indv(1)] = min([substrate.val_error]);
-    fprintf('\n Starting loop... Best error = %.4f\n',best);
-    
     % store error that will be used as fitness in the GA
-    store_error(test,1,:) = [substrate.val_error];%[genotype.trainError].*0.2  + [genotype.valError].*0.5 + [genotype.testError].*0.3;
+    store_error(test,1,:) = getError(config_sub.error_to_check,substrate);
     
+    % find an d print best individual
+    [best(1),best_indv(1)] = min(store_error(test,1,:));
+    
+    fprintf('\n Starting loop... Best error = %.4f\n',best);
     
     %% start GA
     for gen = 2:config.total_gens
@@ -155,10 +156,11 @@ for test = 1:config.num_tests
         
         %update errors
         store_error(test,gen,:) =  store_error(test,gen-1,:);
-        store_error(test,gen,loser) = substrate(loser).val_error;%[genotype(loser).trainError.*0.2  + genotype(loser).valError.*0.5 + genotype(loser).testError.*0.3];
-        %genotype(loser).valError;
-        best(gen)  = best(gen-1);
-        best_indv(gen) = best_indv(gen-1);
+        store_error(test,gen,loser) = getError(config_sub.error_to_check,substrate(loser));   
+        [best(test,gen),best_indv(test,gen)] = min(store_error(test,gen,:));
+
+%         best(gen)  = best(gen-1);
+%         best_indv(gen) = best_indv(gen-1);
         
         % print info
         if (mod(gen,config.gen_print) == 0)
@@ -166,8 +168,8 @@ for test = 1:config.num_tests
             fprintf('Gen %d, time taken: %.4f sec(s)\n  Winner: %.4f, Loser: %.4f, Best Error: %.4f \n',gen,toc/config.gen_print,substrate(winner).val_error,substrate(loser).val_error,best(gen));
             tic;
             % plot reservoir structure, task simulations etc.
-            plotReservoirDetails(substrate,store_error,test,best_indv,gen,loser,config_sub)
-            plotReservoirDetails(substrate,store_error,test,best_indv,gen,loser,config)
+            plotReservoirDetails(substrate,best_indv,gen,loser,config_sub)
+            plotReservoirDetails(substrate,best_indv,gen,loser,config)
         end
         
         %get metric details

@@ -1,5 +1,5 @@
 % Separation Metrics and Kernel Quality
-function metrics = getMetrics(individual,config)
+function [metrics,M] = getMetrics(individual,config)
 
 scurr = rng;
 temp_seed = scurr.Seed;
@@ -185,6 +185,9 @@ for metric_item = 1:length(config.metrics)
             
         case 'transferEntropy'
             TE = transferEntropy(X, Y, W, varargin);
+            
+        case 'connectivity'
+            metrics = [metrics individual.connectivity];
     end
 end
 

@@ -58,7 +58,9 @@ end
 
 input_sequence = [zeros(1,6); from to];
 [test_states,CPPN] = config.assessFcn(CPPN,input_sequence,config);
+%CPPN_input_weights = test_states*CPPN.output_weights(:,1);
 CPPN_input_weights = test_states*CPPN.output_weights(:,1);
+
 substrate.input_weights{1} = reshape(CPPN_input_weights,size(input));
 
 % query hidden weights
@@ -74,6 +76,7 @@ end
 
 hidden_sequence = [zeros(1,6); from to];
 [test_states,CPPN] = config.assessFcn(CPPN,hidden_sequence,config);
+%CPPN_hidden_weights = test_states*CPPN.output_weights(:,2);
 CPPN_hidden_weights = test_states*CPPN.output_weights(:,2);
 %substrate.W{1} = reshape(CPPN_hidden_weights,size(substrate.W{1}));
 
@@ -94,11 +97,17 @@ if config_sub.evolve_output_weights
     
     output_sequence = [ones(1,6); from to];
     [test_states,CPPN] = config.assessFcn(CPPN,output_sequence,config);
+    
+    %CPPN_output_weights = test_states*CPPN.output_weights(:,3);
     CPPN_output_weights = test_states*CPPN.output_weights(:,3);
     substrate.output_weights = reshape(CPPN_output_weights,size(output));
 end
 
 %assess substrate on task
-substrate = config_sub.testFcn(substrate,config_sub);
+if strcmp(config_sub.dataset,'blank')
+    substrate.behaviours = getMetrics(substrate,config_sub);
+else
+    substrate = config_sub.testFcn(substrate,config_sub);
+end
 
 end

@@ -12,31 +12,31 @@ switch(config.res_type)
         config.mutFcn = @mutateRoR;
         config.recFcn = @recombRoR;
         
-    case 'RoR' 
+    case 'RoR'
         config.createFcn = @createRoR;
         config.assessFcn = @collectRoRStates;
         config.mutFcn = @mutateRoR;
-        config.recFcn = @recombRoR;              
+        config.recFcn = @recombRoR;
         
     case 'Pipeline'
         config.createFcn = @createPipeline;
         config.assessFcn = @collectPipelineStates;
         config.mutFcn = @mutateRoR;
-        config.recFcn = @recombRoR;     
-         
+        config.recFcn = @recombRoR;
+        
     case 'Ensemble'
         config.createFcn = @createEnsemble;
         config.assessFcn = @collectEnsembleStates;
         config.mutFcn = @mutateRoR;
         config.recFcn = @recombRoR;
         config.hierarchy = 1;
-         
+        
     case 'Graph'
         config.createFcn = @createGraphReservoir;
         config.assessFcn = @assessGraphReservoir;
         config.mutFcn = @mutateRoR;
         config.recFcn = @recombRoR;
-         
+        
     case 'BZ'
         config.createFcn = @createBZReservoir;
         config.assessFcn = @assessBZReservoir;
@@ -79,17 +79,17 @@ switch(config.res_type)
         config.mutFcn = @mutateInstru;
         config.recFcn = @recombInstru;
         
-    case 'CNT' 
+    case 'CNT'
         config.createFcn = @createCNT;
         config.assessFcn = @collectCNTStates;
         config.mutFcn = @mutateCNT;
-        config.recFcn = @recombCNT; 
+        config.recFcn = @recombCNT;
         
     case 'Wave'
         config.createFcn = @createWave;
         config.assessFcn = @collectWaveStates;
         config.mutFcn = @mutateWave;
-        config.recFcn = @recombWave; 
+        config.recFcn = @recombWave;
         
     case 'MM'
         config.createFcn = @createMM;
@@ -102,6 +102,12 @@ switch(config.res_type)
         config.assessFcn = @assessGOL;
         config.mutFcn = @mutateGOL;
         config.recFcn = @recombGOL;
+        
+    case 'Ising'
+        config.createFcn = @createIsing;
+        config.assessFcn = @assessIsing;
+        config.mutFcn = @mutateIsing;
+        config.recFcn = @recombIsing;
 end
 
 if strcmp(config.res_type,'CNT')

@@ -3,14 +3,13 @@ function plotSearchwithTask(database, gen, task_error ,config)
 
 %task_error(task_error > 0.5) = 0.5;
 
-
-for order = 1:3
+for order = 1:1
     
 switch(order)
     case 1
         database_plot = database;
         task_error_plot = task_error;  
-        title_label = 'added to database';
+        %title_label = 'added to database';
     case 2
         [v,I] = sort(task_error,'descend');
         database_plot = database(I);
@@ -40,16 +39,16 @@ C = nchoosek(v,2);
 % end
 
 for i = 1:size(C,1)
-    subplot(3,3,i + (order-1)*3)
+    subplot(1,3,i + (order-1)*3)
 
-    scatter(all_behaviours(:,C(i,1)),all_behaviours(:,C(i,2)),2,task_error_plot,'filled')
+    scatter(all_behaviours(:,C(i,1)),all_behaviours(:,C(i,2)),5,task_error_plot,'filled')
 
     xlabel(config.metrics(C(i,1)))
     ylabel(config.metrics(C(i,2)))
     colormap(jet)
 end
 
-title(title_label)
+%title(title_label)
 
 colorbar;
 drawnow

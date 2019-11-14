@@ -32,8 +32,8 @@ if isempty(gcp) && config.parallel
 end
 
 % type of network to evolve
-config.res_type = 'GOL';                % state type of reservoir to use. E.g. 'RoR' (Reservoir-of-reservoirs/ESNs), 'ELM' (Extreme learning machine), 'Graph' (graph network of neurons), 'DL' (delay line reservoir) etc. Check 'selectReservoirType.m' for more.
-config.num_nodes = [10];                  % num of nodes in each sub-reservoir, e.g. if config.num_nodes = {10,5,15}, there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. For one reservoir, sate as a non-cell, e.g. config.num_nodes = 25
+config.res_type = 'RoR';                % state type of reservoir to use. E.g. 'RoR' (Reservoir-of-reservoirs/ESNs), 'ELM' (Extreme learning machine), 'Graph' (graph network of neurons), 'DL' (delay line reservoir) etc. Check 'selectReservoirType.m' for more.
+config.num_nodes = [100];                  % num of nodes in each sub-reservoir, e.g. if config.num_nodes = {10,5,15}, there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. For one reservoir, sate as a non-cell, e.g. config.num_nodes = 25
 config = selectReservoirType(config);   % collect function pointers for the selected reservoir type
 
 % Network details
@@ -54,18 +54,18 @@ config.dataset = 'blank';
 config.num_tests = 1;                        % num of tests/runs
 config.pop_size = 100;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
 config.total_gens = 5000;                    % number of generations to evolve
-config.mut_rate = 0.1;                       % mutation rate
-config.deme_percent = 0.2;                   % speciation percentage; determines interbreeding distance on a ring.
+config.mut_rate = 0.05;                       % mutation rate
+config.deme_percent = 0.1;                   % speciation percentage; determines interbreeding distance on a ring.
 config.deme = round(config.pop_size*config.deme_percent);
 config.rec_rate = 0.5;                       % recombination rate
 
 % Novelty search parameters
 config.k_neighbours = 10;                   % how many neighbours to check, e.g 10-15 is a good rule-of-thumb
-config.p_min_start = 3;%sum(config.num_nodes)/10;                     % novelty threshold. In general start low. Reduce or increase depending on network size.
+config.p_min_start = sqrt(config.num_nodes);%sum(config.num_nodes)/10;                     % novelty threshold. In general start low. Reduce or increase depending on network size.
 config.p_min_check = 200;                   % change novelty threshold dynamically after "p_min_check" generations.
 
 % general params
-config.gen_print = 10;                       % after 'gen_print' generations display archive and database
+config.gen_print = 25;                       % after 'gen_print' generations display archive and database
 config.start_time = datestr(now, 'HH:MM:SS');
 config.save_gen = inf;                       % save data at generation = save_gen
 config.param_indx = 1;                      % index for recording database quality; start from 1
@@ -247,7 +247,9 @@ all_behaviours = reshape([database.behaviours],length(database(1).behaviours),le
 
 % Add specific parameter to observe here
 % Example: plot a particular parameter:
-% lr = [database.leak_rate]';
+% param = [database.leak_rate]';
+% param = 1:length(all_behaviours);
+param = [database.connectivity]';
 
 set(0,'currentFigure',config.figure_array(1))
 title(strcat('Gen:',num2str(gen)))
@@ -264,16 +266,16 @@ end
 
 for i = 1:size(C,1)
     subplot(num_plot_x,num_plot_y,i)
-    scatter(all_behaviours(:,C(i,1)),all_behaviours(:,C(i,2)),20,1:length(all_behaviours),'filled')
+    scatter(all_behaviours(:,C(i,1)),all_behaviours(:,C(i,2)),20,param,'filled')
     
     % Replace with desired parameter:
     % scatter(all_behaviours(:,C(i,1)),all_behaviours(:,C(i,2)),20,lr,'filled')
     
     xlabel(config.metrics(C(i,1)))
     ylabel(config.metrics(C(i,2)))
-    colormap(copper)
+    colormap('jet')
 end
-
+colorbar
 drawnow
 end
 

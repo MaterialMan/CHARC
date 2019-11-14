@@ -10,7 +10,7 @@ config = getAdditionalParameters(config);
 % get dataset information
 config = selectDataset(config);
 config.figure_array(2) = figure;
-v = VideoWriter('BZ_200x200','MPEG-4');
+v = VideoWriter('Ising_10x10','MPEG-4');
 open(v);
 
 if exist('database') ~= 1

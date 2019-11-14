@@ -28,11 +28,16 @@ for i = 1:config.num_reservoirs
     input_weights = offspring.input_weights{i}(:);
     pos =  randperm(length(input_weights),ceil(config.mut_rate*length(input_weights)));
     for n = 1:length(pos)
-        if rand < 0.5 % 50% chance to zero weight
-            input_weights(pos(n)) = 0;
-        else
-            input_weights(pos(n)) = 2*rand-1;
-        end
+        % uniform mutation
+        % if rand < 0.5 % 50% chance to zero weight
+        %     input_weights(pos(n)) = 0;
+        %else
+        %    input_weights(pos(n)) = 2*rand-1;
+        % end
+        
+        % Gausssian mutation
+        input_weights(pos(n)) = input_weights(pos(n)) - randn*0.15;
+       
     end
     offspring.input_weights{i} = reshape(input_weights,size(offspring.input_weights{i}));
     
@@ -150,15 +155,29 @@ for i = 1:config.num_reservoirs
                 % select weights to change
                 pos =  randperm(length(W),ceil(config.mut_rate*length(W)));
                 for n = 1:length(pos)
-                    if rand < 0.5 % 50% chance to zero weight
-                        W(pos(n)) = 0;
-                    else
-                        W(pos(n)) = 2*rand-1;%0.5;
-                    end
+                     %if rand < 0.75 % 50% chance to zero weight
+                      %   W(pos(n)) = 0;
+                     %else
+                        %uniform mutation 
+                        %W(pos(n)) = 2*rand-1;%0.5;
+                        
+                        %if rand < rand
+                            %gaussian mutation
+                            W(pos(n)) = W(pos(n)) - randn*0.15;
+                     %end
+
                 end
                 offspring.W{i,j} = reshape(W,size(offspring.W{i,j}));
+                
+%                 if rand < 0.5 % knock out a node and its connections
+%                     pos2 = randi([1 length(offspring.W{i,j})],ceil(config.mut_rate*length(offspring.W{i,j})),1);
+%                     offspring.W{i,j}(pos2,:) = 0;
+%                     offspring.W{i,j}(:,pos2) = 0;
+%                 end
             end
         end
+        
+        offspring.connectivity(i,j) = nnz(offspring.W{i,j});    
     end
     
     % mutate activ fcns
@@ -173,6 +192,8 @@ for i = 1:config.num_reservoirs
         activFcn(pos) = {config.activ_list{randi([1 length(config.activ_list)],length(pos),1)}};
         offspring.activ_Fcn = reshape(activFcn,size(offspring.activ_Fcn));
     end
+    
+    
 end
 
 % mutate output weights

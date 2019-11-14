@@ -80,7 +80,7 @@ for pop_indx = 1:config.pop_size
                 
                 % assign additional small world weights
                 if config.SW
-                   num_SW_weights = ceil(length(nonzeros(~graph_indx))*config.P_rc);
+                   num_SW_weights = ceil(nnz(graph_indx)*config.P_rc); %~graph_indx for percentage of left-over weights, graph_indx for percentage of topological weights
                    SW_weights = rand(1,num_SW_weights)-0.5;
                    loc = find(~graph_indx);
                    SW_indx = randperm(length(loc),num_SW_weights);

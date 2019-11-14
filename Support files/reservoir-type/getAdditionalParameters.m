@@ -6,7 +6,7 @@ function [config] = getAdditionalParameters(config)
 config.num_reservoirs = length(config.num_nodes);% num of subreservoirs. Default ESN should be 1.
 config.leak_on = 1;                           % add leak states
 config.add_input_states = 1;                  %add input to states
-config.sparse_input_weights = 0;              % use sparse inputs
+config.sparse_input_weights = 1;              % use sparse inputs
 config.evolve_output_weights = 0;             % evolve rather than train
 config.evolve_feedback_weights = 0;             % find suitable feedback weights
 config.figure_array = [figure figure];
@@ -15,7 +15,7 @@ config.multi_activ = 0;                      % use different activation funcs
 config.activ_list = {@tanh};                % what activations are in use when multiActiv = 1
 config.training_type = 'Ridge';              % blank is psuedoinverse. Other options: Ridge, Bias,RLS
 config.evolve_feedback_weights = 0;
-config.undirected = 1;                       % by default all networks are directed
+config.undirected = 0;                       % by default all networks are directed
 config.undirected_ensemble = 0;              % by default all inter-network weights are directed
 
 % default reservoir input scale
@@ -137,6 +137,12 @@ switch(config.res_type)
         config.sparse_input_weights = 1;
         config.discrete = 0;
         
+    case 'Ising'
+        config.leak_on = 0;                           % add leak states
+        config.add_input_states = 1;                  %add input to states
+        config.sparse_input_weights = 1;
+        config.discrete = 1;
+        
     otherwise
         
 end
@@ -188,7 +194,7 @@ switch(config.dataset)
         
     case 'CPPN'
         config.leak_on = 0;                          % add leak states
-        config.add_input_states = 0;                  % add input to states
+        config.add_input_states = 1;                  % add input to states
         config.sparse_input_weights = 0;              % use sparse inputs
         config.evolve_output_weights = 1;             % evolve rather than train
         
@@ -196,7 +202,7 @@ switch(config.dataset)
         config.graph_type= {'fullLattice'}; 
         
         config.multi_activ = 1;                      % use different activation funcs
-        config.activ_list = {@linearNode,@sawtooth,@symFcn,@sin,@cos,@gaussDist};
+        config.activ_list = {@tanh,@linearNode,@sawtooth,@symFcn,@sin,@cos,@gaussDist};
 
     case 'attractor'
         config.leak_on = 0;                          % add leak states

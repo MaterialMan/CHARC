@@ -1,7 +1,5 @@
 function F = plotReservoirDetails(population,best_indv,gen,loser,config)
 
-
-
 % individual to print - maybe cell if using MAPelites
 if iscell(population(best_indv(gen)))
     best_individual = population{best_indv(gen)};
@@ -25,7 +23,7 @@ switch(config.dataset)
     
     case 'autoencoder'
         
-        %plotAEWeights(best_individual,config)
+        plotAEWeights(best_individual,config)
         
     case 'pole_balance'
         set(0,'currentFigure',config.figure_array(1))
@@ -147,6 +145,31 @@ switch(config.res_type)
                 t_state = extra_states(i,1:end);
                 imagesc(reshape(t_state,sqrt(size(t_state,2)),sqrt(size(t_state,2))));
                 
+                drawnow
+                if config.film
+                    F(i) = getframe(gcf);
+                else
+                    F =[];
+                end
+                if CmdKeyCallback()
+                    i = size(states,1);
+                end
+                pause(0.05);
+            end
+        end
+        
+    case {'Ising'}
+
+        if config.run_sim
+            colormap('bone')
+            set(0,'currentFigure',config.figure_array(2))
+            set(gcf,'position',[-737 236 713 557])
+            [states] = config.assessFcn(population(best_indv(gen)),config.test_input_sequence,config);
+            for i = 1:size(states,1)
+                t_state = states(i,1:end-population(best_indv(gen)).n_input_units);
+                imagesc(reshape(t_state,sqrt(size(t_state,2)),sqrt(size(t_state,2))));
+                colorbar
+                caxis([-1 1])
                 drawnow
                 if config.film
                     F(i) = getframe(gcf);
