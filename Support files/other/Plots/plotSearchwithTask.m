@@ -2,6 +2,7 @@
 function plotSearchwithTask(database, gen, task_error ,config)
 
 %task_error(task_error > 0.5) = 0.5;
+set(gcf,'position',[0,492,1657,456])
 
 for order = 1:1
     

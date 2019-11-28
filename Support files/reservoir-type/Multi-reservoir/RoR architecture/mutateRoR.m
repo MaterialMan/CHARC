@@ -37,7 +37,7 @@ for i = 1:config.num_reservoirs
         
         % Gausssian mutation
         input_weights(pos(n)) = input_weights(pos(n)) - randn*0.15;
-       
+        
     end
     offspring.input_weights{i} = reshape(input_weights,size(offspring.input_weights{i}));
     
@@ -68,7 +68,7 @@ for i = 1:config.num_reservoirs
                     w1 = find(W(pos_chng)); %all non-zero non-base weights
                     
                     %w1 = W(pos_chng)~= 0;
-                    w = w1; %set default non-zero non-base weights       
+                    w = w1; %set default non-zero non-base weights
                     
                     %pos = randperm(length(w),ceil(config.mut_rate*length(w1))); % randomly pick from all non-zero non-base weights
                     
@@ -96,7 +96,7 @@ for i = 1:config.num_reservoirs
                             pos2(p) = w(pos(p));
                             while(sum(pos2(p) == w) > 0 || sum(pos2(p) == pos2(1:p-1)) > 0)
                                 pos2(p) = randi([1 length(pos_chng)]);
-                            end 
+                            end
                             
                             W(pos_chng(pos2(p))) = 2*rand-1;
                             
@@ -104,12 +104,12 @@ for i = 1:config.num_reservoirs
                             if nnz(offspring.W{i,j}) ~= nnz(W)
                                 error('SW not working');
                             end
-%                             if W(t_pos_chng(pos2)) == 0
-%                                 error('SW not working');
-%                             end
+                            %                             if W(t_pos_chng(pos2)) == 0
+                            %                                 error('SW not working');
+                            %                             end
                         else
                             % change non-zero non-base weight to another value
-                            W(pos_chng(w(pos(p)))) = 2*rand-1; 
+                            W(pos_chng(w(pos(p)))) = 2*rand-1;
                         end
                         
                         %w = find(W(pos_chng)); %update non-zero non-base weights after mutation
@@ -120,7 +120,7 @@ for i = 1:config.num_reservoirs
                         error('SW not working');
                     end
                     
-                    offspring.W{i,j} = W;                                       
+                    offspring.W{i,j} = W;
                     
                     %change base graph
                     f = find(base_W_0);
@@ -128,56 +128,88 @@ for i = 1:config.num_reservoirs
                     
                     % select weights to change
                     for n = 1:length(pos)
-                        if rand < 0.5 % 50% chance to zero weight
-                            W(f(pos(n))) = 0;
-                        else
-                            W(f(pos(n))) = 2*rand-1;%0.5;
-                        end
+                        %                         if rand < 0.5 % 50% chance to zero weight
+                        %                             W(f(pos(n))) = 0;
+                        %                         else
+                        W(f(pos(n))) = 2*rand-1;%0.5;
+                        %end
                     end
                     offspring.W{i,j} = W;
                     
+                    
                 else
-                    W = offspring.W{i,j};
-                    f = find(adjacency(config.G{i,j}));
-                    pos = randperm(length(f),ceil(config.mut_rate*length(f)));
-                    % select weights to change
-                    for n = 1:length(pos)
-                        if rand < 0.5 % 50% chance to zero weight
-                            W(f(pos(n))) = 0;
-                        else
-                            W(f(pos(n))) = 2*rand-1;%0.5;
+                    if config.WattsStrogartz
+                        W = offspring.W{i,j};
+                        f = find(W);
+                        pos = randperm(length(f),ceil(config.mut_rate*length(f)));
+                        
+                        for n = 1:length(pos)
+                            % switch
+                            if rand < config.probability% rewiring probability
+                                % find row and col
+                                [row,col] = ind2sub(size(W),f(pos(n)));
+                                
+                                tmp_val1 = W(row,col);
+                                tmp_val2 = W(col,row);
+                                
+                                W(row,col) = 0;
+                                W(col,row) = 0;
+                                
+                                list = 1:length(W);
+                                list(list == row) = [];
+                                list(list == col) = [];
+                                
+                                indx = randi([1 length(list)]);
+                                
+                                W(row,list(indx)) = tmp_val1;
+                                W(list(indx),col) = tmp_val2;
+                            else
+                                W(f(pos(n))) = 2*rand-1;% or change weight value
+                            end
                         end
+                    else
+                        W = offspring.W{i,j};
+                        f = find(adjacency(config.G{i}));
+                        pos = randperm(length(f),ceil(config.mut_rate*length(f)));
+                        % select weights to change
+                        for n = 1:length(pos)
+                            if rand < 0.5 % 50% chance to zero weight
+                                W(f(pos(n))) = 0;
+                            else
+                                W(f(pos(n))) = 2*rand-1;%0.5;
+                            end
+                        end
+                        offspring.W{i,j} = W;
                     end
-                    offspring.W{i,j} = W;
                 end
             else
                 W = offspring.W{i,j}(:);
                 % select weights to change
                 pos =  randperm(length(W),ceil(config.mut_rate*length(W)));
                 for n = 1:length(pos)
-                     %if rand < 0.75 % 50% chance to zero weight
-                      %   W(pos(n)) = 0;
-                     %else
-                        %uniform mutation 
-                        %W(pos(n)) = 2*rand-1;%0.5;
-                        
-                        %if rand < rand
-                            %gaussian mutation
-                            W(pos(n)) = W(pos(n)) - randn*0.15;
-                     %end
-
+                    %if rand < 0.75 % 50% chance to zero weight
+                    %   W(pos(n)) = 0;
+                    %else
+                    %uniform mutation
+                    %W(pos(n)) = 2*rand-1;%0.5;
+                    
+                    %if rand < rand
+                    %gaussian mutation
+                    W(pos(n)) = W(pos(n)) - randn*0.15;
+                    %end
+                    
                 end
                 offspring.W{i,j} = reshape(W,size(offspring.W{i,j}));
                 
-%                 if rand < 0.5 % knock out a node and its connections
-%                     pos2 = randi([1 length(offspring.W{i,j})],ceil(config.mut_rate*length(offspring.W{i,j})),1);
-%                     offspring.W{i,j}(pos2,:) = 0;
-%                     offspring.W{i,j}(:,pos2) = 0;
-%                 end
+                %                 if rand < 0.5 % knock out a node and its connections
+                %                     pos2 = randi([1 length(offspring.W{i,j})],ceil(config.mut_rate*length(offspring.W{i,j})),1);
+                %                     offspring.W{i,j}(pos2,:) = 0;
+                %                     offspring.W{i,j}(:,pos2) = 0;
+                %                 end
             end
         end
         
-        offspring.connectivity(i,j) = nnz(offspring.W{i,j});    
+        offspring.connectivity(i,j) = nnz(offspring.W{i,j})/offspring.total_units.^2;
     end
     
     % mutate activ fcns

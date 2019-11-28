@@ -12,7 +12,7 @@ config.evolve_feedback_weights = 0;             % find suitable feedback weights
 config.figure_array = [figure figure];
 
 config.multi_activ = 0;                      % use different activation funcs
-config.activ_list = {@tanh};                % what activations are in use when multiActiv = 1
+config.activ_list = {@tanh,@tanh,@tanh,@tanh};                % what activations are in use when multiActiv = 1
 config.training_type = 'Ridge';              % blank is psuedoinverse. Other options: Ridge, Bias,RLS
 config.evolve_feedback_weights = 0;
 config.undirected = 0;                       % by default all networks are directed
@@ -46,18 +46,19 @@ switch(config.res_type)
         
     case 'Graph'
         
-        config.graph_type= {'Torus'};            % Define substrate. Add graph type to cell array for multi-reservoirs
+        config.graph_type= {'Ring','Ring','Ring','Ring'};            % Define substrate. Add graph type to cell array for multi-reservoirs
         % Examples: 'Hypercube','Cube'
         % 'Torus','L-shape','Bucky','Barbell','Ring', 'Ring_SW'
         % (SW=small-world), 'fullLattice_SW', 'Torus_SW'
         % 'basicLattice','partialLattice','fullLattice','basicCube','partialCube','fullCube',ensembleLattice,ensembleCube,ensembleShape
-        config.self_loop = [1];               % give node a loop to self. Must be defined as array.
+        config.self_loop = [1,1,1,1];               % give node a loop to self. Must be defined as array.
        
         if length(config.graph_type) ~= length(config.num_nodes) && length(config.self_loop) ~= length(config.num_nodes)
             error('Number of graph types does not match number of reservoirs. Add more in getDataSetInfo.m')
         end
         
         % node details and connectivity
+        config.WattsStrogartz = 0;
         config.SW = 0;                                              % graph is SW network. Change ratio of random connections with config.P_rc 
         config.P_rc = 0;                                         % percentage of random connections. Used for Small World Networks
         config.ensemble_graph = 0;                                  % no connections between mutli-graph reservoirs

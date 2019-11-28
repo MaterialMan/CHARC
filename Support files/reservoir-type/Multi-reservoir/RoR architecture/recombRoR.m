@@ -68,13 +68,30 @@ for i = 1:config.num_reservoirs
                     pos = randperm(length(f),ceil(config.rec_rate*length(f)));
                     L(f(pos)) = W(f(pos));
                     loser.W{i,j} = L;
+                    
+                    %loser.connectivity = nnz(loser.W{i,j})/(length(loser.W{i,j}).^2);
                 else
-                    W= winner.W{i,j};
-                    L = loser.W{i,j};
-                    f = find(adjacency(config.G{i,j}));
-                    pos = randperm(length(f),ceil(config.rec_rate*length(f)));
-                    L(f(pos)) = W(f(pos));
-                    loser.W{i,j} = L;
+                    if config.WattsStrogartz
+                        % must maintain same number of total connections
+                        W= winner.W{i,j}(:);
+                        L = loser.W{i,j}(:);
+                        pos1 = randperm(length(L),ceil(config.rec_rate*length(L)));
+                        pos2 = randperm(length(L),ceil(config.rec_rate*length(L)));
+                        nnz_chk1 = nnz(L(pos1));
+                        nnz_chk2 = nnz(W(pos2));
+                        while(nnz_chk1 ~= nnz_chk2)
+                            pos2 = randperm(length(W),ceil(config.rec_rate*length(W)));
+                            nnz_chk2 = nnz(W(pos2));
+                        end
+                        L(pos2) = W(pos1);
+                    else
+                        W= winner.W{i,j};
+                        L = loser.W{i,j};
+                        f = find(adjacency(config.G{i}));
+                        pos = randperm(length(f),ceil(config.rec_rate*length(f)));
+                        L(f(pos)) = W(f(pos));
+                        loser.W{i,j} = L;
+                    end
                 end
             else
                 W= winner.W{i,j}(:);

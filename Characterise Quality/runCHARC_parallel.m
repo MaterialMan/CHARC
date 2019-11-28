@@ -1,4 +1,4 @@
-%% CHARC framework
+%% CHARC framework in parallel
 % The CHARC framework measures the quality of a reservoir substrate using
 % the total number and diversity of behaviours realisable by different substrate configurations.
 % To search for all realisable behaviours in the substrate's abstract behaviour space,
@@ -6,18 +6,20 @@
 % algorithm). The search and fitness calculation is performed in this
 % behaviour space and not the configuration space.
 %
-% To start 'runCHARC.m', define the substrate-to-test ('res_type'),
+% To start 'runCHARC_parallel.m', define the substrate-to-test ('res_type'),
 % behaviours to be measured ('metrics') and details of the
 % genetic algorithm (population, generations etc.). After 'gen_print'
 % generations, the script will display the behaviour space and where different
 % reservoir configurations sit in this space.
 
 % Author: M. Dale
-% Date: 03/07/19
+% Date: 20/11/19
 
-clear
-close all
+function runCHARC_parallel(num_CPUs)
+
 % add all subfolders to the path --> make all functions in subdirectories available
+%addpath(genpath('/mnt/lustre/users/md596/working-branch/')); % make sure filepath is correct
+%addpath(genpath('/....))
 addpath(genpath('/branches/working-branch/'));
 
 %set random seed for experiments
@@ -25,15 +27,16 @@ rng(1,'twister');
 
 %% Setup
 config.parallel = 1;                        % use parallel toolbox
-
+config.num_CPUs = num_CPUs;
+    
 %start paralllel pool if empty
 if isempty(gcp) && config.parallel
-    parpool('local',4,'IdleTimeout', Inf); % create parallel pool
+    parpool('local',config.num_CPUs,'IdleTimeout', Inf); % create parallel pool
 end
 
 % type of network to evolve
 config.res_type = 'RoR';                % state type of reservoir to use. E.g. 'RoR' (Reservoir-of-reservoirs/ESNs), 'ELM' (Extreme learning machine), 'Graph' (graph network of neurons), 'DL' (delay line reservoir) etc. Check 'selectReservoirType.m' for more.
-config.num_nodes = [10,10,10];                  % num of nodes in each sub-reservoir, e.g. if config.num_nodes = {10,5,15}, there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. For one reservoir, sate as a non-cell, e.g. config.num_nodes = 25
+config.num_nodes = [10,10,10,10];                  % num of nodes in each sub-reservoir, e.g. if config.num_nodes = {10,5,15}, there would be 3 sub-reservoirs with 10, 5 and 15 nodes each. For one reservoir, sate as a non-cell, e.g. config.num_nodes = 25
 config = selectReservoirType(config);   % collect function pointers for the selected reservoir type
 
 % Network details
@@ -53,7 +56,7 @@ config.dataset = 'blank';
 %% Evolutionary parameters
 config.num_tests = 1;                        % num of tests/runs
 config.pop_size = 100;                       % initail population size. Note: this will generally bias the search to elitism (small) or diversity (large)
-config.total_gens = 10000;                    % number of generations to evolve
+config.total_gens = 250;                    % number of generations to evolve
 config.mut_rate = 0.05;                       % mutation rate
 config.deme_percent = 0.1;                   % speciation percentage; determines interbreeding distance on a ring.
 config.deme = round(config.pop_size*config.deme_percent);
@@ -65,10 +68,11 @@ config.p_min_start = sqrt(sum(config.num_nodes));%sum(config.num_nodes)/10;     
 config.p_min_check = 100;                   % change novelty threshold dynamically after "p_min_check" generations.
 
 % general params
-config.gen_print = 50;                       % after 'gen_print' generations display archive and database
+config.gen_print = 10;                       % after 'gen_print' generations display archive and database
 config.start_time = datestr(now, 'HH:MM:SS');
 config.save_gen = inf;                       % save data at generation = save_gen
 config.param_indx = 1;                      % index for recording database quality; start from 1
+config.multi_offspring = 1;                 % CHARC with paralleised search , config.parallel must be 1
 
 % prediction parameters
 config.get_prediction_data = 0;             % collect task performances after experiment. Variables below are applied if '1'.
@@ -123,71 +127,151 @@ for tests = 1:config.num_tests
     % reset variables for novelty threshold
     cnt_no_change = 1;
     config.p_min = config.p_min_start;
+    db_cnt = length(population)+1;
     
     % start generational loop
     for gen = 2:config.total_gens
         
         rng(gen,'twister');
         
-        % Tournment selection - pick two individuals.
-        equal = 1;
-        while(equal)
-            indv1 = randi([1 config.pop_size]);
-            indv2 = indv1+randi([1 config.deme]); %Second within in deme range of the first
-            if indv2 > config.pop_size
-                indv2 = indv2- config.pop_size;
+        if config.multi_offspring
+            
+            pop_size = config.pop_size;
+            deme = config.deme;
+            
+            parfor p = 1:config.num_CPUs
+                
+                rng(gen + p,'twister')
+                % Tournment selection - pick two individuals
+                equal = 1;
+                while(equal) % find pair who are within deme range
+                    indv_1 = randi([1 pop_size]);
+                    indv_2 = indv_1 + randi([1 deme]);
+                    if indv_2 > pop_size % loop around, i.e population is on a ring
+                        indv_2 = indv_2 - pop_size;
+                    end
+                    if indv_1 ~= indv_2
+                        equal = 0;
+                    end
+                end
+                
+                %calculate distances in behaviour space using KNN search
+                pop_behaviours = reshape([population.behaviours],length(population(1).behaviours),pop_size)';
+                fit_indv1 = findKNN([archive; pop_behaviours],pop_behaviours(indv_1,:),config.k_neighbours);
+                fit_indv2 = findKNN([archive; pop_behaviours],pop_behaviours(indv_2,:),config.k_neighbours);
+                
+                % Assess fitness of both and assign winner/loser - highest score
+                % wins
+                if fit_indv1 > fit_indv2
+                    winner(p)=indv_1; loser(p) = indv_2;
+                else
+                    winner(p)=indv_2; loser(p) = indv_1;
+                end
+                
+                %% Infection and mutation phase
+                offspring{p} = config.recFcn(population(winner(p)),population(loser(p)),config);
+                offspring{p} = config.mutFcn(offspring{p},config);
+                
+                %% Evaluate and update fitness of offspring/loser
+                offspring{p}.behaviours = getMetrics(offspring{p},config);
+                
             end
-            if indv1 ~= indv2
-                equal = 0;
+            
+            % find unique losers
+            [U,ia,ic]  = unique(loser);                
+            
+            % replace losers in population
+            population(loser(ia)) = [offspring{ia}];   % replace losers (does not replace replicates)
+                        
+            for p = 1:length(ia)
+                
+                % add offspring details to database
+                database(db_cnt) = offspring{p};
+                db_cnt = db_cnt +1;
+                % reset behaviours of population for fitness assessment
+                pop_behaviours(loser(ia(p)),:) = offspring{ia(p)}.behaviours;
+                
+                % calculate offsprings neighbours in behaviour space - using
+                % population and archive
+                fit_offspring(p) = findKNN([archive; pop_behaviours],offspring{ia(p)}.behaviours,config.k_neighbours);
+                
+                %add offspring to archive under conditions
+                if  fit_offspring(p) > config.p_min || rand < 0.001 % random chance of being added to archive
+                    if length(archive) < 150
+                        archive(end+1,:) = pop_behaviours(loser(ia(p)),:);
+                    else
+                        archive = [archive(2:end,:); pop_behaviours(loser(ia(p)),:)]; % pop & push
+                    end
+                    cnt_change(gen) = 1;
+                    cnt_no_change(gen) = 0;
+                else
+                    cnt_no_change(gen) = 1;
+                    cnt_change(gen) = 0;
+                end
+                
             end
-        end
-        
-        %calculate distances in behaviour space using KNN search
-        pop_behaviours = reshape([population.behaviours],length(population(1).behaviours),config.pop_size)';
-        fit_indv1 = findKNN([archive; pop_behaviours],pop_behaviours(indv1,:),config.k_neighbours);
-        fit_indv2 = findKNN([archive; pop_behaviours],pop_behaviours(indv2,:),config.k_neighbours);
-        
-        % Assess fitness of both and assign winner/loser - highest score
-        % wins
-        if fit_indv1 > fit_indv2
-            winner=indv1; loser = indv2;
         else
-            winner=indv2; loser = indv1;
-        end
-        
-        %% Infection and mutation phase
-        % winner infects loser
-        offspring = config.recFcn(population(winner),population(loser),config);
-        
-        % mutate offspring/loser
-        offspring = config.mutFcn(offspring,config);
-        
-        %% Evaluate and update fitness of offspring/loser
-        offspring.behaviours = getMetrics(offspring,config);
-        
-        % Store behaviours
-        population(loser) = offspring;
-        pop_behaviours(loser,:) = offspring.behaviours;
-        
-        % calculate offsprings neighbours in behaviour space - using
-        % population and archive
-        fit_offspring = findKNN([archive; pop_behaviours],offspring.behaviours,config.k_neighbours);
-        
-        % add offspring details to database
-        database(config.pop_size + gen-1) = offspring;
-        
-        %add offspring to archive under conditions
-        if  fit_offspring > config.p_min || rand < 0.001 % random chance of being added to archive
-            if length(archive) < 150
-                archive(end+1,:) = pop_behaviours(loser,:);
+            % Tournment selection - pick two individuals.
+            equal = 1;
+            while(equal)
+                indv1 = randi([1 config.pop_size]);
+                indv2 = indv1+randi([1 config.deme]); %Second within in deme range of the first
+                if indv2 > config.pop_size
+                    indv2 = indv2- config.pop_size;
+                end
+                if indv1 ~= indv2
+                    equal = 0;
+                end
+            end
+                                   
+            %calculate distances in behaviour space using KNN search
+            pop_behaviours = reshape([population.behaviours],length(population(1).behaviours),config.pop_size)';
+            fit_indv1 = findKNN([archive; pop_behaviours],pop_behaviours(indv1,:),config.k_neighbours);
+            fit_indv2 = findKNN([archive; pop_behaviours],pop_behaviours(indv2,:),config.k_neighbours);
+            
+            % Assess fitness of both and assign winner/loser - highest score
+            % wins
+            if fit_indv1 > fit_indv2
+                winner=indv1; loser = indv2;
             else
-                archive = [archive(2:end,:); pop_behaviours(loser,:)]; % pop & push
+                winner=indv2; loser = indv1;
             end
-            cnt_change(gen) = 1;
-            cnt_no_change(gen) = 0;
-        else
-            cnt_no_change(gen) = 1;
-            cnt_change(gen) = 0;
+            
+            %% Infection and mutation phase
+            % winner infects loser
+            offspring = config.recFcn(population(winner),population(loser),config);
+            
+            % mutate offspring/loser
+            offspring = config.mutFcn(offspring,config);
+            
+            %% Evaluate and update fitness of offspring/loser
+            offspring.behaviours = getMetrics(offspring,config);
+            
+            % Store behaviours
+            population(loser) = offspring;
+            pop_behaviours(loser,:) = offspring.behaviours;
+            
+            % calculate offsprings neighbours in behaviour space - using
+            % population and archive
+            fit_offspring = findKNN([archive; pop_behaviours],offspring.behaviours,config.k_neighbours);
+            
+            % add offspring details to database
+            database(config.pop_size + gen-1) = offspring;
+            
+            %add offspring to archive under conditions
+            if  fit_offspring > config.p_min || rand < 0.001 % random chance of being added to archive
+                if length(archive) < 150
+                    archive(end+1,:) = pop_behaviours(loser,:);
+                else
+                    archive = [archive(2:end,:); pop_behaviours(loser,:)]; % pop & push
+                end
+                cnt_change(gen) = 1;
+                cnt_no_change(gen) = 0;
+            else
+                cnt_no_change(gen) = 1;
+                cnt_change(gen) = 0;
+            end
+            
         end
         
         %dynamically adapt p_min -- minimum novelty threshold
@@ -204,7 +288,8 @@ for tests = 1:config.num_tests
         
         % print info
         if (mod(gen,config.gen_print) == 0)
-            fprintf('Gen %d, time taken: %.4f sec(s)\n Winner is %d, Loser is %d \n',gen,toc/config.gen_print,winner,loser);
+            %fprintf('Gen %d, time taken: %.4f sec(s)\n Winner is %d, Loser is %d \n',gen,toc/config.gen_print,winner,loser);
+            fprintf('Gen %d, time taken: %.4f sec(s)\n',gen,toc/config.gen_print);
             fprintf('Length of archive: %d, p_min; %d \n',length(archive), config.p_min);
             tic;
             plotSearch(database,gen,config)        % plot details
@@ -233,6 +318,7 @@ for tests = 1:config.num_tests
 end
 config.finish_time = datestr(now, 'HH:MM:SS');
 
+end
 
 %% fitness function for novelty search
 function [avg_dist] = findKNN(behaviours,Y,k_neighbours)
@@ -249,7 +335,7 @@ all_behaviours = reshape([database.behaviours],length(database(1).behaviours),le
 % Example: plot a particular parameter:
 % param = [database.leak_rate]';
  param = 1:length(all_behaviours);
-%param = [database.connectivity]';
+% param = [database.connectivity]';
 
 set(0,'currentFigure',config.figure_array(1))
 title(strcat('Gen:',num2str(gen)))
@@ -267,9 +353,6 @@ end
 for i = 1:size(C,1)
     subplot(num_plot_x,num_plot_y,i)
     scatter(all_behaviours(:,C(i,1)),all_behaviours(:,C(i,2)),20,param,'filled')
-    
-    % Replace with desired parameter:
-    % scatter(all_behaviours(:,C(i,1)),all_behaviours(:,C(i,2)),20,lr,'filled')
     
     xlabel(config.metrics(C(i,1)))
     ylabel(config.metrics(C(i,2)))
@@ -297,7 +380,7 @@ end
 
 function saveData(database_history,database,quality,tests,config)
 config.figure_array =[];
-save(strcat('Framework_substrate_',config.res_type,'_run',num2str(tests),'_gens',num2str(config.total_gens),'_',num2str(config.num_reservoirs),'Nres_'),...
+save(strcat('/mnt/lustre/users/md596/working-branch/Framework_substrate_',config.res_type,'_run',num2str(tests),'_gens',num2str(config.total_gens),'_',num2str(config.num_reservoirs),'Nres_'),...
     'database_history','database','config','quality','-v7.3');
 
 end
