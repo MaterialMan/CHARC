@@ -32,9 +32,7 @@ for i= 1:config.num_reservoirs
             input_mul{i,r}(mod(1:size(input_mul{i,r},1),individual.time_period(i)) == 1,:,:) = input{i,r};
         else
             input_mul{i,r} = input{i,r};
-        end
-        
-        
+        end  
     end
     
     % change input widths
@@ -72,6 +70,8 @@ a = individual.a;
 b = individual.b;
 c = individual.c;
 
+step = 1; % update step
+
 %% Calculate reservoir states - general state equation for multi-reservoir system: x(n) = f(Win*u(n) + S)
 for n = 2:size(input_mul{1},1)
     
@@ -86,22 +86,22 @@ for n = 2:size(input_mul{1},1)
         c_b = zeros(xres,yres);
         c_c = zeros(xres,yres);
         
-        for m=1:xres
+        for m=1:step:xres
             
-            for nn=1:yres
-
-            idx_temp = idx(m:m+2,:);
-            idx_temp= idx_temp(:,nn:nn+2);
-            idx_temp=idx_temp(:);
-            
-            % shift?
-            if p==2
-                idx_temp=idx_temp+(xres+0)*(yres+0);
-            end
-            
-            c_a(m,nn) =c_a(m,nn) + sum(a(idx_temp));
-            c_b(m,nn) =c_b(m,nn) + sum(b(idx_temp));
-            c_c(m,nn) =c_c(m,nn) + sum(c(idx_temp));
+            for nn=1:step:yres
+                
+                idx_temp = idx(m:m+2,:);
+                idx_temp= idx_temp(:,nn:nn+2);
+                idx_temp=idx_temp(:);
+                
+                % shift?
+                if p==2
+                    idx_temp=idx_temp+(xres+0)*(yres+0);
+                end
+                
+                c_a(m,nn) =c_a(m,nn) + sum(a(idx_temp));
+                c_b(m,nn) =c_b(m,nn) + sum(b(idx_temp));
+                c_c(m,nn) =c_c(m,nn) + sum(c(idx_temp));
             end
         end
         

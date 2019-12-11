@@ -1,4 +1,4 @@
-function population = createGraphReservoir(config)
+function population = createSWReservoir(config)
 
 %% Reservoir Parameters
 for pop_indx = 1:config.pop_size
@@ -71,18 +71,42 @@ for pop_indx = 1:config.pop_size
         for j= 1:config.num_reservoirs
             
             if i == j
-                internal_weights = zeros(size(population(pop_indx).G{i}.Nodes,1));
-                % find indices for graph weights
-                graph_indx = logical(full(adjacency(population(pop_indx).G{i})));
                 
-                % assign directed weights
-                internal_weights(graph_indx) = rand(1,length(nonzeros(graph_indx)))-0.5;
+                switch(config.SW_type)
+                    
+                    case 'watts_strogartz'
+                        internal_weights = zeros(population(pop_indx).nodes(i));
+                        
+                        [population(pop_indx).G{i}, population(pop_indx).s, population(pop_indx).t] = WattsStrogatz(population(pop_indx).nodes(i),config.num_edges,config.P_rc);
+                        
+                        % find indices for graph weights
+                        graph_indx = logical(full(adjacency(population(pop_indx).G{i})));
+                        
+                        % assign directed weights
+                        internal_weights(graph_indx) = 2*rand(1,length(nonzeros(graph_indx)))-1;
+                        
+                    case 'topology_plus_weights'
+                        internal_weights = zeros(size(population(pop_indx).G{i}.Nodes,1));
+                        
+                        % find indices for topolgy weights
+                        graph_indx = logical(full(adjacency(population(pop_indx).G{i})));
+                        
+                        % assign topological weights
+                        internal_weights(graph_indx) = rand(1,length(nonzeros(graph_indx)))-0.5;
+                        
+                        % assign additional small world weights
+                        num_SW_weights = ceil(nnz(~graph_indx)*config.P_rc); %~graph_indx for percentage of left-over weights, graph_indx for percentage of topological weights
+                        SW_weights = rand(1,num_SW_weights)-0.5;
+                        loc = find(~graph_indx);
+                        SW_indx = randperm(length(loc),num_SW_weights);
+                        internal_weights(loc(SW_indx)) = SW_weights;
+                end
                 
                 % remove directed weights, make symmetrical
                 if config.undirected
                     internal_weights = triu(internal_weights)+triu(internal_weights,1)';
                 end
-                
+                 
                 population(pop_indx).connectivity(i,j) = nnz(internal_weights)/length(graph_indx).^2;
                 
             else

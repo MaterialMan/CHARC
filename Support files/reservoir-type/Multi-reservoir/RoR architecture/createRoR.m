@@ -65,7 +65,7 @@ for pop_indx = 1:config.pop_size
         
         for j= 1:config.num_reservoirs
             
-            population(pop_indx).connectivity(i,j) =  0; % seems to work better from scratch 
+            population(pop_indx).connectivity(i,j) = 0;  
             
             internal_weights = sprand(population(pop_indx).nodes(i), population(pop_indx).nodes(j), population(pop_indx).connectivity(i,j));
             internal_weights(internal_weights ~= 0) = ...

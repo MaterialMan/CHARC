@@ -41,65 +41,12 @@ for i = 1:config.num_reservoirs
             L(f(pos)) = W(f(pos));
             L = triu(L)+triu(L,1)';
             loser.W{i,j} = L;
-        else
-            if strcmp(config.res_type,'Graph')
-                if config.SW
-                    % change SW weights - problem: will add more connections
-                    W_weights = winner.W{i,j};  % current graph
-                    L_weights = loser.W{i,j};  % current graph
-                    base_W_0 = adjacency(config.G{i,j});
-                    pos_chng = find(~base_W_0); % non-base weights
-                    
-                    w = find(W_weights(pos_chng));
-                    l = find(L_weights(pos_chng));
-    
-                    pos = randperm(length(l),ceil(config.rec_rate*length(l)));
-                    L_weights(pos_chng(l(pos))) = W_weights(pos_chng(w(pos)));
-                                                            
-                    if length(find(W_weights(pos_chng))) ~= length(find(L_weights(pos_chng)))
-                        error('SW not working');
-                    end
-                    loser.W{i,j} = L_weights;
-                    
-                    % change base graph
-                    W= winner.W{i,j};
-                    L = loser.W{i,j};
-                    f = find(adjacency(config.G{i,j}));
-                    pos = randperm(length(f),ceil(config.rec_rate*length(f)));
-                    L(f(pos)) = W(f(pos));
-                    loser.W{i,j} = L;
-                    
-                    %loser.connectivity = nnz(loser.W{i,j})/(length(loser.W{i,j}).^2);
-                else
-                    if config.WattsStrogartz
-                        % must maintain same number of total connections
-                        W= winner.W{i,j}(:);
-                        L = loser.W{i,j}(:);
-                        pos1 = randperm(length(L),ceil(config.rec_rate*length(L)));
-                        pos2 = randperm(length(L),ceil(config.rec_rate*length(L)));
-                        nnz_chk1 = nnz(L(pos1));
-                        nnz_chk2 = nnz(W(pos2));
-                        while(nnz_chk1 ~= nnz_chk2)
-                            pos2 = randperm(length(W),ceil(config.rec_rate*length(W)));
-                            nnz_chk2 = nnz(W(pos2));
-                        end
-                        L(pos2) = W(pos1);
-                    else
-                        W= winner.W{i,j};
-                        L = loser.W{i,j};
-                        f = find(adjacency(config.G{i}));
-                        pos = randperm(length(f),ceil(config.rec_rate*length(f)));
-                        L(f(pos)) = W(f(pos));
-                        loser.W{i,j} = L;
-                    end
-                end
-            else
-                W= winner.W{i,j}(:);
-                L = loser.W{i,j}(:);
-                pos = randperm(length(L),ceil(config.rec_rate*length(L)));
-                L(pos) = W(pos);
-                loser.W{i,j} = reshape(L,size(loser.W{i,j}));
-            end
+        else             
+            W= winner.W{i,j}(:);
+            L = loser.W{i,j}(:);
+            pos = randperm(length(L),ceil(config.rec_rate*length(L)));
+            L(pos) = W(pos);
+            loser.W{i,j} = reshape(L,size(loser.W{i,j}));
         end        
     end   
     

@@ -24,8 +24,6 @@ if size(individual.activ_Fcn,2) > 1
     end
 end
 
-
-
 %% collect states
 for n = 2:size(input_sequence,1)
     
@@ -44,8 +42,6 @@ for n = 2:size(input_sequence,1)
         end
     end
 end
-
-
 
 % get leak states
 if config.leak_on

@@ -34,8 +34,8 @@ switch(config.res_type)
     case 'Graph'
         config.createFcn = @createGraphReservoir;
         config.assessFcn = @assessGraphReservoir;
-        config.mutFcn = @mutateRoR;
-        config.recFcn = @recombRoR;
+        config.mutFcn = @mutateSW;
+        config.recFcn = @recombSW;
         
     case 'BZ'
         config.createFcn = @createBZReservoir;
@@ -108,6 +108,12 @@ switch(config.res_type)
         config.assessFcn = @assessIsing;
         config.mutFcn = @mutateIsing;
         config.recFcn = @recombIsing;
+        
+    case 'SW'
+        config.createFcn = @createSWReservoir;
+        config.assessFcn = @collectRoRStates;
+        config.mutFcn = @mutateSW;
+        config.recFcn = @recombSW;
 end
 
 if strcmp(config.res_type,'CNT')

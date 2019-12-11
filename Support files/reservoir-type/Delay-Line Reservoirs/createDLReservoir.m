@@ -30,7 +30,6 @@ for pop_indx = 1:config.pop_size
         %define num of units
         population(pop_indx).nodes(i) = config.num_nodes(i);
 
-        
         % Scaling and leak rate
         population(pop_indx).input_scaling(i) = 2*rand-1; %increases nonlinearity
         population(pop_indx).leak_rate(i) = rand;
