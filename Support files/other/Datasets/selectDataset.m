@@ -12,9 +12,9 @@ switch config.dataset
     %% Chaotic systems
     case 'narma_10' %input error 4 - good task
         err_type = 'NMSE';
-        wash_out =200;
-        sequence_length = 8000;
-        train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
+        wash_out =100;
+        sequence_length = 5000;
+        train_fraction=0.6;    val_fraction=0.2;    test_fraction=0.2;
         [input_sequence,output_sequence] = generate_new_NARMA_sequence(sequence_length,10);
         input_sequence = 2*input_sequence-0.5;
         output_sequence = 2*output_sequence-0.5;
@@ -22,9 +22,9 @@ switch config.dataset
         
     case 'narma_20' %input error 4 - good task
         err_type = 'NMSE';
-        wash_out =200;
-        sequence_length = 8000;
-        train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
+        wash_out =100;
+        sequence_length = 5000;
+        train_fraction=0.6;    val_fraction=0.2;    test_fraction=0.2;
         [input_sequence,output_sequence] = generate_new_NARMA_sequence(sequence_length,20);
         input_sequence = 2*input_sequence-0.5;
         output_sequence = 2*output_sequence-0.5;
@@ -32,9 +32,9 @@ switch config.dataset
         
     case 'narma_30' %input error 4 - good task
         err_type = 'NMSE';
-        wash_out =200;
-        sequence_length = 8000;
-        train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
+        wash_out =100;
+        sequence_length = 5000;
+        train_fraction=0.6;    val_fraction=0.2;    test_fraction=0.2;
         [input_sequence,output_sequence] = generate_new_NARMA_sequence(sequence_length,30);
         input_sequence = 2*input_sequence-0.5;
         output_sequence = 2*output_sequence-0.5;
@@ -64,10 +64,10 @@ switch config.dataset
     case 'henon_map' % input error > 1 - good task
         
         err_type = 'NMSE';
-        wash_out =200;
-        sequence_length= 8000;
+        wash_out =100;
+        sequence_length= 5000;
         stdev = 0.05;
-        train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
+        train_fraction=0.5;    val_fraction=0.2;    test_fraction=0.2;
         [input_sequence,output_sequence] = generateHenonMap(sequence_length,stdev);
         
         %% Time-series
@@ -110,9 +110,9 @@ switch config.dataset
         
         err_type = 'NMSE';
         % Sante Fe Laser generator task
-        wash_out =200;
-        sequence_length = 8000;
-        train_fraction=0.25;    val_fraction=0.375;    test_fraction=0.375;
+        wash_out =100;
+        sequence_length = 5000;
+        train_fraction=0.6;    val_fraction=0.2;    test_fraction=0.2;
         
         ahead = 1;
         data = laser_dataset;  %checkout the list at http://uk.mathworks.com/help/nnet/gs/neural-network-toolbox-sample-data-sets.html
@@ -121,8 +121,7 @@ switch config.dataset
         output_sequence = data(ahead+1:end)';
         
         %fprintf('Laser task TSP - 64 electrode test: %s \n',datestr(now, 'HH:MM:SS'))
-        
-        
+               
     case 'sunspot' % good task but not sure about dataset- problem with dividing set
         
         err_type = 'NMSE';
@@ -329,8 +328,8 @@ switch config.dataset
         err_type = 'softmax';%'IJCNNpaper';%'confusion';
         
         wash_out = 0;
-        % train_fraction=0.66666667;    val_fraction=0.333333/2;    test_fraction=0.333333/2;
-        train_fraction=0.5;    val_fraction=0.25;    test_fraction=0.25;
+
+        train_fraction=0.6;    val_fraction=0.2;    test_fraction=0.2;
         dataset_length = 150;
         
         t =  randperm(dataset_length,dataset_length);
@@ -342,8 +341,8 @@ switch config.dataset
     case 'MSO'
         err_type = 'NRMSE';
         wash_out =100;
-        sequence_length= 2000;
-        train_fraction=0.583333;    val_fraction=0.16667;    test_fraction=0.25;
+        sequence_length= 5000;
+        train_fraction=0.6;    val_fraction=0.2;    test_fraction=0.2;
         
         for t = 1:sequence_length
             u(1,t) = sin(0.2*t)+sin(0.311*t);
@@ -508,6 +507,9 @@ if config.evolve_feedback_weights
     output_sequence(output_sequence ~= 0) = (1--1)*(output_sequence(output_sequence ~= 0)-min(output_sequence(output_sequence ~= 0)))/(max(output_sequence(output_sequence ~= 0))- min(output_sequence(output_sequence ~= 0)))-1;
 end
 
+% rescale training data
+[input_sequence] = featureNormailse(input_sequence,config.preprocess); 
+
 % split datasets
 [train_input_sequence,val_input_sequence,test_input_sequence] = ...
     split_train_test3way(input_sequence,train_fraction,val_fraction,test_fraction);
@@ -515,36 +517,13 @@ end
 [train_output_sequence,val_output_sequence,test_output_sequence] = ...
     split_train_test3way(output_sequence,train_fraction,val_fraction,test_fraction);
 
-
-if config.preprocess
-    
-    % rescale training data
-    [train_input_sequence,config.input_scaler] = mapminmax(train_input_sequence');
-    [train_output_sequence,config.target_scaler] = mapminmax(train_output_sequence');
-    
-    % apply scalers to validation sets
-    val_input_sequence = mapminmax('apply',val_input_sequence',config.input_scaler);
-    val_output_sequence = mapminmax('apply',val_output_sequence',config.target_scaler);
-    
-    test_input_sequence = mapminmax('apply',test_input_sequence',config.input_scaler);
-    test_output_sequence = mapminmax('apply',test_output_sequence',config.target_scaler);
-    
-    % squash into structure
-    config.train_input_sequence = train_input_sequence';
-    config.train_output_sequence = train_output_sequence';
-    config.val_input_sequence = val_input_sequence';
-    config.val_output_sequence = val_output_sequence';
-    config.test_input_sequence = test_input_sequence';
-    config.test_output_sequence = test_output_sequence';
-else
-    % squash into structure
-    config.train_input_sequence = train_input_sequence;
-    config.train_output_sequence = train_output_sequence;
-    config.val_input_sequence = val_input_sequence;
-    config.val_output_sequence = val_output_sequence;
-    config.test_input_sequence = test_input_sequence;
-    config.test_output_sequence = test_output_sequence;
-end
+% squash into structure
+config.train_input_sequence = train_input_sequence;
+config.train_output_sequence = train_output_sequence;
+config.val_input_sequence = val_input_sequence;
+config.val_output_sequence = val_output_sequence;
+config.test_input_sequence = test_input_sequence;
+config.test_output_sequence = test_output_sequence;
 
 config.wash_out = wash_out;
 config.err_type = err_type;

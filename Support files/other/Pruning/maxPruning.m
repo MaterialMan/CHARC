@@ -82,7 +82,12 @@ for iter = 1:config.prune_iterations*2
             new_behaviour(f) = getfield(new_individual,output_to_check{f});           
         end
         
-        chng_fitness = sum((new_behaviour-base_behaviour) <= bounds)/length(base_behaviour) == 1 ;
+        if  new_behaviour <= base_behaviour
+            chng_fitness = 1;%(sum((new_behaviour-base_behaviour) <= bounds)/length(base_behaviour) == 1);
+            base_behaviour = new_behaviour;
+        else
+            chng_fitness = 0;
+        end
  
     else
         %get behaviour

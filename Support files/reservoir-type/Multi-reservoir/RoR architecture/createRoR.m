@@ -34,7 +34,7 @@ for pop_indx = 1:config.pop_size
         
        %inputweights
         if config.sparse_input_weights
-            input_weights = sprand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1, 0); 
+            input_weights = sprand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1, 0.1); 
             input_weights(input_weights ~= 0) = ...
                 2*input_weights(input_weights ~= 0)  - 1;
             population(pop_indx).input_weights{i} = input_weights;
@@ -65,7 +65,7 @@ for pop_indx = 1:config.pop_size
         
         for j= 1:config.num_reservoirs
             
-            population(pop_indx).connectivity(i,j) = 0;  
+            population(pop_indx).connectivity(i,j) = 0.1;  
             
             internal_weights = sprand(population(pop_indx).nodes(i), population(pop_indx).nodes(j), population(pop_indx).connectivity(i,j));
             internal_weights(internal_weights ~= 0) = ...
