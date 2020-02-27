@@ -6,7 +6,7 @@ The CHARC framework, which is still central, can be applied to lots of computing
 
 Thanks to this new update, it is now easier than before to add new tasks, behaviour measures, optimisation methods, etc., making it a useful playground for experimentation and research.
 
-For more details on how to use the general ecosystem, go to the [Wiki](https://github.com/MaterialMan/CHARC/wiki) for some basic tutorials.
+For more details on how to use the general ecosystem, go to the [Wiki](https://github.com/MaterialMan/CHARC/wiki) for some basic tutorials. *After the recent update some variables in the tutorials may have changed names.
 
 ***Disclaimer: Some reservoirs are still in the exploratory phase and may still be under development. For example, parameters and input-output mechanisms are currently lines of research, therefore feel free to play with/change/improve any implementations.
 
