@@ -16,7 +16,7 @@ for i= 1:config.num_reservoirs
 end
 
 % preassign activation function calls
-if size(individual.activ_Fcn,2) > 1
+if config.multi_activ%size(individual.activ_Fcn,2) > 1 
     for i= 1:config.num_reservoirs
         for p = 1:length(config.activ_list)
             index{i,p} = findActiv({individual.activ_Fcn{i,:}},config.activ_list{p});
@@ -38,7 +38,7 @@ for n = 2:size(input_sequence,1)
             input = ([individual.bias_node states{i-1}(n,:)])';
         end
         
-        if size(individual.activ_Fcn,2) > 1
+        if config.multi_activ%size(individual.activ_Fcn,2) > 1
             for p = 1:length(config.activ_list)             
                 states{i}(n,index{i,p}) = config.activ_list{p}(((individual.input_weights{i}(index{i,p},:)*individual.input_scaling(i))*input)+ x{i}(n,index{i,p})');
             end
@@ -68,4 +68,8 @@ if config.add_input_states == 1
     final_states = [final_states input_sequence];
 end
 
-final_states = final_states(config.wash_out+1:end,:); % remove washout
+if size(input_sequence,1) == 2
+    final_states = final_states(end,:); % remove washout
+else
+    final_states = final_states(config.wash_out+1:end,:); % remove washout
+end

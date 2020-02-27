@@ -55,9 +55,7 @@ switch(config.err_type)
         
     case 'NMSE'
         err= mean((desired_output-system_output).^2)/var(desired_output);
-      
-      
-        
+              
     case 'NMSE_mem'
         err = computeNRMSE(system_output,desired_output).^2;
         %err = mean((systemOutput-desiredOutput(config.wash_out+1:end,:)).^2/var(systemOutput));

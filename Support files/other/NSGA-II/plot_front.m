@@ -12,12 +12,12 @@ else
     grid(ax, 'on');
     switch(objs)
         case 2
-            xlabel(ax, config.dataSet{1});
-            ylabel(ax, config.dataSet{2});
+            xlabel(ax, config.dataset_list{1});
+            ylabel(ax, config.dataset_list{2});
         case 3
-            xlabel(ax, config.dataSet{1});
-            ylabel(ax, config.dataSet{2});
-            zlabel(ax, config.dataSet{3});
+            xlabel(ax, config.dataset_list{1});
+            ylabel(ax, config.dataset_list{2});
+            zlabel(ax, config.dataset_list{3});
     end
     hold(ax, 'on');  
 end

@@ -41,14 +41,23 @@ for pop_indx = 1:config.pop_size
         population(pop_indx).leak_rate(i) = rand;
         
         % input weights
-        if config.sparse_input_weights
-            input_weights = sprand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1, 0.1);
-            input_weights(input_weights ~= 0) = ...
-                2*input_weights(input_weights ~= 0)  - 1;
-            population(pop_indx).input_weights{i} = input_weights;
-        else
-            population(pop_indx).input_weights{i} = 2*rand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1)-1;
+        switch(config.input_weight_initialisation)
+            case 'norm' % normal distribution
+                if config.sparse_input_weights
+                    input_weights = sprandn(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1, 0.1);
+                else
+                    input_weights = randn(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1);
+                end
+            case 'uniform' % uniform dist between -1 and 1
+                if config.sparse_input_weights
+                    input_weights = sprand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1, 0.1);
+                    input_weights(input_weights ~= 0) = ...
+                        2*input_weights(input_weights ~= 0)  - 1;
+                else
+                    input_weights = 2*rand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1)-1;
+                end
         end
+        population(pop_indx).input_weights{i} = input_weights;
         
         
         % add other necessary parameters

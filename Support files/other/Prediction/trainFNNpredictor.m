@@ -16,8 +16,8 @@ net = fitnet(hiddenLayerSize,trainFcn);
 
 % Choose Input and Output Pre/Post-Processing Functions
 % For a list of all processing functions type: help nnprocess
-net.input.processFcns = {'removeconstantrows','mapminmax','mapstd'};
-net.output.processFcns = {'removeconstantrows','mapminmax','mapstd'};
+net.input.processFcns = {'removeconstantrows','mapstd'}; %'mapminmax',;
+net.output.processFcns = {'removeconstantrows','mapstd'}; %'mapminmax',;
 
 % Setup Division of Data for Training, Validation, Testing
 % For a list of all data division functions type: help nndivision
@@ -29,7 +29,7 @@ net.divideParam.testRatio = 10/100;
 
 % Choose a Performance Function
 % For a list of all performance functions type: help nnperformance
-net.performFcn = 'mse';  % Mean Squared Error
+net.performFcn = 'mae';  % Mean Squared Error
 
 % Train the Network
 [net,tr] = train(net,x,t);

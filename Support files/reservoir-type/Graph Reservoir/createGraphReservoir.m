@@ -25,7 +25,7 @@ for pop_indx = 1:config.pop_size
         
         %define num of units
         population(pop_indx).nodes(i) = config.num_nodes(i);
-
+        
         
         % Scaling and leak rate
         population(pop_indx).input_scaling(i) = 2*rand-1; %increases nonlinearity
@@ -74,8 +74,16 @@ for pop_indx = 1:config.pop_size
                 internal_weights = zeros(size(population(pop_indx).G{i}.Nodes,1));
                 % find indices for graph weights
                 graph_indx = logical(full(adjacency(population(pop_indx).G{i})));
-                % assign weights
+                
+                % assign directed weights
                 internal_weights(graph_indx) = rand(1,length(nonzeros(graph_indx)))-0.5;
+                
+                % remove directed weights, make symmetrical
+                if config.undirected
+                    internal_weights = triu(internal_weights)+triu(internal_weights,1)';
+                end
+                
+                population(pop_indx).connectivity(i,j) = nnz(internal_weights)/length(graph_indx).^2;
                 
             else
                 if ~config.ensemble_graph
@@ -84,12 +92,16 @@ for pop_indx = 1:config.pop_size
                     internal_weights = sprand(population(pop_indx).nodes(i), population(pop_indx).nodes(j), population(pop_indx).connectivity(i,j));
                     internal_weights(internal_weights ~= 0) = ...
                         internal_weights(internal_weights ~= 0)  - 0.5;
+                    
+                    if config.undirected_ensemble
+                        internal_weights = triu(internal_weights)+triu(internal_weights,1)';
+                    end
                 else
                     internal_weights = zeros(population(pop_indx).nodes(i), population(pop_indx).nodes(j));
                 end
             end
             % assign scaling for inner weights
-            population(pop_indx).W_scaling(i,j) = rand;
+            population(pop_indx).W_scaling(i,j) = 2*rand;
             population(pop_indx).W{i,j} = internal_weights;
             
         end

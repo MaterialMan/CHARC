@@ -12,10 +12,11 @@ for i= 1:config.num_reservoirs
         states{i} = zeros(size(input_sequence,1),individual.nodes(i));
     end
     x{i} = zeros(size(input_sequence,1),individual.nodes(i));
+    
 end
 
 % preassign activation function calls
-if size(individual.activ_Fcn,2) > 1
+if config.multi_activ%size(individual.activ_Fcn,2) > 1
     for i= 1:config.num_reservoirs
         for p = 1:length(config.activ_list)
             index{i,p} = findActiv({individual.activ_Fcn{i,:}},config.activ_list{p});
@@ -32,13 +33,27 @@ for n = 2:size(input_sequence,1)
             x{i}(n,:) = x{i}(n,:) + ((individual.W{i,k}*individual.W_scaling(i,k))*states{k}(n-1,:)')';
         end
         
-        if size(individual.activ_Fcn,2) > 1
+        if config.multi_activ
             for p = 1:length(config.activ_list)
-                states{i}(n,index{i,p}) = config.activ_list{p}(((individual.input_weights{i}(index{i,p},:)*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,index{i,p})');
+                if config.evolve_feedback_weights
+                    states{i}(n,index{i,p}) = config.activ_list{p}(((individual.input_weights{i}(index{i,p},:)*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,index{i,p})' + individual.feedback_weights*states{i}(n-1,:)*individual.output_weights(1:end-config.add_input_states,:));
+                else
+                    states{i}(n,index{i,p}) = config.activ_list{p}(((individual.input_weights{i}(index{i,p},:)*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,index{i,p})');
+                end
             end
         else
-           states{i}(n,:) = individual.activ_Fcn{1}(((individual.input_weights{i}*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,:)');
+            if config.evolve_feedback_weights
+                states{i}(n,:) = individual.activ_Fcn{i}(((individual.input_weights{i}*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])') + x{i}(n,:)'+ (individual.feedback_scaling*individual.feedback_weights)*states{i}(n-1,:)*individual.output_weights(1:end-config.add_input_states,:));
+            else
+                states{i}(n,:) = individual.activ_Fcn{i}(((individual.input_weights{i}*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,:)');
+            end
         end
+        
+        % add IIR filter
+        %         if config.iir_filter_on && n > config.iir_filter_order
+        %             prev_states = states{i}(n-(1:config.iir_filter_order),:);
+        %             filter_states(n+1,:) = iirFilterStates(prev_states,filter_states(n-(1:config.iir_filter_order),:),individual,config);
+        %         end
         
     end
 end
@@ -47,6 +62,7 @@ end
 if config.leak_on
     states = getLeakStates(states,individual,input_sequence,config);
 end
+
 
 % concat all states for output weights
 final_states = [];
@@ -62,4 +78,8 @@ if config.add_input_states == 1
     final_states = [final_states input_sequence];
 end
 
-final_states = final_states(config.wash_out+1:end,:); % remove washout
+if size(input_sequence,1) == 2
+    final_states = final_states(end,:); % remove washout
+else
+    final_states = final_states(config.wash_out+1:end,:); % remove washout
+end

@@ -14,7 +14,7 @@ else
     % Find best reg parameter
     reg_train_error = [];
     reg_val_error =[];reg_weights=[];
-    reg_param = [10e-1 10e-3 10e-5 10e-7 10e-9];
+    reg_param = [10e-1 10e-3 10e-5 10e-7 10e-9 10e-11];
     
     for i = 1:length(reg_param)
         %Train: tanspose is inversed compared to equation

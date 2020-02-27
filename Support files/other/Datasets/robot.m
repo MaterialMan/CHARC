@@ -1,5 +1,5 @@
 %% Assess genotype on robot task
-function individual = robot(individual,config)
+function [individual,states] = robot(individual,config)
 
 % store current seed and reset seed for simulations -- why? robot simulation
 % starts from random positions
@@ -17,8 +17,8 @@ end
 % run robot simulation
 if config.robot_tests <= 4 && config.run_sim == 0
     %temp_geno = genotype;
-      parfor i = 1:num_tests
-        [~,temp_geno(i)]= robotSim(config.robot_behaviour,config.time_steps,'max',[],individual,config);
+      for i = 1:num_tests
+        [~,temp_geno(i),states]= robotSim(config.robot_behaviour,config.time_steps,'max',[],individual,config);
         
         %record fitness
         train_error(i) = temp_geno(i).train_error;
@@ -27,7 +27,7 @@ if config.robot_tests <= 4 && config.run_sim == 0
       end    
 else
     for i = 1:num_tests
-        [~,individual]= robotSim(config.robot_behaviour,config.time_steps,'max',[],individual,config);
+        [~,individual,states]= robotSim(config.robot_behaviour,config.time_steps,'max',[],individual,config);
         %record fitness
         train_error(i) = individual.train_error;
         val_error(i) = individual.val_error;

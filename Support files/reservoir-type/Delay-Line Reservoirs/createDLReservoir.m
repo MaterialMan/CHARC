@@ -30,7 +30,6 @@ for pop_indx = 1:config.pop_size
         %define num of units
         population(pop_indx).nodes(i) = config.num_nodes(i);
 
-        
         % Scaling and leak rate
         population(pop_indx).input_scaling(i) = 2*rand-1; %increases nonlinearity
         population(pop_indx).leak_rate(i) = rand;
@@ -38,24 +37,32 @@ for pop_indx = 1:config.pop_size
         % mackey glass parameters: eta, gamma and p must be > 0
         population(pop_indx).eta(i) = rand;
         population(pop_indx).gamma(i) = rand;
-        population(pop_indx).p(i) = 1;
-        population(pop_indx).x0(i) = 0.01;
+        population(pop_indx).p(i) = randi([1 20]);
+        population(pop_indx).x0(i) = 0; % initial value
         population(pop_indx).T(i) = 1; %time-scale of node
         population(pop_indx).time_step(i) = 0.1;
         
         % set reservoir specific parameters round(20*rand);
-        population(pop_indx).tau(i) = 80; % lenght of delay line
+        population(pop_indx).tau(i) = config.tau(i); % length of delay line
         population(pop_indx).theta(i) = population(pop_indx).tau(i)/population(pop_indx).nodes(i); % distance between virtual nodes
                      
         
-       %inputweights - MASK for DL
+       %inputweights - MASK for DL, binary weights either [-0.1,0.1]
        if config.sparse_input_weights
            input_weights = sprand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units, 0.1);
            input_weights(input_weights ~= 0) = ...
                2*input_weights(input_weights ~= 0)  - 1;
-           population(pop_indx).input_weights{i} = input_weights;
-       else           
-           population(pop_indx).input_weights{i} = (sign(rand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units)-0.5)*0.1);%(round(rand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units))*0.1);
+           if config.binary_weights
+                population(pop_indx).input_weights{i} = sign(input_weights);
+           else
+               population(pop_indx).input_weights{i} = input_weights;
+           end
+       else      
+           if config.binary_weights
+                population(pop_indx).input_weights{i} = (sign(rand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units)-0.5));
+           else
+                population(pop_indx).input_weights{i} = (2*rand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units)-1);
+           end
        end
           
         population(pop_indx).last_state{i} = zeros(1,population(pop_indx).nodes(i));

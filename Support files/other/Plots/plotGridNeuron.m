@@ -1,4 +1,4 @@
-function plotGridNeuron(figure1,individual,store_error,test,best_indv,loser,config)
+function plotGridNeuron(figure1,individual,best_indv,loser,config)
 
 set(0,'currentFigure',figure1)
 
@@ -11,9 +11,10 @@ for graph_i= 1:size(config.G,2)
     else
         G = config.G;
     end
-    graph_indx = logical(full(adjacency(G)));
-    individual(best_indv).W{graph_i,graph_i}(~graph_indx) = 0;
-    individual(loser).W{graph_i,graph_i}(~graph_indx) = 0;
+    %graph_indx = logical(full(adjacency(G)));
+    %individual(best_indv).W{graph_i,graph_i}(~graph_indx) = 0;
+    %individual(loser).W{graph_i,graph_i}(~graph_indx) = 0;
+    
     %create graphs to plot
     best_G = digraph(individual(best_indv).W{graph_i,graph_i});
     loser_G = digraph(individual(loser).W{graph_i,graph_i});

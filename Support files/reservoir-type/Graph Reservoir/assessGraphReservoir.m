@@ -11,11 +11,8 @@ for i= 1:config.num_reservoirs
     else
         states{i} = zeros(size(input_sequence,1),individual.nodes(i));
     end
-    x{i} = zeros(size(input_sequence,1),individual.nodes(i));
-    
-    % reset weights to correct graph structure 
-    graph_indx{i} = logical(full(adjacency(individual.G{i})));
-    individual.W{i,i}(~graph_indx{i}) = 0;
+    x{i} = zeros(size(input_sequence,1),individual.nodes(i));    
+      
 end
 
 % preassign activation function calls
@@ -46,8 +43,6 @@ for n = 2:size(input_sequence,1)
     end
 end
 
-
-
 % get leak states
 if config.leak_on
     states = getLeakStates(states,individual,input_sequence,config);
@@ -67,5 +62,9 @@ if config.add_input_states == 1
     final_states = [final_states input_sequence];
 end
 
-final_states = final_states(config.wash_out+1:end,:); % remove washout    
+if size(input_sequence,1) == 2
+    final_states = final_states(end,:); % remove washout
+else
+    final_states = final_states(config.wash_out+1:end,:); % remove washout
+end
   

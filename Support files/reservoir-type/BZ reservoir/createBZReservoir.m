@@ -1,64 +1,104 @@
+%% create_ReservoirName_.m
+% Template function to define reservoir parameters. Use this as a guide when
+% creating a new reservoir.
+%
+% How this function looks at the end depends on the reservoir. However,
+% everything below is typically needed to work with all master scripts.
+% Tip: Try maintain ordering as structs keep this ordering.
 
-function genotype = createBZReservoir(config)
+% This is called by the @config.createFcn pointer.
 
-genotype = [];
-for res = 1:config.popSize
+function population = createBZReservoir(config)
+
+%% Reservoir Parameters
+for pop_indx = 1:config.pop_size
     
-    genotype(res).trainError = 1;
-    genotype(res).valError = 1;
-    genotype(res).testError = 1;
+    % add performance records
+    population(pop_indx).train_error = 1;
+    population(pop_indx).val_error = 1;
+    population(pop_indx).test_error = 1;
     
-    genotype(res).inputShift = 1;
+    % add single bias node
+    population(pop_indx).bias_node = 1;
     
-    if isempty(config.trainInputSequence)
-        genotype(res).nInputUnits = 1;
-        genotype(res).nOutputUnits = 1;
-        config.task_num_inputs = 1;
-        config.task_num_outputs = 1;
+    % assign input/output count
+    if isempty(config.train_input_sequence)
+        population(pop_indx).n_input_units = 1;
+        population(pop_indx).n_output_units = 1;
     else
-        genotype(res).nInputUnits = size(config.trainInputSequence,2);
-        genotype(res).nOutputUnits = size(config.trainOutputSequence,2);
-        config.task_num_inputs = size(config.trainInputSequence,2);
-        config.task_num_outputs =size(config.trainOutputSequence,2);
+        population(pop_indx).n_input_units = size(config.train_input_sequence,2);
+        population(pop_indx).n_output_units = size(config.train_output_sequence,2);
     end
     
-    genotype(res).size = config.maxMinorUnits;
-    genotype(res).a = rand(genotype(res).size,genotype(res).size,2);
-    genotype(res).b = rand(genotype(res).size,genotype(res).size,2);
-    genotype(res).c = rand(genotype(res).size,genotype(res).size,2);
+    % iterate through subreservoirs
+    for i = 1:config.num_reservoirs
+        
+        %define num of units
+        population(pop_indx).nodes(i) = config.num_nodes(i).^2;
+        
+        % Scaling and leak rate
+        population(pop_indx).input_scaling(i,:) = 2*rand(1,3)-1; %increases nonlinearity
+        population(pop_indx).leak_rate(i) = rand;
+        
+        % input weights
+        for r = 1:3
+            if config.sparse_input_weights
+                input_weights = sprand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1, 0.01);
+                input_weights(input_weights ~= 0) = ...
+                    2*input_weights(input_weights ~= 0)  - 1;
+                population(pop_indx).input_weights{i,r} = input_weights;
+            else
+                population(pop_indx).input_weights{i,r} = 2*rand(population(pop_indx).nodes(i),  population(pop_indx).n_input_units+1)-1;
+            end
+            widths = ceil(abs(randn(length(input_weights),1))*2); %less likely to get big inputs
+            widths(widths > round(sqrt(population(pop_indx).nodes(i))/8)) = round(sqrt(population(pop_indx).nodes(i))/8);% cap at 1/6 size of space 
+            population(pop_indx).input_widths{i,r} = widths; %size of the inputs; pin-point or broad
+       end
+        
+        % add other necessary parameters
+        % e.g., population(pop_indx).param1(i) = rand
+        population(pop_indx).a = rand(config.num_nodes(i),config.num_nodes(i),2);
+        population(pop_indx).b = rand(config.num_nodes(i),config.num_nodes(i),2);
+        population(pop_indx).c = rand(config.num_nodes(i),config.num_nodes(i),2);
+        
+        population(pop_indx).time_period(i) = randi([1 3]);
+        
+        % individual should keep track of final state for certain tasks
+        population(pop_indx).last_state{i} = zeros(1,population(pop_indx).nodes(i));
+    end
     
-    %genotype(res).num_dots = randi([1 20]);
-    genotype(res).time_interval = 1;
-    genotype(res).dot_perc = 0.01;%rand;
-    genotype(res).nTotalUnits = config.maxMinorUnits.^2;
+    %track total nodes in use
+    population(pop_indx).total_units = 0;
     
-    genotype(res).input_loc = zeros((genotype(res).size.^2)*3,1);
-    genotype(res).input_loc(randperm(size(genotype(res).input_loc,1),round(randi([1 round(size(genotype(res).input_loc,1))])*genotype(res).dot_perc))) = 1;
-    genotype(res).totalInputs = sum(genotype(res).input_loc);
     
-    %inputweights
-    if config.sparseInputWeights
-        inputWeights = sprand((genotype(res).size.^2)*3,config.task_num_inputs, 0.1); %1/genotype.esnMinor(res,i).nInternalUnits
-        inputWeights(inputWeights ~= 0) = ...
-            2*inputWeights(inputWeights ~= 0)  - 1;
-        genotype(res).w_in = inputWeights;
+    %% weights and connectivity of all reservoirs
+    for i= 1:config.num_reservoirs
+        
+        for j= 1:config.num_reservoirs
+            
+            % If used, add internal connectivity weights 'W{i==j}' of networks here
+            
+            % Assign scaling for inner weights here, e.g. 'W_scaling(i) = rand'
+            
+            % If multiple reservoirs are connected, add connectivity weight matrix
+            % `W{i!=j}` here. This should be place in off-diagnal positions
+            
+            
+        end
+        % count total nodes including sub-reservoir nodes
+        population(pop_indx).total_units = population(pop_indx).total_units + population(pop_indx).nodes(i);
+    end
+    
+    
+    % Add random output weights - these are typically trained for tasks but
+    % can be evolved as well
+    if config.add_input_states
+        population(pop_indx).output_weights = 2*rand(population(pop_indx).total_units*3 + population(pop_indx).n_input_units, population(pop_indx).n_output_units)-1;
     else
-        if config.restricedWeight
-        for r = 1:config.task_num_inputs
-            genotype(res).w_in(:,r) = datasample(0.2:0.2:1,(genotype(res).size.^2)*3);%2*rand((genotype(res).size.^2)*3,config.task_num_inputs)-1; %1/genotype.esnMinor(res,i).nInternalUnits
-        end
-        else
-            genotype(res).w_in = 2*rand((genotype(res).size.^2)*3,config.task_num_inputs)-1; %1/genotype.esnMinor(res,i).nInternalUnits
-        end
+        population(pop_indx).output_weights = 2*rand(population(pop_indx).total_units*3, population(pop_indx).n_output_units)-1;
     end
     
-    genotype(res).outputWeights = zeros(genotype(res).size*genotype(res).size*3,1);
-    
-    if config.evolvedOutputStates
-        genotype(res).state_perc = 0.1;
-        genotype(res).state_loc = zeros((genotype(res).size.^2)*3,1);
-        genotype(res).state_loc(randperm(size(genotype(res).state_loc,1),round(randi([1 round(size(genotype(res).state_loc,1))])*genotype(res).state_perc))) = 1;
-        genotype(res).totalStates = sum(genotype(res).state_loc);
-    end
+    % Add placeholder for behaviours
+    population(pop_indx).behaviours = [];
     
 end

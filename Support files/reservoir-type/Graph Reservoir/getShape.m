@@ -3,7 +3,6 @@
 
 function [config,new_num_nodes] = getShape(config)
 
-temp_num_nodes = [];
 
 for graph_indx = 1:length(config.num_nodes)
     
@@ -28,6 +27,7 @@ for graph_indx = 1:length(config.num_nodes)
             
         case 'Torus'
             config.rule_type = 'Moores';
+            config.torus_rings = config.num_nodes;
             G = torusGraph(num_nodes,config.self_loop(graph_indx),config);
             config.plot_3d = 1;    % plot graph in 3D.
             
@@ -42,9 +42,10 @@ for graph_indx = 1:length(config.num_nodes)
             
         case 'Ring'
             config.rule_type = 0;
+            config.torus_rings = 1;
             G = torusGraph(num_nodes,config.self_loop(graph_indx),config);
-            config.plot_3d = 0;    % plot graph in 3D.
-            
+            config.plot_3d = 0;    % plot graph in 3D.                 
+  
         otherwise
             error('Requires a substrate shape. Check graph type.')
     end

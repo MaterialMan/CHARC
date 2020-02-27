@@ -1,0 +1,5 @@
+
+% radial basis functions in MATLAB
+> radbas(n): Radial basis transfer function
+> radbasn(n) Normalised radial basis transfer function 
+> tribas(n): Triangular basis transfer function

@@ -149,9 +149,11 @@ ncolor = rgb2hsv(ncolor);
 
 % Create figure
 if nargin < 5
-    figure('renderer','zbuffer','visible','off')
+    %figHandle = figure('renderer','zbuffer','visible','off')
 else
-    figHandle;%('renderer','zbuffer','visible','off')
+    set(0,'currentFigure',figHandle)
+    set(figHandle,'renderer','zbuffer','visible','off')
+    
 end
 axes('NextPlot','add')
 
@@ -227,6 +229,7 @@ xlims      = [min(xlims), max(xlims)];
 % Stretch figure
 posfa(1,3) = (( diff(xlims)/2 - 1)*posfa(2,3) + 1) * posfa(1,3);
 posfa(1,4) = (( diff(ylims)/2 - 1)*posfa(2,4) + 1) * posfa(1,4);
+
 % Position it a bit lower (movegui slow)
 posfa(1,2) = 100;
 
@@ -234,7 +237,8 @@ posfa(1,2) = 100;
 set(gca, 'Xlim',xlims,'Ylim',ylims, 'color', 'w','XColor','none','YColor','none',...
          'clim',[-1,1],'FontName','Arial')
      
-set(gcf, 'pos' ,posfa(1,:),'Visible','on')
+%set(figHandle, 'pos' ,posfa(1,:),'Visible','on')
+set(figHandle,'Visible','on')
 axis equal
 
 % Set colormap

@@ -4,23 +4,24 @@ function y = fitnessNSGAII(genotype,config)
 %Assess each task
 y = zeros(1,config.num_objectives);
 for j = 1:config.num_objectives
-    config.trainInputSequence = config.data{1,j}.trainInputSequence;
-    config.trainOutputSequence = config.data{1,j}.trainOutputSequence;
+    config.train_input_sequence = config.data{1,j}.train_input_sequence;
+    config.train_output_sequence = config.data{1,j}.train_output_sequence;
     
-    config.valInputSequence = config.data{1,j}.valInputSequence;
-    config.valOutputSequence = config.data{1,j}.valOutputSequence;
+    config.val_input_sequence = config.data{1,j}.val_input_sequence;
+    config.val_output_sequence = config.data{1,j}.val_output_sequence;
     
-    config.testInputSequence = config.data{1,j}.testInputSequence;
-    config.testOutputSequence = config.data{1,j}.testOutputSequence;
+    config.test_input_sequence = config.data{1,j}.test_input_sequence;
+    config.test_output_sequence = config.data{1,j}.test_output_sequence;
     
-    config.nForgetPoints =  config.data{1,j}.nForgetPoints;
-    config.errType = config.data{1,j}.errType;
+    config.wash_out =  config.data{1,j}.wash_out;
+    config.err_type = config.data{1,j}.err_type;
     
-    config.task_num_inputs = size(config.trainInputSequence,2);
-    config.task_num_outputs = size(config.trainOutputSequence,2);
+    config.task_num_inputs = size(config.train_input_sequence,2);
+    config.task_num_outputs = size(config.train_output_sequence,2);
     
-    genotype = testReservoir(genotype,config);
-    y(j) = sum(genotype.valError);%sum(genotype.trainError + genotype.valError);
+    genotype = config.testFcn(genotype,config);
+    y(j) = getError(config.error_to_check,genotype);
+    %sum(genotype.valError);%sum(genotype.trainError + genotype.valError);
 end
 
 end

@@ -1,5 +1,5 @@
 %% Find best performances based on metrics using PSO - evaluate on tasks
-function [final_error, final_metrics, best_indv, output] =  psoOnDatabase(config,database,genotype)
+function [final_error, final_metrics, best_indv, output] =  psoOnDatabase(config,metrics,database)
 
 rng(config.rngState,'twister');
 %record video
@@ -9,33 +9,54 @@ open(vid);
 
 config.track_pos = [];
 config.track_value = [];
-        
+
 %call func
-nvars = length(config.metrics);%1;%length(config.metrics); 
-fun = @(x) getError(x);
+nvars = length(config.metrics);%1;%length(config.metrics);
+
+p_cnt = 1;
+fun = @(x) getPSOError(x);
 
 options = optimoptions('particleswarm','SwarmSize',config.swarm_size,'HybridFcn',@fmincon,'MaxStallIterations',...
     config.maxStall,'MaxIterations',config.maxIter,'Display','iter','InertiaRange',config.InertiaRange,...
-    'SelfAdjustmentWeight',config.SelfAdjustmentWeight,'SocialAdjustmentWeight',config.SocialAdjustmentWeight,'MinNeighborsFraction',config.MinNeigh,'PlotFcn',@pswplotswarm);%,'OutputFcn',@pswplotranges);
-lb= min(database);%1;%min(database);
-hb= max(database);% length(database);%max(database);
+    'SelfAdjustmentWeight',config.SelfAdjustmentWeight,'SocialAdjustmentWeight',config.SocialAdjustmentWeight,'MinNeighborsFraction',config.MinNeigh,'PlotFcn',@pswplotswarm,'UseParallel',true);%,'OutputFcn',@pswplotranges);
+lb= min(metrics);%1;%min(database);
+hb= max(metrics);% length(database);%max(database);
 cnt =1; F =[];
+
+% get datasets
+for d = 1:length(config.task_list)
+    config.dataset = config.task_list{d};
+    [dataset{d}] = selectDataset(config);
+end
+
+if isfield(database,'pop_indx')
+    for indv = 1:length(database)
+        %database(indv).pop_indx = mod(indv,10) + 1; %max([database.pop_indx])
+        database(indv).pop_indx = indv;
+    end
+end
 
 %run pso
 [metrics_pos,final_error,~,output] = particleswarm(fun,nvars,lb,hb,options);
-        
-best_indv = round(metrics_pos);
-final_metrics = database(round(metrics_pos),:);
 
-    function y = getError(x)
-        distances = pdist2(database,round(x));%[round(x(1)) x(2)]);
-        [~,indx] = min(distances); 
+final_metrics = round(metrics_pos);
+best_dist = pdist2(metrics,round(final_metrics));%[round(x(1)) x(2)]);
+[~,best_indv] = min(best_dist);
+        
+%final_metrics = metrics(round(metrics_pos),:);
+
+    function y = getPSOError(x)
+        distances = pdist2(metrics,round(x));%[round(x(1)) x(2)]);
+        [~,indx] = min(distances);
         %indx = round(x);
         
         %evaluate ESN on task
-        task_error = assessDBonTasks(config,genotype(indx),database(indx,:));
+        for n = 1:length(config.task_list)
+            database(indx) = config.testFcn(database(indx),dataset{n});
+            error(n) = getError(config.error_to_check,database(indx));
+        end
         
-        y = task_error.outputs; 
+        y = sum(error);
         
     end
 
@@ -43,10 +64,10 @@ final_metrics = database(round(metrics_pos),:);
         set(gcf,'position', [24 349 1632 497]);
         
         stop = false; % This function does not stop the solver
-                
-        distances = pdist2(database,round(optimValues.swarm));%[round(x(1)) x(2)]);
-        [~,s] = min(distances); 
-
+        
+        distances = pdist2(metrics,round(optimValues.swarm));%[round(x(1)) x(2)]);
+        [~,s] = min(distances);
+        
         %s = round(optimValues.swarm);
         
         config.track_pos = [config.track_pos s];
@@ -70,24 +91,24 @@ final_metrics = database(round(metrics_pos),:);
             subplot(num_plot_x,num_plot_y,i)
             
             % grey out all reservoirs to highlight database
-            scatter(database(:,C(i,1)),database(:,C(i,2)),10,[0.75 0.75 0.75],'filled')
+            scatter(metrics(:,C(i,1)),metrics(:,C(i,2)),10,[0.75 0.75 0.75],'filled')
             hold on
-             
+            
             % add colour to reservoirs been evaluated
             %scatter(config.track_pos(:,C(i,1)),config.track_pos(:,C(i,2)),10,config.track_value,'filled')
-            scatter(database(config.track_pos,C(i,1)),database(config.track_pos,C(i,2)),10,config.track_value,'filled')           
-              
+            scatter(metrics(config.track_pos,C(i,1)),metrics(config.track_pos,C(i,2)),10,config.track_value,'filled')
+            
             % show swarm as blue
-            scatter(database(s,C(i,1)),database(s,C(i,2)),20,[0 0 1],'filled')
+            scatter(metrics(s,C(i,1)),metrics(s,C(i,2)),20,[0 0 1],'filled')
             
             % highlight top 5 locations
             %scatter(config.track_pos(top5_indx(1:5),C(i,1)),config.track_pos(top5_indx(1:5),C(i,2)),20,[1 0 0],'filled')
-            scatter(database(config.track_pos(top5_indx(1:5)),C(i,1)),database(config.track_pos(top5_indx(1:5)),C(i,2)),20,[1 0 0],'filled')
+            scatter(metrics(config.track_pos(top5_indx(1:5)),C(i,1)),metrics(config.track_pos(top5_indx(1:5)),C(i,2)),20,[1 0 0],'filled')
             
             hold off
             
             if i ==2
-                title(strcat('Lowest error found: ',num2str(min(config.track_value),3),', Space searched: ',num2str((optimValues.funccount/length(database))*100,2),'%'))
+                title(strcat('Lowest error found: ',num2str(min(config.track_value),3),', Space searched: ',num2str((optimValues.funccount/length(metrics))*100,2),'%'))
             end
             
             xlabel(config.metrics(C(i,1)))
@@ -97,9 +118,10 @@ final_metrics = database(round(metrics_pos),:);
         end
         
         drawnow
+        
         %make video
-        F = getframe(gcf);
-        writeVideo(vid,F);
+        %         F = getframe(gcf);
+        %         writeVideo(vid,F);
         cnt = cnt +1;
     end
 

@@ -66,4 +66,8 @@ if config.add_input_states == 1
     final_states = [final_states input_sequence];
 end
 
-final_states = final_states(config.wash_out+1:end,:); % remove washout
+if size(input_sequence,1) == 2
+    final_states = final_states(end,:); % remove washout
+else
+    final_states = final_states(config.wash_out+1:end,:); % remove washout
+end

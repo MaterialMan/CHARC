@@ -34,14 +34,21 @@ loser.time_period = reshape(L,size(loser.time_period));
 
 
 for i = 1:config.num_reservoirs
-
-  % input weights
+    
+    % input weights
     W= winner.input_weights{i}(:);
     L = loser.input_weights{i}(:);
     pos = randperm(length(L),ceil(config.rec_rate*length(L)));
     L(pos) = W(pos);
     loser.input_weights{i} = reshape(L,size(loser.input_weights{i}));
-           
+    
+    % input widths
+    W= winner.input_widths{i}(:);
+    L = loser.input_widths{i}(:);
+    pos = randperm(length(L),ceil(config.rec_rate*length(L)));
+    L(pos) = W(pos);
+    loser.input_widths{i} = reshape(L,size(loser.input_widths{i}));
+    
     % rules
     if config.mono_rule
         W= winner.rules{i}(:,1);
@@ -54,10 +61,10 @@ for i = 1:config.num_reservoirs
         L = loser.rules{i}(:);
         pos = randperm(length(L),ceil(config.rec_rate*length(L)));
         L(pos) = W(pos);
-        loser.rules{i} = int8(reshape(L,size(loser.rules{i})));       
+        loser.rules{i} = int8(reshape(L,size(loser.rules{i})));
     end
-
-    if strcmp(config.res_type,'RBN')       
+    
+    if strcmp(config.res_type,'RBN')
         % swap nodes
         W = winner.RBN_node{i};
         L = loser.RBN_node{i};
@@ -78,7 +85,7 @@ for i = 1:config.num_reservoirs
             L(pos) = W(pos);
             loser.W{i,j} = reshape(L,size(loser.W{i,j}));
         end
-    end  
+    end
     
     % initial states
     W= winner.initial_states{i}(:);
@@ -93,8 +100,8 @@ for i = 1:config.num_reservoirs
     % check and update rules, etc.
     loser.RBN_node{i} = assocRules(loser.RBN_node{i}, loser.rules{i});
     %loser.RBN_node{i} = assocNeighbours(loser.RBN_node{i}, loser.W{i,i});
-      
-
+    
+    
 end
 
 % for output weights
