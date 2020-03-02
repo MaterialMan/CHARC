@@ -62,7 +62,7 @@ for pop_indx = 1:config.pop_size
                 population(pop_indx).activ_Fcn{i,act} = config.activ_list{activ_positions(act)};
             end
         else
-            population(pop_indx).activ_Fcn = config.activ_list; %if multi-reservoir and not multi-activ, list must signify what local activations for each subreservoir 
+            population(pop_indx).activ_Fcn{i} = config.activ_list{randi([1 length(config.activ_list)])}; %if multi-reservoir and not multi-activ, list must signify what local activations for each subreservoir 
         end
         
         % create iir filter weights - creates specific filter ranges; {1}

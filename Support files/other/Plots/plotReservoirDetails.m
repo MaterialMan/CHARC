@@ -33,10 +33,12 @@ switch(config.dataset)
         
     case 'attractor'
         
-        test_states = config.assessFcn(best_individual,config.test_input_sequence,config);
-        test_sequence = test_states*best_individual.output_weights;
+        %test_states = config.assessFcn(best_individual,config.test_input_sequence,config,config.test_output_sequence);
+        %test_sequence = test_states*best_individual.output_weights;
+        test_states = config.assessFcn(loser_individual,config.test_input_sequence,config,config.test_output_sequence);
+        test_sequence = test_states*loser_individual.output_weights;
         
-        set(0,'currentFigure',config.figure_array(3))
+        set(0,'currentFigure',config.figure_array(1))
         subplot(1,3,1)
         plot(config.test_output_sequence(config.wash_out+1:end,:),'r')
         hold on
@@ -46,21 +48,28 @@ switch(config.dataset)
         subplot(1,3,2)
         X = config.test_output_sequence(config.wash_out+1:end,:);
         T = test_sequence;
-        if size(X,2) > 2
+        switch(size(X,2))
+            case 3
             plot3(X(:,1),X(:,2),X(:,3),'r');
             hold on
             plot3(T(:,1),T(:,2),T(:,3),'b');
             hold off
             xlabel('X'); ylabel('Y'); zlabel('Z');
-        else
+        case 2
             plot(X(:,1),X(:,2),'r');
             hold on
             plot(T(:,1),T(:,2),'b');
             hold off
             xlabel('X'); ylabel('Y');
+         case 1
+            plot(X(:,1),'r');
+            hold on
+            plot(T(:,1),'b');
+            hold off
+            xlabel('X');
         end
         
-        axis equal;
+        %axis equal;
         grid;
         title('Attractor');
         
@@ -239,7 +248,7 @@ switch(config.res_type)
         plotRoR(config.figure_array(2),best_individual,loser_individual,config);
         
         % plot state space
-        states = config.assessFcn(best_individual,config.test_input_sequence,config);
+        states = config.assessFcn(best_individual,config.test_input_sequence,config,config.test_output_sequence);
         %         set(0,'currentFigure',config.figure_array(1))
         %         C = nchoosek(1:size(states,2)-1,2);
         %         for i = 1:length(C)
@@ -248,7 +257,7 @@ switch(config.res_type)
         %         end
         %         hold off
         
-        set(0,'currentFigure',config.figure_array(1))
+        set(0,'currentFigure',config.figure_array(2))
         subplot(1,2,1)
         imagesc(states(:,1:end-config.task_num_inputs)')
         colorbar

@@ -1,7 +1,7 @@
 function [individual,test_states,test_sequence] = testReservoir(individual,config)
 
-train_states = config.assessFcn(individual,config.train_input_sequence,config);
-val_states = config.assessFcn(individual,config.val_input_sequence,config);
+train_states = config.assessFcn(individual,config.train_input_sequence,config,config.train_output_sequence);
+val_states = config.assessFcn(individual,config.val_input_sequence,config,config.val_output_sequence);
 
 %if W_out are evolved instead of trained
 if config.evolve_output_weights
@@ -40,7 +40,7 @@ else
 end
 
 %% Evaluate on test data
-test_states = config.assessFcn(individual,config.test_input_sequence,config);
+test_states = config.assessFcn(individual,config.test_input_sequence,config,config.test_output_sequence);
 test_sequence = test_states*individual.output_weights;
 individual.test_error = sum(calculateError(test_sequence,config.test_output_sequence,config));
 

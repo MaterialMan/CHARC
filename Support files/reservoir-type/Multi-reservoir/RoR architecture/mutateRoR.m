@@ -1,24 +1,23 @@
 %% Mutation operator used for different reservoir systems
 % Details:
-% - number of weights mutated is based on mut_rate; 50% chance to change existing weight or remove it
-% - 25% chance to change global parameters
+% - number of weights mutated is based on mut_rate; 
 function offspring = mutateRoR(offspring,config)
 
 % params - input scaling and leak rate
 input_scaling = offspring.input_scaling(:);
 pos = randperm(length(input_scaling),sum(rand(length(input_scaling),1) < config.mut_rate));
-input_scaling(pos) = mutateWeight(input_scaling(pos),config);%2*rand(length(pos),1)-1;
+input_scaling(pos) = mutateWeight(input_scaling(pos),config);
 offspring.input_scaling = reshape(input_scaling,size(offspring.input_scaling));
 
 leak_rate = offspring.leak_rate(:);
 pos = randperm(length(leak_rate),sum(rand(length(leak_rate),1) < config.mut_rate));
-leak_rate(pos) = mutateWeight(leak_rate(pos),config);%rand(length(pos),1);
+leak_rate(pos) = mutateWeight(leak_rate(pos),config);
 offspring.input_scaling = reshape(leak_rate,size(offspring.leak_rate));
 
 % W scaling
 W_scaling = offspring.W_scaling(:);
 pos = randperm(length(W_scaling),sum(rand(length(W_scaling),1) < config.mut_rate));
-W_scaling(pos) = mutateWeight(W_scaling(pos),config);%2*rand(length(pos),1);
+W_scaling(pos) = mutateWeight(W_scaling(pos),config);
 offspring.W_scaling = reshape(W_scaling,size(offspring.W_scaling));
 
 % cycle through all sub-reservoirs
@@ -26,7 +25,7 @@ for i = 1:config.num_reservoirs
     
     % input weights
     input_weights = offspring.input_weights{i}(:);
-    pos =  randperm(length(input_weights),ceil(config.mut_rate*length(input_weights)));
+    pos = randperm(length(input_weights),sum(rand(length(input_weights),1) < config.mut_rate));
     input_weights(pos) = mutateWeight(input_weights(pos),config); 
     offspring.input_weights{i} = reshape(input_weights,size(offspring.input_weights{i}));
         
@@ -36,14 +35,14 @@ for i = 1:config.num_reservoirs
         if (config.undirected_ensemble && i ~= j) || (config.undirected && i == j)
             W= triu(offspring.W{i,j});
             f = find(W);
-            pos = randperm(length(f),ceil(config.mut_rate*length(f)));
+             pos = randperm(length(f),sum(rand(length(f),1) < config.mut_rate));
             W(f(pos)) = mutateWeight(W(f(pos)),config);
             W = triu(W)+triu(W,1)'; % copy top-half to lower-half
             offspring.W{i,j} = W;
         else
             W = offspring.W{i,j}(:);
             % select weights to change
-            pos =  randperm(length(W),ceil(config.mut_rate*length(W)));
+            pos = randperm(length(W),sum(rand(length(W),1) < config.mut_rate));
             W(pos) = mutateWeight(W(pos),config);
             offspring.W{i,j} = reshape(W,size(offspring.W{i,j}));
             
@@ -72,7 +71,7 @@ for i = 1:config.num_reservoirs
     
     if config.iir_filter_on
         iir_feedfoward = offspring.iir_weights{i,1}(:,1);
-        pos =  randperm(length(iir_feedfoward),ceil(config.mut_rate*length(iir_feedfoward)));
+        pos = randperm(length(iir_feedfoward),sum(rand(length(iir_feedfoward),1) < config.mut_rate));
         w_0 = mutateWeight(iir_feedfoward(pos),config);        
         alpha = sin(w_0).*sinh((log(2)./2) * (3*rand) * (w_0./(sin(w_0))));
         offspring.iir_weights{i,1}(pos,:) = alpha .* [1 0 -1]; 
@@ -91,7 +90,7 @@ end
 % mutate output weights
 if config.evolve_output_weights
     output_weights = offspring.output_weights(:);
-    pos =  randperm(length(output_weights),ceil(config.mut_rate*length(output_weights)));    
+    pos = randperm(length(output_weights),sum(rand(length(output_weights),1) < config.mut_rate));   
     output_weights(pos) = mutateWeight(output_weights(pos),config);
     offspring.output_weights = reshape(output_weights,size(offspring.output_weights));
 end
@@ -105,7 +104,8 @@ if config.evolve_feedback_weights
     offspring.feedback_scaling = reshape(feedback_scaling,size(offspring.feedback_scaling));
     
     feedback_weights = offspring.feedback_weights(:);
-    pos =  randperm(length(feedback_weights),ceil(config.mut_rate*length(feedback_weights)));
+    pos = randperm(length(feedback_weights),sum(rand(length(feedback_weights),1) < config.mut_rate));
+       
     feedback_weights(pos) = mutateWeight(feedback_weights(pos),config);
     offspring.feedback_weights = reshape(feedback_weights,size(offspring.feedback_weights));
 end

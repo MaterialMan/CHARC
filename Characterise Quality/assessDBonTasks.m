@@ -33,7 +33,7 @@ for set = 1:length(config.task_list)
         order = 1:length(population);
     end
     
-    for i= 0:batch_num:length(population)
+    for i= 0:batch_num:length(population)-batch_num
         
         test_error = [];
         tmp_pop = population(order(i+1:i+batch_num));

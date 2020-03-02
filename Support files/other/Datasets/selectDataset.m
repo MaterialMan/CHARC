@@ -183,6 +183,7 @@ switch config.dataset
     case 'attractor' %reconstruct lorenz attractor
         err_type = 'NMSE';
         train_fraction=0.5;    val_fraction=0.25;    test_fraction=0.25;
+        wash_out =100;
         
         switch(config.attractor_type)
             case 'lorenz'
@@ -198,9 +199,9 @@ switch config.dataset
                 [x, y] = createLimitCycleAttractor(4, T, h, datalength); % roughly 10k datapoints
                 attractor_sequence= [x, y];
             case 'mackey_glass'
-                datalength = 4e3; T = 1e3;
+                datalength = 4e3; T = 5e3;
                 [x] = createMackeyGlass(17, 0.1, 0.2, 10, T ,datalength);
-                attractor_sequence= x;
+                attractor_sequence= x';
             case 'duffing_map'
                 
             otherwise
@@ -553,8 +554,8 @@ end
 
 %% preprocessing
 if config.evolve_feedback_weights
-    input_sequence(input_sequence ~= 0) = (1--1)*(input_sequence(input_sequence ~= 0)-min(input_sequence(output_sequence ~= 0)))/(max(input_sequence(input_sequence ~= 0))- min(input_sequence(input_sequence ~= 0)))-1;
-    output_sequence(output_sequence ~= 0) = (1--1)*(output_sequence(output_sequence ~= 0)-min(output_sequence(output_sequence ~= 0)))/(max(output_sequence(output_sequence ~= 0))- min(output_sequence(output_sequence ~= 0)))-1;
+   % input_sequence(input_sequence ~= 0) = (1--1)*(input_sequence(input_sequence ~= 0)-min(input_sequence(output_sequence ~= 0)))/(max(input_sequence(input_sequence ~= 0))- min(input_sequence(input_sequence ~= 0)))-1;
+  %  output_sequence(output_sequence ~= 0) = (1--1)*(output_sequence(output_sequence ~= 0)-min(output_sequence(output_sequence ~= 0)))/(max(output_sequence(output_sequence ~= 0))- min(output_sequence(output_sequence ~= 0)))-1;
 end
 
 % rescale training data

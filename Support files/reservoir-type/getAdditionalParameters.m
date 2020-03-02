@@ -20,8 +20,9 @@ config.internal_weight_initialisation = 'norm';  % e.g.,  'norm', 'uniform', 'or
 
 config.evolve_output_weights = 0;             % evolve rather than train
 config.evolve_feedback_weights = 0;             % find suitable feedback weights
-config.feedback_weight_initialisation = 'orth';
+config.feedback_weight_initialisation = 'norm';
 config.feedback_connectivity = 0.1;
+config.teacher_forcing = 0;                 % train output using target signal then transition into "generative" mode
 
 % node functionality
 config.multi_activ = 0;                      % use different activation funcs
@@ -33,6 +34,7 @@ config.undirected_ensemble = 0;              % by default all inter-network weig
 % default reservoir input scale
 config.scaler = 1;                          % this may need to change for different reservoir systems that don't fit to the typical neuron range, e.g. [-1 1]
 config.discrete = 0;
+config.noise_ratio = 0.01;
 
 % preprocessing performed on input data
 if strcmp(config.dataset,'test_pulse')
@@ -230,13 +232,12 @@ switch(config.dataset)
     case 'attractor'
         config.leak_on = 0;                          % add leak states
         config.add_input_states = 0;
-        config.figure_array = [config.figure_array figure];
         config.sparse_input_weights = 0;
         
-        config.attractor_type = 'lorenz';
-        config.evolve_output_weights = 1;
+        config.attractor_type = 'mackey_glass';
+        config.evolve_output_weights = 0;
         config.evolve_feedback_weights = 1;
-        config.assessFcn = @collectRoRStatesFeedback;
+        config.teacher_forcing = 1;
         config.preprocess = 0;
         
     case {'MSO1','MSO2','MSO3','MSO4','MSO5','MSO6','MSO7','MSO8','MSO9','MSO10','MSO11','MSO12'}  %MSO'
