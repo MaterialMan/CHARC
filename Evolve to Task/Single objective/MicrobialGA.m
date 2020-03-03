@@ -40,7 +40,7 @@ config.error_to_check = 'train&val&test';    % printed error includes all three 
 %% Task parameters
 config.discrete = 0;               % select '1' for binary input for discrete systems
 config.nbits = 16;                 % only applied if config.discrete = 1; if wanting to convert data for binary/discrete systems
-config.dataset = 'attractor';          % Task to evolve for
+config.dataset = 'narma_10';          % Task to evolve for
 
 % get any additional params. This might include:
 % details on reservoir structure, extra task variables, etc.
