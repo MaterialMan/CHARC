@@ -7,7 +7,7 @@
 %
 % This is called by the @config.assessFcn pointer.
 
-function[final_states,individual] = assess_ReservoirName_(individual,input_sequence,config)
+function[final_states,individual] = assess_ReservoirName_(individual,input_sequence,config,target_output)
 
 %if single input entry, add previous state
 if size(input_sequence,1) == 1
@@ -44,6 +44,18 @@ for n = 2:size(input_sequence,1)
             states(n+1,j) = individual.alpha*states(n,j+1)*(1-states(n,j+1)) + individual.beta*(states(n,j+1) - states(n,j+1));
             
         end
+        
+        % feedback -example
+        % if config.evolve_feedback_weights
+        %    if config.teacher_forcing && sum(input_sequence(n-1:n,:)) ~= 0 % teacher forcing
+        %        states{i}(n,:) = individual.activ_Fcn{i}(((individual.input_weights{i}*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])') + x{i}(n,:)'+ (individual.feedback_scaling*individual.feedback_weights(sum(individual.nodes(1:i-1))+1:sum(individual.nodes(1:i)),:))*target_output(n-1,:));
+        %    else
+        %        states{i}(n,:) = individual.activ_Fcn{i}(((individual.input_weights{i}*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])') + x{i}(n,:)'+ (individual.feedback_scaling*individual.feedback_weights(sum(individual.nodes(1:i-1))+1:sum(individual.nodes(1:i)),:))*states{i}(n-1,:)*individual.output_weights(sum(individual.nodes(1:i-1))+1:sum(individual.nodes(1:i)),:));
+        %    end
+        % else
+        %    states{i}(n,:) = individual.activ_Fcn{i}(((individual.input_weights{i}*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,:)');
+        % end
+        
     end
 end
 

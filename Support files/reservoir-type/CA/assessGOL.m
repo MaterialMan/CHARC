@@ -3,7 +3,7 @@
 
 % This is called by the @config.assessFcn pointer.
 
-function[final_states,individual,extra_states] = assessGOL(individual,input_sequence,config)
+function[final_states,individual,extra_states] = assessGOL(individual,input_sequence,config,target_output)
 
 %if single input entry, add previous state
 if size(input_sequence,1) == 1

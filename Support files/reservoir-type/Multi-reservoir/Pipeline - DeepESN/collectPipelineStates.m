@@ -1,4 +1,4 @@
-function[final_states,individual] = collectPipelineStates(individual,input_sequence,config)    
+function[final_states,individual] = collectPipelineStates(individual,input_sequence,config,target_output)    
 
 %% Collect states for plain ESN
 %if single input entry, add previous state

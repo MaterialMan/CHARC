@@ -13,7 +13,7 @@ sequence_length = data_length/2;%200;
 data_sequence = 2*rand(n_input_units,data_length+1+n_output_units)-1;
 
 % rescale for each reservoir
-data_sequence = data_sequence.*config.scaler;
+[data_sequence] = featureNormailse(data_sequence,config.preprocess);
 
 if config.discrete %strcmp(config.res_type,'elementary_CA') || strcmp(config.res_type,'2d_CA') || strcmp(config.res_type,'RBN')
     data_sequence = floor(heaviside(data_sequence));
@@ -40,7 +40,7 @@ test_states = config.assessFcn(individual,test_input_sequence,config);
 % Find best reg parameter
 reg_train_error = [];
 reg_weights=[];
-reg_param = [10e-1 10e-3 10e-5 10e-7 10e-9];
+reg_param = [10e-1 10e-3 10e-5 10e-7 10e-9 10e-11];
 config.err_type = 'NMSE';
 
 for i = 1:length(reg_param)

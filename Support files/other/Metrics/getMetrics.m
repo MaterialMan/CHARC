@@ -6,8 +6,8 @@ temp_seed = scurr.Seed;
 
 % set parameters
 metrics = [];
-config.reg_param = 10e-6;
-config.wash_out = 25;
+config.reg_param = 10e-9;
+config.wash_out = 50;
 metrics_type =  config.metrics;
 num_timesteps = round(individual.total_units*1.5) + config.wash_out; % input should be twice the size of network + wash out
 MC_num_timesteps = 500 + config.wash_out*2;
@@ -28,7 +28,7 @@ for metric_item = 1:length(config.metrics)
             input_sequence = repmat(ui(:,1),1,n_input_units);
             
             % rescale for each reservoir
-            input_sequence =input_sequence.*config.scaler;
+            [input_sequence] = featureNormailse(input_sequence,config.preprocess);
             
             %kernel matrix - pick 'to' at halfway point
             M = config.assessFcn(individual,input_sequence,config);
@@ -61,7 +61,7 @@ for metric_item = 1:length(config.metrics)
             input_sequence = 0.5 + 0.1*rand(num_timesteps,n_input_units)-0.05;
             
             % rescale for each reservoir
-            input_sequence =input_sequence.*config.scaler;
+            %[input_sequence] = featureNormailse(input_sequence,config.preprocess);
             
             %collect states
             G = config.assessFcn(individual,input_sequence,config);
@@ -98,7 +98,8 @@ for metric_item = 1:length(config.metrics)
         case 'entropy'
             
             data_length = num_timesteps;%individual.total_units*2 + config.wash_out;%400;
-            input_sequence = ones(data_length,n_input_units).*config.scaler;
+            input_sequence = ones(data_length,n_input_units);
+            [input_sequence] = featureNormailse(input_sequence,config.preprocess);
             
             X = config.assessFcn(individual,input_sequence,config);
             C = X'*X;
@@ -144,8 +145,10 @@ for metric_item = 1:length(config.metrics)
             
             data_length = num_timesteps;%individual.total_units*4 + config.wash_out*2;%400;
             
-            u1 = (rand(data_length,n_input_units)-1).*config.scaler;
-            u2 = (rand(data_length,n_input_units)).*config.scaler;
+            u1 = (rand(data_length,n_input_units)-1);
+            u2 = (rand(data_length,n_input_units));
+            [u1] = featureNormailse(u1,config.preprocess);
+            [u2] = featureNormailse(u2,config.preprocess);
             
             D= norm(u1-u2);
             
@@ -176,9 +179,11 @@ for metric_item = 1:length(config.metrics)
             
             data_length = individual.total_units*4 + config.wash_out*2;%400;
             
-            u = (rand(data_length,n_input_units)-1).*config.scaler;
+            input_sequence = (rand(data_length,n_input_units)-1).*config.scaler;
             
-            X = config.assessFcn(individual,u,config);
+            [input_sequence] = featureNormailse(input_sequence,config.preprocess);
+            
+            X = config.assessFcn(individual,input_sequence,config);
             
             for i = 1:size(X,1)
                 for j = 1:size(X,1)

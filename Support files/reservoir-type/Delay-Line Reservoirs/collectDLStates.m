@@ -1,4 +1,4 @@
-function [final_states,individual]= collectDLStates(individual,input_sequence,config)
+function [final_states,individual]= collectDLStates(individual,input_sequence,config,target_output)
 
 %if single input entry, add previous state
 if size(input_sequence,1) == 1

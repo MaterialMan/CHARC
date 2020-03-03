@@ -183,25 +183,34 @@ switch config.dataset
     case 'attractor' %reconstruct lorenz attractor
         err_type = 'NMSE';
         train_fraction=0.5;    val_fraction=0.25;    test_fraction=0.25;
+        wash_out =100;
         
         switch(config.attractor_type)
             case 'lorenz'
-                datalength = 1e4; T = 100; h = 0.001;
-                [x,y, z] = createLorenz(28, 10, 8/3, T, h, datalength);  % roughly 100k datapoints
+                data_length = 1e4; T = 100; h = 0.001;
+                [x,y, z] = createLorenz(28, 10, 8/3, T, h, data_length);  % roughly 100k datapoints
                 attractor_sequence= [x, y, z];
             case 'rossler'
-                datalength = 10e3; T = 100; h = 0.001;
-                [x,y,z] = createRosslerAttractor(0.2,0.2,5.7, T, h ,datalength); % roughly 100k datapoints
+                data_length = 4e3; T = 100; h = 0.001;
+                [x,y,z] = createRosslerAttractor(0.2,0.2,5.7, T, h ,data_length); % roughly 100k datapoints
                 attractor_sequence= [x, y, z];
             case 'limit_cycle'
-                datalength = 4e3; T = 100; h = 0.001;
-                [x, y] = createLimitCycleAttractor(4, T, h, datalength); % roughly 10k datapoints
+                data_length = 4e3; T = 100; h = 0.001;
+                [x, y] = createLimitCycleAttractor(4, T, h, data_length); % roughly 10k datapoints
                 attractor_sequence= [x, y];
             case 'mackey_glass'
-                datalength = 4e3; T = 1e3;
-                [x] = createMackeyGlass(17, 0.1, 0.2, 10, T ,datalength);
+                data_length = 7e3; T = 1e3;
+                [x] = createMackeyGlass(17, 0.1, 0.2, 10, T ,data_length);
                 attractor_sequence= x';
             case 'duffing_map'
+                data_length = 7e3;
+                data_struct.delta= 0.3;
+                data_struct.alpha= ;
+                data_struct.beta= ;
+                data_struct.gamma= ;
+                data_struct.w = ;
+                y0 = [];
+                [x] =createDuffingOscillator(data_length, data_struct, y0);
                 
             otherwise
         end
@@ -553,8 +562,8 @@ end
 
 %% preprocessing
 if config.evolve_feedback_weights
-    input_sequence(input_sequence ~= 0) = (1--1)*(input_sequence(input_sequence ~= 0)-min(input_sequence(output_sequence ~= 0)))/(max(input_sequence(input_sequence ~= 0))- min(input_sequence(input_sequence ~= 0)))-1;
-    output_sequence(output_sequence ~= 0) = (1--1)*(output_sequence(output_sequence ~= 0)-min(output_sequence(output_sequence ~= 0)))/(max(output_sequence(output_sequence ~= 0))- min(output_sequence(output_sequence ~= 0)))-1;
+   % input_sequence(input_sequence ~= 0) = (1--1)*(input_sequence(input_sequence ~= 0)-min(input_sequence(output_sequence ~= 0)))/(max(input_sequence(input_sequence ~= 0))- min(input_sequence(input_sequence ~= 0)))-1;
+  %  output_sequence(output_sequence ~= 0) = (1--1)*(output_sequence(output_sequence ~= 0)-min(output_sequence(output_sequence ~= 0)))/(max(output_sequence(output_sequence ~= 0))- min(output_sequence(output_sequence ~= 0)))-1;
 end
 
 % rescale training data

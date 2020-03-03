@@ -30,7 +30,7 @@ for n = 2:size(input_sequence,1)
     for i= 1:config.num_reservoirs
         
         for k= 1:config.num_reservoirs
-            x{i}(n,:) = x{i}(n,:) + ((individual.W{i,k}*individual.W_scaling(i,k))*states{k}(n-1,:)')';% + config.noise_ratio*rand(size(states{k}(n-1,:)));
+            x{i}(n,:) = x{i}(n,:) + ((individual.W{i,k}*individual.W_scaling(i,k))*states{k}(n-1,:)')';
         end
         
         if config.multi_activ
@@ -43,10 +43,11 @@ for n = 2:size(input_sequence,1)
             end
         else
             if config.evolve_feedback_weights
-                if config.teacher_forcing && sum(input_sequence(n-1:n,:)) ~= 0 % teacher forcing
-                    states{i}(n,:) = individual.activ_Fcn{i}(((individual.input_weights{i}*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])') + x{i}(n,:)'+ (individual.feedback_scaling*individual.feedback_weights(sum(individual.nodes(1:i-1))+1:sum(individual.nodes(1:i)),:))*target_output(n-1,:));
+                if config.teacher_forcing && sum(sum(input_sequence(n-1:n,:))) ~= 0 % teacher forcing
+                    target_output(n-1,:) = target_output(n-1,:) + config.noise_ratio*rand(size(target_output(n-1,:))); % add noise to regulate weights
+                    states{i}(n,:) = individual.activ_Fcn{i}(((individual.input_weights{i}*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])') + x{i}(n,:)' + ((individual.feedback_scaling*individual.feedback_weights(sum(individual.nodes(1:i-1))+1:sum(individual.nodes(1:i)),:))*target_output(n-1,:)'));
                 else
-                  states{i}(n,:) = individual.activ_Fcn{i}(((individual.input_weights{i}*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])') + x{i}(n,:)'+ (individual.feedback_scaling*individual.feedback_weights(sum(individual.nodes(1:i-1))+1:sum(individual.nodes(1:i)),:))*states{i}(n-1,:)*individual.output_weights(sum(individual.nodes(1:i-1))+1:sum(individual.nodes(1:i)),:)); 
+                  states{i}(n,:) = individual.activ_Fcn{i}(((individual.input_weights{i}*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])') + x{i}(n,:)' + ((individual.feedback_scaling*individual.feedback_weights(sum(individual.nodes(1:i-1))+1:sum(individual.nodes(1:i)),:)) *(states{i}(n-1,:)*individual.output_weights(sum(individual.nodes(1:i-1))+1:sum(individual.nodes(1:i)),:))'));  
                 end
             else
                 states{i}(n,:) = individual.activ_Fcn{i}(((individual.input_weights{i}*individual.input_scaling(i))*([individual.bias_node input_sequence(n,:)])')+ x{i}(n,:)');

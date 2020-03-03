@@ -1,9 +1,9 @@
 
-function states = assessDNAreservoir(genotype,inputSequence,config)
+function states = assessDNAreservoir(genotype,inputSequence,config,target_output)
 
 % constants
-Beta = genotype.Beta;           % reaction rate constant = 5 × 10-7 nM s-1
-e = genotype.e;                 %e is the efflux rate; e = 8.8750×10-2 nL s-1
+Beta = genotype.Beta;           % reaction rate constant = 5 ï¿½ 10-7 nM s-1
+e = genotype.e;                 %e is the efflux rate; e = 8.8750ï¿½10-2 nL s-1
 H = genotype.H;                 % h the fraction of the reactor chamber that is well-mixed; h = 0.7849
 V = genotype.V;                 % volume of the reactor; V = 7.54 nL
 tau = genotype.tau;

@@ -187,22 +187,38 @@ switch config.dataset
         
         switch(config.attractor_type)
             case 'lorenz'
-                datalength = 1e4; T = 100; h = 0.001;
-                [x,y, z] = createLorenz(28, 10, 8/3, T, h, datalength);  % roughly 100k datapoints
+                data_length = 1e4; T = 100; h = 0.001;
+                [x,y, z] = createLorenz(28, 10, 8/3, T, h, data_length);  % roughly 100k datapoints
                 attractor_sequence= [x, y, z];
             case 'rossler'
-                datalength = 4e3; T = 100; h = 0.001;
-                [x,y,z] = createRosslerAttractor(0.2,0.2,5.7, T, h ,datalength); % roughly 100k datapoints
+                data_length = 4e3; T = 100; h = 0.001;
+                [x,y,z] = createRosslerAttractor(0.2,0.2,5.7, T, h ,data_length); % roughly 100k datapoints
                 attractor_sequence= [x, y, z];
             case 'limit_cycle'
-                datalength = 4e3; T = 100; h = 0.001;
-                [x, y] = createLimitCycleAttractor(4, T, h, datalength); % roughly 10k datapoints
+                data_length = 4e3; T = 100; h = 0.001;
+                [x, y] = createLimitCycleAttractor(4, T, h, data_length); % roughly 10k datapoints
                 attractor_sequence= [x, y];
             case 'mackey_glass'
-                datalength = 4e3; T = 5e3;
-                [x] = createMackeyGlass(17, 0.1, 0.2, 10, T ,datalength);
+                data_length = 7e3; T = 1e3;
+                [x] = createMackeyGlass(17, 0.1, 0.2, 10, T ,data_length);
                 attractor_sequence= x';
             case 'duffing_map'
+                data_length = 4e3;
+                data_struct.delta= 0.3;
+                data_struct.alpha= -1;
+                data_struct.beta= 1;
+                data_struct.gamma= 0.5;
+                data_struct.w = 1.2;
+                y0 = [1 0];
+                T = 1e3;
+                [x] =createDuffingOscillator(data_length, data_struct, y0, T);
+                attractor_sequence= x';
+            case 'dynamic' % not finished: still playing with
+                data_length = 4e3;
+                plot = 0;
+                num_attractors = 10;
+                [x] = attractorSwitch(data_length,num_attractors,plot);
+                attractor_sequence= x;
                 
             otherwise
         end

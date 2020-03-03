@@ -18,7 +18,7 @@ end
 num_tasks = length(config.task_list);
 
 num_tests= 10;
-nn_size= [10];
+nn_size= [100];
 
 threshold= repmat(2,1,num_tasks);
 
