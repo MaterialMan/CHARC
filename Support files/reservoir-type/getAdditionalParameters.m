@@ -236,12 +236,9 @@ switch(config.dataset)
         
         config.attractor_type = 'mackey_glass';
         config.evolve_output_weights = 0;
-        config.evolve_feedback_weights = 1;
-        config.feedback_weight_initialisation = 'norm';
-        config.feedback_connectivity = 0.1;
         config.teacher_forcing = 1;
-        config.preprocess = 'scaling';
-        config.noise_ratio = 0.01;
+        config.preprocess = 0;
+        config.noise_ratio = 10e-6;
         
     case {'MSO1','MSO2','MSO3','MSO4','MSO5','MSO6','MSO7','MSO8','MSO9','MSO10','MSO11','MSO12'}  %MSO'
         

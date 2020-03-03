@@ -33,18 +33,18 @@ switch(config.dataset)
         
     case 'attractor'
         
-        %test_states = config.assessFcn(best_individual,config.test_input_sequence,config,config.test_output_sequence);
-        %test_sequence = test_states*best_individual.output_weights;
-        test_states = config.assessFcn(loser_individual,config.test_input_sequence,config,config.test_output_sequence);
-        test_sequence = test_states*loser_individual.output_weights;
-        
+        test_states = config.assessFcn(best_individual,config.test_input_sequence,config,config.test_output_sequence);
+        test_sequence = test_states*best_individual.output_weights;
+
         set(0,'currentFigure',config.figure_array(1))
         subplot(1,3,1)
         plot(config.test_output_sequence(config.wash_out+1:end,:),'r')
         hold on
         plot(test_sequence,'b')
+        plot(config.test_input_sequence(config.wash_out+1:end,:),'g')
         hold off
-        
+        legend({'Target','Output','Input'})
+
         subplot(1,3,2)
         X = config.test_output_sequence(config.wash_out+1:end,:);
         T = test_sequence;
@@ -156,8 +156,8 @@ switch(config.res_type)
     case 'Graph'
         plotGridNeuron(config.figure_array(2),population,best_indv(gen),loser,config)
 
-        
-         set(0,'currentFigure',config.figure_array(1))
+        states = config.assessFcn(population(best_indv(gen)),config.test_input_sequence,configconfig.test_output_sequence);
+        set(0,'currentFigure',config.figure_array(1))
         subplot(1,2,1)
         imagesc(states(:,1:end-config.task_num_inputs)')
         colorbar

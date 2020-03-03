@@ -190,18 +190,26 @@ switch config.dataset
                 data_length = 1e4; T = 100; h = 0.001;
                 [x,y, z] = createLorenz(28, 10, 8/3, T, h, data_length);  % roughly 100k datapoints
                 attractor_sequence= [x, y, z];
+                slice = [1 1 0.5];
             case 'rossler'
                 data_length = 4e3; T = 100; h = 0.001;
                 [x,y,z] = createRosslerAttractor(0.2,0.2,5.7, T, h ,data_length); % roughly 100k datapoints
                 attractor_sequence= [x, y, z];
+                slice = [1 1 0.5];
             case 'limit_cycle'
                 data_length = 4e3; T = 100; h = 0.001;
                 [x, y] = createLimitCycleAttractor(4, T, h, data_length); % roughly 10k datapoints
                 attractor_sequence= [x, y];
+                slice = [1 1 0.5];
             case 'mackey_glass'
-                data_length = 7e3; T = 1e3;
-                [x] = createMackeyGlass(17, 0.1, 0.2, 10, T ,data_length);
-                attractor_sequence= x';
+                data_length = 8e3; T = 1e4;
+                %[x] = createMackeyGlass(17, 0.1, 0.2, 10, T ,data_length);
+                %attractor_sequence= x';
+                x = load('Mackey_Glass_t17.txt');
+                
+                attractor_sequence= x(1:data_length);
+                slice = [1 1 0.5];
+
             case 'duffing_map'
                 data_length = 4e3;
                 data_struct.delta= 0.3;
@@ -213,24 +221,26 @@ switch config.dataset
                 T = 1e3;
                 [x] =createDuffingOscillator(data_length, data_struct, y0, T);
                 attractor_sequence= x';
+                slice = [1 1 0.5];
             case 'dynamic' % not finished: still playing with
+                
                 data_length = 4e3;
                 plot = 0;
                 num_attractors = 10;
                 [x] = attractorSwitch(data_length,num_attractors,plot);
                 attractor_sequence= x;
-                
+                slice = [1 1 1];
             otherwise
         end
         
         data_length = size(attractor_sequence,1);
         
         % divide data -  add no signal
-        slice = 0.5;
+        
         input_sequence = attractor_sequence;
-        input_sequence(floor(data_length*train_fraction*slice)+1:floor(data_length*train_fraction),:) = zeros;
-        input_sequence(floor(data_length*train_fraction)+floor(data_length*val_fraction*slice)+1:floor(data_length*train_fraction)+floor(data_length*val_fraction),:) = zeros;
-        input_sequence(floor(data_length*train_fraction)+floor(data_length*val_fraction)+floor(data_length*test_fraction*slice)+1:end,:) = zeros;
+        input_sequence(floor(data_length*train_fraction*slice(1))+1:floor(data_length*train_fraction),:) = zeros;
+        input_sequence(floor(data_length*train_fraction)+floor(data_length*val_fraction*slice(2))+1:floor(data_length*train_fraction)+floor(data_length*val_fraction),:) = zeros;
+        input_sequence(floor(data_length*train_fraction)+floor(data_length*val_fraction)+floor(data_length*test_fraction*slice(3))+1:end,:) = zeros;
         
         ahead = 1;%shift by 1. Becomes prediction problem
         input_sequence = input_sequence(1:end-ahead,:);

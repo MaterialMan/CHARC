@@ -26,18 +26,18 @@ for i= 1:config.num_reservoirs
     end
     
     % change input widths
-    for n = 1:size(input_mul{i},1)
-            m = reshape(input_mul{i}(n,:),config.num_nodes(i),config.num_nodes(i));
-            f_pos = find(m);
-            input_matrix_2d = m;
-            for p = 1:length(f_pos)
-                t = zeros(size(m));
-                t(f_pos(p)) = m(f_pos(p));
-                [t] = adjustInputShape(t,individual.input_widths{i}(f_pos(p)));
-                input_matrix_2d = input_matrix_2d + t;
-            end
-            input_mul{i}(n,:) = input_matrix_2d(:);
-    end
+%     for n = 1:size(input_mul{i},1)
+%             m = reshape(input_mul{i}(n,:),config.num_nodes(i),config.num_nodes(i));
+%             f_pos = find(m);
+%             input_matrix_2d = m;
+%             for p = 1:length(f_pos)
+%                 t = zeros(size(m));
+%                 t(f_pos(p)) = m(f_pos(p));
+%                 [t] = adjustInputShape(t,individual.input_widths{i}(f_pos(p)));
+%                 input_matrix_2d = input_matrix_2d + t;
+%             end
+%             input_mul{i}(n,:) = input_matrix_2d(:);
+%     end
     
     x{i} = zeros(size(input_sequence,1),individual.nodes(i));
 
